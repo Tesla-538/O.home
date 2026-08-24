@@ -15,9 +15,9 @@ export function ProfileAvatarImage({ src, compact = false }: { src: string; comp
         height: '100%',
         objectFit: 'cover',
         objectPosition: '50% 50%',
-        // 28px 헤더 썸네일은 원형 테두리와 축소 보간 때문에 얼굴이 약 1px 아래로 보인다.
-        // 살짝 확대하며 위로 당겨 빈 틈 없이 큰 프로필과 시각적 중심을 맞춘다.
-        transform: compact ? 'translateY(-1px) scale(1.08)' : undefined,
+        // 작은 헤더 썸네일은 얼굴 중심을 위쪽에 두어 큰 프로필과 같은 인상으로 보정한다.
+        // 이동량만큼 확대해 아래쪽에 빈 틈이 생기지 않게 한다.
+        transform: compact ? 'translateY(-4px) scale(1.32)' : undefined,
         transformOrigin: '50% 50%',
       }}
     />
