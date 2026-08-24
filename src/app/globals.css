@@ -1170,7 +1170,7 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .cal-cell.picked{border-color:var(--accent);box-shadow:0 0 0 2px rgba(166,58,69,.16)}
 /* 달력 칸에는 위에서 3개까지 — 나머지 개수만 표시 */
 .cal-cell .ev.more{background:transparent;color:var(--faint);font-weight:700;padding-left:0}
-.cal-cell .ev{margin-top:4px;font-size:calc(11.5px*var(--fs,1));padding:3px 7px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600} /* 일정 글씨 확대 9.5→11.5 (v1.9 사용자 피드백) */
+.cal-cell .ev{margin-top:4px;font-size:max(12px,calc(12px*var(--fs,1)));line-height:1.35;padding:4px 7px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:750;letter-spacing:-.01em;text-shadow:0 1px 0 rgba(255,255,255,.24)}
 
 /* ---------- 다이어리 (4.14) — 좌 리스트 + 우 미니 캘린더 ---------- */
 .dy-layout{display:grid;grid-template-columns:1fr 250px;gap:14px} /* 풀 콘텐츠 폭 · 두 열 높이 일치(stretch) */
@@ -2070,7 +2070,7 @@ html.route-transitioning.route-ready .route-frame{animation:apple-page-enter .88
   background:color-mix(in srgb,var(--accent) 9%,var(--glass-control));
   box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent),0 1px 0 rgba(255,255,255,.3) inset;
 }
-.cal-cell .ev{box-shadow:0 1px 0 rgba(255,255,255,.18) inset}
+.cal-cell .ev{box-shadow:0 1px 0 rgba(255,255,255,.28) inset,0 1px 3px rgba(5,10,18,.09)}
 .cal-side{gap:10px}
 
 /* 게시판·TRPG: 필터와 목록을 한 재질 체계로 */

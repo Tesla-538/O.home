@@ -330,7 +330,11 @@ export default function CalPage() {
                   {c.d}
                   {/* 칸에는 위에서 3개까지만 — 나머지는 오른쪽 카드에서 본다 */}
                   {evs.slice(0, 3).map(e => (
-                    <div key={e.id} className="ev" style={{ background: `${eventColor(e, st.cats)}22`, color: eventColor(e, st.cats) }}
+                    <div key={e.id} className="ev" style={{
+                      background: `${eventColor(e, st.cats)}38`,
+                      color: 'var(--ink)',
+                      borderLeft: `3px solid ${eventColor(e, st.cats)}`,
+                    }}
                       data-tip={`${e.title}${e.memo ? ` — ${e.memo}` : ''}`}
                       onClick={ev => { ev.stopPropagation(); setPicked(date); openEdit(e); }}>
                       {e.done && e.keepRecord ? '✓ ' : ''}{e.title}
