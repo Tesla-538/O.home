@@ -23,6 +23,7 @@ interface GoogleCalendarStatus {
   connected: boolean;
   calendarName?: string | null;
   lastSyncedAt?: string | null;
+  error?: string | null;
 }
 
 async function googleAuthHeaders(): Promise<Record<string, string>> {
@@ -72,7 +73,6 @@ export default function CalPage() {
     if (!isAdmin) return;
     try {
       const res = await fetch('/api/google-calendar/status', { cache: 'no-store', headers: await googleAuthHeaders() });
-      if (!res.ok) throw new Error();
       setGoogleStatus(await res.json() as GoogleCalendarStatus);
     } catch {
       setGoogleStatus({ configured: false, connected: false });
@@ -474,6 +474,7 @@ export default function CalPage() {
                   onClick={() => void connectGoogle()}>
                   {googleStatus === null ? '확인 중…' : googleStatus.configured ? 'Google 계정 연결' : '서버 설정 필요'}
                 </button>
+                {googleStatus?.error && <p className="hint" style={{ margin: '8px 0 0' }}>진단: {googleStatus.error}</p>}
               </>
             )}
           </div>

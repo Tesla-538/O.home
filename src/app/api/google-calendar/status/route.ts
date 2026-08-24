@@ -17,7 +17,11 @@ export async function GET(request: Request) {
     }, { headers: { 'cache-control': 'no-store' } });
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
-    return Response.json({ error: message }, { status: message === 'UNAUTHORIZED' ? 401 : 403 });
+    return Response.json({
+      configured: googleConfig().ready,
+      connected: false,
+      error: message || '상태 확인 실패',
+    }, { headers: { 'cache-control': 'no-store' } });
   }
 }
 
