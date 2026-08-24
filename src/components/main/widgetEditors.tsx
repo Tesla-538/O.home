@@ -377,23 +377,23 @@ export function BannerEditor({ conf, onSaved, onClose }: {
       </div>
       <div style={{ display: 'grid', gap: 6, flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          <KInput placeholder="캡션" value={d.cap} onChange={e => patch(d.id, { cap: e.target.value })} />
-          <KInput placeholder="설명" value={d.sub} onChange={e => patch(d.id, { sub: e.target.value })} />
+          <KInput style={{ flex: '1 1 0', minWidth: 0 }} placeholder="캡션" value={d.cap} onChange={e => patch(d.id, { cap: e.target.value })} />
+          <KInput style={{ flex: '1 1 0', minWidth: 0 }} placeholder="설명" value={d.sub} onChange={e => patch(d.id, { sub: e.target.value })} />
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {/* 풀주소를 붙여넣어도 사이트 오리진을 떼고 /rels/… 상대경로로 (v1.9) */}
-          <KInput placeholder="링크 (선택)" value={d.link} onChange={e => patch(d.id, { link: normalizeInternalLink(e.target.value) })} />
+          <KInput style={{ flex: '1 1 100px', minWidth: 0 }} placeholder="링크 (선택)" value={d.link} onChange={e => patch(d.id, { link: normalizeInternalLink(e.target.value) })} />
           {(d.localUrl || d.imgId) && (
             <>
-              <button className="btn btn-ghost" style={{ padding: '4px 9px', fontSize: 10, whiteSpace: 'nowrap' }}
+              <button className="btn btn-ghost" style={{ padding: '4px 9px', fontSize: 10, whiteSpace: 'nowrap', flexShrink: 0 }}
                 onClick={() => setCropFor(d.id)}>✂ 위치</button>
-              <button className="btn btn-ghost" style={{ padding: '4px 9px', fontSize: 10, whiteSpace: 'nowrap' }}
+              <button className="btn btn-ghost" style={{ padding: '4px 9px', fontSize: 10, whiteSpace: 'nowrap', flexShrink: 0 }}
                 onClick={() => patch(d.id, { file: undefined, localUrl: undefined, imgId: undefined, crop: undefined })}>이미지 제거</button>
             </>
           )}
         </div>
       </div>
-      <button className="btn btn-ghost" style={{ height: 24, padding: '0 11px', fontSize: 10.5, display: 'inline-flex', alignItems: 'center' }}
+      <button className="btn btn-ghost" style={{ height: 24, padding: '0 11px', fontSize: 10.5, display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
         onClick={() => del.ask(`슬라이드${d.cap ? ` 「${d.cap}」` : ''}를 삭제하시겠습니까?`,
           () => setDraft(list => list.filter(x => x.id !== d.id)),
           '삭제는 [SAVE]를 눌러야 확정됩니다.')}>DELETE</button>
