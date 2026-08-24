@@ -11,12 +11,14 @@ export function ProfileAvatarImage({ src, compact = false }: { src: string; comp
       alt=""
       style={{
         display: 'block',
-        width: '100%',
-        height: '100%',
+        // 헤더에서는 큰 프로필(84px)과 같은 렌더링 면적을 만든 뒤 28px로 정확히 축소한다.
+        // 작은 원에 1px 테두리를 직접 적용해서 사진 비율이 달라지는 문제를 피한다.
+        width: compact ? '300%' : '100%',
+        height: compact ? '300%' : '100%',
         objectFit: 'cover',
-        // 확대 없이 원본 비율을 유지하고, 작은 헤더 썸네일만 자르는 기준을 아래로 내려
-        // 사진 내용이 원 안에서 더 위쪽에 보이게 한다.
-        objectPosition: compact ? '50% calc(70% + 3px)' : '50% 50%',
+        objectPosition: '50% 50%',
+        transform: compact ? 'scale(0.3333333333)' : undefined,
+        transformOrigin: '0 0',
       }}
     />
   );
