@@ -268,24 +268,31 @@ export function TodoWidget({ conf, date }: { conf: WidgetConf; date?: string }) 
   const [open, setOpen] = useState(false);
   const now = new Date();
   const shownDate = date ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const items = st.events.filter(e => e.kind === 'todo' && eventOnDate(e, shownDate));
+  const items = st.events.filter(e => eventOnDate(e, shownDate));
   useEditEvent(conf.id, () => setOpen(true));   // 편집모드 우클릭 → 설정 (v1.9)
 
   return (
     <div className="panel widget" style={{ cursor: isAdmin ? 'pointer' : undefined }}
       onClick={e => {
         if (!isAdmin || editOn) return;
-        if ((e.target as HTMLElement).closest('.k-check') || (e.target as HTMLElement).closest('.modal-ov')) return;
+        if ((e.target as HTMLElement).closest('.k-check') || (e.target as HTMLElement).closest('.todo-record') || (e.target as HTMLElement).closest('.modal-ov')) return;
         setOpen(true);
       }}>
       <h4><span>TO-DO{date ? ` · ${date.slice(5).replace('-', '.')}` : ''}</span>{isAdmin && <span className="more">관리 ›</span>}</h4>
       {items.map(it => (
-        <label className={`todo-row k-check ${it.done ? 'done' : ''}`} key={it.id}
-          style={!isAdmin ? { pointerEvents: 'none' } : undefined}>
-          <input type="checkbox" checked={!!it.done}
-            onChange={ev => updateEvent(it.id, { done: ev.target.checked })} />
-          <span className="box" /><span>{it.title}</span>
-        </label>
+        <div className={`todo-row ${it.done ? 'done' : ''}`} key={it.id}>
+          <label className="k-check" style={!isAdmin ? { pointerEvents: 'none' } : undefined}>
+            <input type="checkbox" checked={!!it.done}
+              onChange={ev => updateEvent(it.id, { done: ev.target.checked })} />
+            <span className="box" /><span className="todo-title">{it.title}</span>
+          </label>
+          <button type="button" className={`todo-record ${it.keepRecord ? 'on' : ''}`}
+            disabled={!isAdmin} aria-pressed={!!it.keepRecord}
+            title={it.keepRecord ? '완료해도 캘린더에 기록으로 남습니다' : '완료 후에도 캘린더에 남기기'}
+            onClick={() => updateEvent(it.id, { keepRecord: !it.keepRecord })}>
+            {it.keepRecord ? '기록 ON' : '기록'}
+          </button>
+        </div>
       ))}
       {items.length === 0 && <p className="hint">{date ? '이 날짜에 할 일이 없습니다' : '오늘 할 일이 없습니다'}</p>}
 
@@ -309,7 +316,7 @@ export function UpcomingWidget() {
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   // 오늘 포함 이후 일정 — 매년 반복은 올해 날짜로 환산해 가장 가까운 3개
   const upcoming = st.events
-    .filter(e => e.kind !== 'todo' && (isAdmin || e.visibility === 'public' || (e.visibility === 'member' && !!user)))
+    .filter(e => (!e.done || e.keepRecord) && (isAdmin || e.visibility === 'public' || (e.visibility === 'member' && !!user)))
     .map(e => {
       let d = e.start;
       if (e.repeat === 'yearly') {

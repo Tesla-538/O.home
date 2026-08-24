@@ -26,6 +26,7 @@ export interface SchedEvent {
   repeat: 'none' | 'yearly'; // 매년 반복
   kind?: 'event' | 'todo';   // 미지정은 기존 일반 일정 · todo는 날짜별 TO-DO
   done?: boolean;            // TO-DO 완료 여부
+  keepRecord?: boolean;      // 완료 후에도 캘린더 기록으로 남길지
   updatedAt?: string;         // Google Calendar 충돌 해결용 최종 수정 시각
   googleEventId?: string;
   googleUpdatedAt?: string;

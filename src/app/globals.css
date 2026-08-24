@@ -848,7 +848,10 @@ body.edit-on .main-grid{grid-template-columns:260px 720px 280px}
 .dday-row b{font-family:var(--serif);font-size:calc(15px*var(--fs,1));letter-spacing:.05em}
 .dday-row .d-red{color:var(--accent)}
 .todo-row{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:calc(12.5px*var(--fs,1))}
-.todo-row.done span{text-decoration:line-through;color:var(--faint)}
+.todo-row>.k-check{flex:1;min-width:0}.todo-row .todo-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.todo-row.done .todo-title{text-decoration:line-through;color:var(--faint)}
+.todo-record{flex:0 0 auto;padding:3px 7px;border:1px solid var(--line);border-radius:999px;color:var(--faint);font-size:9px;letter-spacing:.04em;transition:.15s;background:rgba(255,255,255,.035)}
+.todo-record:hover{color:var(--ink);border-color:var(--sub)}.todo-record.on{color:#fff;border-color:var(--accent);background:var(--accent)}.todo-record:disabled{opacity:.7;cursor:default}
 .diary-mini{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);cursor:var(--cur-pointer,pointer)}
 .diary-mini:last-child{border:none}
 /* line-height를 1로 눌러야 글자 상자가 아니라 글자 자체가 가운데로 온다 (v2.0 사용자 발견) */

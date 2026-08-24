@@ -140,13 +140,13 @@ export function TodoEditor({ conf: _conf, date }: { conf: WidgetConf; date?: str
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const [newDate, setNewDate] = useState(date ?? today);
   useEffect(() => { if (date) setNewDate(date); }, [date]);
-  const items = st.events.filter(e => e.kind === 'todo' && (!date || eventOnDate(e, date)));
+  const items = st.events.filter(e => !date || eventOnDate(e, date));
 
   const add = () => {
     if (!newText.trim() || !newDate) return;
     addEvent({
       title: newText.trim(), start: newDate, catId: st.cats[0]?.id ?? '',
-      visibility: 'public', repeat: 'none', kind: 'todo', done: false,
+      visibility: 'public', repeat: 'none', kind: 'event', done: false, keepRecord: false,
     });
     setNewText('');
   };
@@ -168,6 +168,10 @@ export function TodoEditor({ conf: _conf, date }: { conf: WidgetConf; date?: str
             <span className="drag-h">⠿</span>
             <KCheck checked={!!it.done} onChange={v => updateEvent(it.id, { done: v })} />
             <span style={{ flex: 1, minWidth: 0, fontSize: 13, textDecoration: it.done ? 'line-through' : undefined, color: it.done ? 'var(--faint)' : undefined }}>{it.title}</span>
+            <button className={`btn btn-ghost todo-record ${it.keepRecord ? 'on' : ''}`}
+              onClick={() => updateEvent(it.id, { keepRecord: !it.keepRecord })}>
+              {it.keepRecord ? '기록 ON' : '기록'}
+            </button>
             <KDate value={it.start} onChange={v => updateEvent(it.id, { start: v, end: undefined })} style={{ width: 142 }} />
             {/* 높이 24px 짝수 고정 + flex 세로 중앙 (v1.9 사용자 피드백) */}
             <button className="btn btn-ghost" style={{ marginLeft: 'auto', height: 24, padding: '0 11px', fontSize: 10.5, display: 'inline-flex', alignItems: 'center' }}

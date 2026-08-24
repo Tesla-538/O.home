@@ -145,7 +145,7 @@ export default function CalPage() {
     isAdmin || e.visibility === 'public' || (e.visibility === 'member' && !!user);
 
   const downloadCalendar = () => {
-    const visible = st.events.filter(canSee).sort((a, b) => a.start.localeCompare(b.start));
+    const visible = st.events.filter(e => canSee(e) && (!e.done || e.keepRecord)).sort((a, b) => a.start.localeCompare(b.start));
     const blob = new Blob([eventsToIcs(visible)], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -214,7 +214,9 @@ export default function CalPage() {
     cells.push({ y: view.m === 11 ? view.y + 1 : view.y, m, d: idx, dimmed: true });
   }
 
-  const eventsOn = (date: string) => st.events.filter(e => e.kind !== 'todo' && canSee(e) && eventOnDate(e, date));
+  // 모든 일정은 TO-DO와 하나의 항목을 공유한다. 완료한 일정은 숨기되
+  // 「기록」을 켠 완료 항목은 과거 기록으로 캘린더에 남긴다.
+  const eventsOn = (date: string) => st.events.filter(e => canSee(e) && (!e.done || e.keepRecord) && eventOnDate(e, date));
   // 오른쪽 카드가 보여 줄 날짜 — 달력 칸을 누르면 바뀐다 (v2.0)
   const pickedEvents = eventsOn(picked);
 
@@ -277,7 +279,7 @@ export default function CalPage() {
           {(() => {
             const today = fmt(now.getFullYear(), now.getMonth(), now.getDate());
             const list = st.events
-              .filter(e => e.kind !== 'todo' && canSee(e))
+              .filter(e => (!e.done || e.keepRecord) && canSee(e))
               .map(e => {
                 let d = e.start;
                 if (e.repeat === 'yearly') {
@@ -331,7 +333,7 @@ export default function CalPage() {
                     <div key={e.id} className="ev" style={{ background: `${eventColor(e, st.cats)}22`, color: eventColor(e, st.cats) }}
                       data-tip={`${e.title}${e.memo ? ` — ${e.memo}` : ''}`}
                       onClick={ev => { ev.stopPropagation(); setPicked(date); openEdit(e); }}>
-                      {e.title}
+                      {e.done && e.keepRecord ? '✓ ' : ''}{e.title}
                     </div>
                   ))}
                   {evs.length > 3 && <div className="ev more">＋{evs.length - 3}</div>}
@@ -361,7 +363,7 @@ export default function CalPage() {
                       flex: 1, minWidth: 0, textAlign: 'left',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       cursor: canWrite ? 'var(--cur-pointer,pointer)' : undefined,
-                    }} onClick={() => openEdit(e)}>{e.title}</span>
+                    }} onClick={() => openEdit(e)}>{e.done && e.keepRecord ? '✓ ' : ''}{e.title}</span>
                     <i style={{
                       width: 9, height: 9, borderRadius: '50%', flexShrink: 0,
                       background: eventColor(e, st.cats), fontStyle: 'normal',

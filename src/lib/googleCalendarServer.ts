@@ -16,6 +16,7 @@ export interface CalendarEvent {
   repeat: 'none' | 'yearly';
   kind?: 'event' | 'todo';
   done?: boolean;
+  keepRecord?: boolean;
   updatedAt?: string;
   googleEventId?: string;
   googleUpdatedAt?: string;
@@ -155,6 +156,7 @@ function toGoogle(e: CalendarEvent) {
     extendedProperties: { private: {
       ohomeId: e.id, ohomeVisibility: e.visibility, ohomeCatId: e.catId,
       ohomeKind: e.kind ?? 'event', ohomeDone: e.done ? 'true' : 'false',
+      ohomeKeepRecord: e.keepRecord ? 'true' : 'false',
     } },
   };
 }
@@ -175,7 +177,9 @@ function fromGoogle(g: GoogleEvent, fallbackCat: string): CalendarEvent | null {
     memo: g.description?.trim() || undefined,
     visibility: (['public', 'member', 'private'].includes(p.ohomeVisibility) ? p.ohomeVisibility : 'private') as CalendarEvent['visibility'],
     repeat: g.recurrence?.some(x => /FREQ=YEARLY/.test(x)) ? 'yearly' : 'none',
-    kind, done: kind === 'todo' ? p.ohomeDone === 'true' || /^☑/.test(rawTitle) : undefined,
+    kind,
+    done: p.ohomeDone === 'true' || (kind === 'todo' && /^☑/.test(rawTitle)),
+    keepRecord: p.ohomeKeepRecord === 'true',
     googleEventId: g.id,
     googleUpdatedAt: g.updated,
     updatedAt: g.updated,
@@ -231,6 +235,16 @@ export async function syncGoogleCalendar(userId: string, supplied?: CalendarStat
   for (const event of local) {
     let g = event.googleEventId ? byGoogle.get(event.googleEventId) : remote.find(x => x.extendedProperties?.private?.ohomeId === event.id);
     if (g?.status === 'cancelled') continue;
+    // 완료했지만 기록으로 남기지 않은 항목은 O.HOME과 Google 양쪽 캘린더에서 제거한다.
+    // 로컬 체크리스트 데이터는 유지해 다시 체크 해제하면 일정을 복원할 수 있다.
+    if (event.done && !event.keepRecord) {
+      if (g?.id) {
+        seen.add(g.id);
+        await googleFetch<void>(token, `/calendars/${encodeURIComponent(conn.calendar_id)}/events/${encodeURIComponent(g.id)}`, { method: 'DELETE' }).catch(() => undefined);
+      }
+      merged.push({ ...event, googleEventId: undefined, googleUpdatedAt: undefined });
+      continue;
+    }
     if (!g) {
       g = await googleFetch<GoogleEvent>(token, `/calendars/${encodeURIComponent(conn.calendar_id)}/events`, { method: 'POST', body: JSON.stringify(toGoogle(event)) });
       merged.push({ ...event, googleEventId: g.id, googleUpdatedAt: g.updated, updatedAt: g.updated });
