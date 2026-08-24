@@ -1885,6 +1885,7 @@ body{
   .page,.grp .sub,.user-menu,.notif-menu,.k-sel-pop,.k-cal,.modal,.modal-ov,.toast,.up-busy,.bgm-list,.ctx-menu,.boot-wait i{
     animation:none !important;
   }
+  ::view-transition-old(page-content),::view-transition-new(page-content){animation:none !important}
   .panel,.btn,.login-link,.pager button,.gnb button,.gnb a.gnb-link,.user-chip,.badge-dot,#appMain{transition:none !important}
   .btn:hover,.login-link:hover,.pager button:hover{transform:none}
 }
@@ -1906,8 +1907,12 @@ body{
 .page-head p{font-size:calc(13.5px*var(--fs,1));line-height:1.55;letter-spacing:-.005em}
 
 /* 상단 메뉴 이동: 셸은 유지하고 현재 콘텐츠만 짧게 빠진 뒤 새 페이지가 이어진다. */
-#appMain{transition:opacity .12s ease,transform .12s ease,filter .12s ease}
+#appMain{view-transition-name:page-content;transition:opacity .12s ease,transform .12s ease,filter .12s ease}
 html.route-leaving #appMain{opacity:0;transform:translateY(-3px);filter:blur(1.5px);pointer-events:none}
+::view-transition-old(page-content){animation:page-vt-out .14s ease both}
+::view-transition-new(page-content){animation:page-vt-in .26s var(--motion-spring) both}
+@keyframes page-vt-out{to{opacity:0;transform:translateY(-3px);filter:blur(1.5px)}}
+@keyframes page-vt-in{from{opacity:0;transform:translateY(5px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
 
 /* panel을 쓰지 않는 카드들도 동일한 표면 계층에 편입 */
 .char-card,.rel-card,.ticket,.bticket,.cm-total-slot,.cm-meta .mail{

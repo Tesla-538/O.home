@@ -14,17 +14,41 @@ export function refreshPage() {
 type RouterLike = { push: (href: string) => void };
 let navTimer: ReturnType<typeof setTimeout> | null = null;
 
+type TransitionDocument = Document & {
+  startViewTransition?: (update: () => void | Promise<void>) => unknown;
+};
+
 /** 상단 메뉴 이동용 짧은 exit → enter 전환. 모션 감소 설정에서는 지연 없이 이동한다. */
 export function navigatePage(router: RouterLike, href: string) {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduced) { router.push(href); return; }
+  const doc = document as TransitionDocument;
+  if (doc.startViewTransition) {
+    const from = window.location.href;
+    void doc.startViewTransition(async () => {
+      router.push(href);
+      // Next가 새 DOM을 커밋할 때까지 이전 화면 스냅샷을 유지한다.
+      await new Promise<void>(resolve => {
+        const started = performance.now();
+        const check = () => {
+          if (window.location.href !== from || performance.now() - started > 1500) {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+          } else {
+            requestAnimationFrame(check);
+          }
+        };
+        check();
+      });
+    });
+    return;
+  }
   if (navTimer) return;
   document.documentElement.classList.add('route-leaving');
   navTimer = setTimeout(() => {
     navTimer = null;
     router.push(href);
     // pathname이 같고 query만 달라지는 이동도 화면이 숨은 채 남지 않게 한다.
-    setTimeout(() => document.documentElement.classList.remove('route-leaving'), 900);
+    setTimeout(() => document.documentElement.classList.remove('route-leaving'), 260);
   }, 120);
 }
 
