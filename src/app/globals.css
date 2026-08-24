@@ -2159,3 +2159,149 @@ html.route-transitioning.route-ready .route-frame{animation:apple-page-enter .88
   #appMain{background-size:auto;background-attachment:scroll}
   .widget{padding:16px}
 }
+
+/* ==========================================================
+   MOSU EDITORIAL UI — 기존 레이아웃 위에 입히는 절제된 표면 체계
+   구조와 컴포넌트 크기는 유지하고 재질, 타이포, 상호작용만 정돈한다.
+   ========================================================== */
+:root{
+  --mosu-surface:color-mix(in srgb,var(--panel-solid) 91%,transparent);
+  --mosu-surface-soft:color-mix(in srgb,var(--panel-solid) 82%,transparent);
+  --mosu-surface-float:color-mix(in srgb,var(--panel-solid) 96%,transparent);
+  --mosu-line:color-mix(in srgb,var(--line) 84%,transparent);
+  --mosu-line-strong:color-mix(in srgb,var(--ink) 18%,var(--line));
+  --mosu-shadow:0 10px 30px rgba(2,7,17,.085);
+  --mosu-shadow-float:0 18px 48px rgba(2,7,17,.15);
+}
+
+#appMain{
+  background:
+    radial-gradient(620px 460px at 4% 20%,color-mix(in srgb,var(--accent-soft) 11%,transparent),transparent 74%),
+    radial-gradient(680px 500px at 96% 32%,rgba(116,174,255,.075),transparent 76%),
+    radial-gradient(560px 380px at 50% 94%,rgba(190,150,255,.045),transparent 78%);
+}
+
+.topbar{
+  background:color-mix(in srgb,var(--top-bg) 86%,transparent);
+  border-bottom-color:color-mix(in srgb,var(--top-fg) 12%,transparent);
+  box-shadow:0 1px 0 rgba(255,255,255,.055) inset,0 8px 24px rgba(2,7,17,.075);
+  -webkit-backdrop-filter:blur(20px) saturate(116%);backdrop-filter:blur(20px) saturate(116%);
+}
+
+.panel{
+  border-radius:var(--radius);
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.055),transparent 34%),
+    var(--mosu-surface);
+  border-color:var(--mosu-line);
+  box-shadow:var(--mosu-shadow);
+  -webkit-backdrop-filter:blur(15px) saturate(108%);backdrop-filter:blur(15px) saturate(108%);
+}
+
+.widget h4,.tagside h4,.set-sec h3{
+  font-weight:600;
+  letter-spacing:.12em;
+  color:color-mix(in srgb,var(--ink) 58%,transparent);
+}
+.page-head h1{
+  font-weight:550;
+  letter-spacing:.13em;
+}
+
+.grp .sub,.user-menu,.notif-menu,.k-sel-pop,.k-cal,.modal,.toast,.up-busy,.bgm,.bgm-list,.ctx-menu{
+  background:var(--mosu-surface-float);
+  border-color:var(--mosu-line-strong);
+  box-shadow:var(--mosu-shadow-float);
+  -webkit-backdrop-filter:blur(18px) saturate(112%);backdrop-filter:blur(18px) saturate(112%);
+}
+.grp .sub a:hover,.grp .sub button:hover,.user-menu button:hover,.notif-menu button:hover,.k-sel-pop button:hover{
+  background:color-mix(in srgb,var(--ink) 6%,transparent);
+}
+
+.k-input,.k-textarea,.k-select .cur,input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],textarea,select{
+  background:var(--mosu-surface-soft);
+  border-color:var(--mosu-line);
+  box-shadow:none;
+}
+.k-input:focus,.k-textarea:focus,.k-select .cur:focus,input:focus,textarea:focus,select:focus{
+  border-color:color-mix(in srgb,var(--accent) 62%,var(--line));
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 11%,transparent);
+}
+
+.btn,.login-link,.seg,.mini-seg,.pager button{
+  background:color-mix(in srgb,var(--panel-solid) 70%,transparent);
+  border-color:var(--mosu-line);
+  box-shadow:none;
+  transition:background-color .22s ease,border-color .22s ease,color .22s ease,transform .22s ease;
+}
+.btn::before{content:none}
+.btn:hover,.login-link:hover,.seg:hover,.mini-seg:hover,.pager button:hover{
+  background:color-mix(in srgb,var(--ink) 7%,var(--panel-solid));
+  border-color:var(--mosu-line-strong);
+  transform:translateY(-1px);
+  box-shadow:none;
+}
+.btn-dark,.btn-accent,.seg.on,.mini-seg.on,.pager button.on{
+  background:var(--btn-dark,var(--ink));
+  color:var(--btn-dark-fg,#fff);
+  border-color:var(--btn-dark,var(--ink));
+  box-shadow:none;
+}
+
+.cal-layout>.panel.cal,.settings-layout>.panel:not(.set-nav),.board-list.panel,.set-nav{
+  background:var(--mosu-surface);
+}
+.cal-cell{
+  background:color-mix(in srgb,var(--panel-solid) 72%,transparent);
+  border-color:color-mix(in srgb,var(--line) 72%,transparent);
+  box-shadow:none;
+}
+.set-nav button:hover,.tagside .tag:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.set-nav button.on,.tagside .tag.on{box-shadow:none}
+.set-row:hover{background:color-mix(in srgb,var(--ink) 3%,transparent)}
+
+.tc-card,.char-card,.rel-card,.dt-card,.g-item,.ticket,.bticket{
+  box-shadow:var(--mosu-shadow);
+  transition:transform .32s cubic-bezier(.22,1,.36,1),border-color .25s ease,box-shadow .32s ease;
+}
+.tc-card:hover,.char-card:hover,.rel-card:hover,.dt-card:hover,.g-item:hover,.ticket:hover,.bticket:hover{
+  transform:translateY(-1px);
+  border-color:var(--mosu-line-strong);
+  box-shadow:0 14px 36px rgba(2,7,17,.105);
+}
+.tc-card .main img,.char-card .thumb img,.rel-card .thumb img,.dt-card .th img,.g-item .thumb img{
+  transition:transform .7s cubic-bezier(.22,1,.36,1),filter .45s ease;
+}
+.tc-card:hover .main img,.char-card:hover .thumb img,.rel-card:hover .thumb img,.dt-card:hover .th img,.g-item:hover .thumb img{
+  transform:scale(1.015);
+  filter:contrast(1.015) brightness(1.01);
+}
+.char-card .nm,.rel-card .nm,.ticket .stub,.bticket .bt-body{
+  background:color-mix(in srgb,var(--panel-solid) 90%,transparent);
+}
+
+.lightbox{
+  background:rgba(7,8,10,.94);
+  animation:fade .32s ease;
+}
+.lightbox img{
+  border-radius:8px;
+  box-shadow:0 30px 90px rgba(0,0,0,.48);
+}
+.lightbox .x,.lightbox .nv{
+  background:transparent;
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:none;
+}
+.lightbox .x:hover,.lightbox .nv:hover{background:rgba(255,255,255,.1)}
+
+@media (max-width:620px){
+  .page-head h1{letter-spacing:.1em}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .tc-card,.char-card,.rel-card,.dt-card,.g-item,.ticket,.bticket,
+  .tc-card .main img,.char-card .thumb img,.rel-card .thumb img,.dt-card .th img,.g-item .thumb img{
+    transition:none;transform:none!important;
+  }
+}
