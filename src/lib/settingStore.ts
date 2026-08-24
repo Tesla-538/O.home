@@ -13,8 +13,29 @@ import { backend, isServerMode } from './backend';
 const cache = new Map<string, unknown>();
 let primed = false;
 const EVT = 'ohome-settings';
+// 같은 설정 키의 서버 저장은 호출 순서대로 보낸다. 빠르게 연속 편집하거나 되돌릴 때
+// 이전 요청이 나중 요청보다 늦게 끝나 최종값을 다시 덮는 경쟁 상태를 막는다.
+const writeQueues = new Map<string, Promise<void>>();
 /** 서버 저장 실패 알림 — SettingSync가 받아 화면에 띄운다 */
 export const ERR_EVT = 'ohome-setting-error';
+
+function queueServerSave(key: string, value: unknown): void {
+  const be = backend();
+  if (!be) return;
+  const previous = writeQueues.get(key) ?? Promise.resolve();
+  const next = previous.catch(() => undefined).then(async () => {
+    await be.saveSetting(key, value);
+  }).catch(err => {
+    console.error('[ohome] 설정 저장 실패', key, err);
+    try {
+      window.dispatchEvent(new CustomEvent(ERR_EVT, {
+        detail: { key, message: (err as { message?: string })?.message ?? '' },
+      }));
+    } catch { /* 무시 */ }
+  });
+  writeQueues.set(key, next);
+  void next.finally(() => { if (writeQueues.get(key) === next) writeQueues.delete(key); });
+}
 
 /** 브라우저에만 두는 값 — 접힘 상태·세션·연결 설정처럼 사람마다 다른 것 */
 const LOCAL_ONLY = new Set<string>([
@@ -99,16 +120,7 @@ export function setSetting(key: string, value: unknown): void {
   cache.set(key, value);
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* 무시 */ }
   if (isServerMode() && !LOCAL_ONLY.has(key)) {
-    // 실패를 삼키면 이 브라우저에는 남아 저장된 것처럼 보이다가, 다음 접속에 서버 값으로
-    // 덮여 "저장했는데 원래대로 돌아가는" 증상이 된다 — 실패는 화면으로 알린다.
-    void backend()?.saveSetting(key, value).catch(err => {
-      console.error('[ohome] 설정 저장 실패', key, err);
-      try {
-        window.dispatchEvent(new CustomEvent(ERR_EVT, {
-          detail: { key, message: (err as { message?: string })?.message ?? '' },
-        }));
-      } catch { /* 무시 */ }
-    });
+    queueServerSave(key, value);
   }
   try { window.dispatchEvent(new CustomEvent(EVT, { detail: key })); } catch { /* 무시 */ }
 }
@@ -117,7 +129,7 @@ export function removeSetting(key: string): void {
   cache.delete(key);
   try { localStorage.removeItem(key); } catch { /* 무시 */ }
   if (isServerMode() && !LOCAL_ONLY.has(key)) {
-    void backend()?.saveSetting(key, null).catch(() => { /* 무시 */ });
+    queueServerSave(key, null);
   }
 }
 

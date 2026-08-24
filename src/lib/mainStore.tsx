@@ -246,10 +246,12 @@ export function MainStoreProvider({ children }: { children: React.ReactNode }) {
   const updateWidget = useCallback((id: string, patch: Partial<WidgetConf>, opts?: { persist?: boolean }) => {
     setState(s => {
       const n = { ...s, widgets: s.widgets.map(w => (w.id === id ? { ...w, ...patch } : w)) };
-      if (opts?.persist) persist(n);
+      // 편집모드에서는 모달의 SAVE도 임시 변경으로만 둔다. 여기서 서버에 먼저 쓰면
+      // 종료창의 「변경 취소」가 늦게 도착한 저장 요청에 다시 덮일 수 있다.
+      if (opts?.persist && !editOn) persist(n);
       return n;
     });
-  }, [persist]);
+  }, [persist, editOn]);
 
   const addWidget = useCallback((type: WidgetType, col: 1 | 2 | 3): string => {
     const id = `${type}-${Date.now().toString(36)}`;
@@ -315,11 +317,11 @@ export function MainStoreProvider({ children }: { children: React.ReactNode }) {
       <ConfirmModal
         open={exitOpen}
         title="편집을 종료하시겠습니까?"
-        body="저장하지 않고 종료하면 이번 편집에서 바꾼 배치·크기·순서가 편집 시작 시점으로 복원됩니다."
+        body="변경 취소 후 종료하면 이번 편집에서 바꾼 배치·크기·순서·위젯 설정을 편집 시작 시점으로 되돌립니다."
         onClose={() => { pendingNav.current = null; setExitOpen(false); }}
         buttons={[
           { label: '저장 후 종료', kind: 'dark', onClick: () => endEdit(true) },
-          { label: '저장하지 않고 종료', kind: 'ghost', onClick: () => endEdit(false) },
+          { label: '변경 취소 후 종료', kind: 'ghost', onClick: () => endEdit(false) },
           { label: 'CANCEL', kind: 'ghost', onClick: () => { pendingNav.current = null; setExitOpen(false); } },
         ]}
       />
