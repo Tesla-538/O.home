@@ -160,7 +160,24 @@ drop policy if exists "settings_write" on public.site_settings;
 create policy "settings_write" on public.site_settings for all to authenticated
   using (public.is_admin()) with check (public.is_admin());
 
--- ── 8. 이미지 저장소 (Storage 버킷) ──────────────────────────
+-- ── 8. Google Calendar 서버 연결 (토큰은 서비스 역할만 접근) ─
+create table if not exists public.calendar_connections (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  provider text not null default 'google',
+  refresh_token_enc text not null,
+  calendar_id text not null default 'primary',
+  calendar_name text,
+  channel_id text,
+  resource_id text,
+  channel_expiration timestamptz,
+  last_synced_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.calendar_connections enable row level security;
+revoke all on table public.calendar_connections from anon, authenticated;
+
+-- ── 9. 이미지 저장소 (Storage 버킷) ──────────────────────────
 insert into storage.buckets (id, name, public)
 values ('ohome', 'ohome', true)
 on conflict (id) do nothing;
@@ -175,7 +192,7 @@ drop policy if exists "ohome_delete" on storage.objects;
 create policy "ohome_delete" on storage.objects for delete to authenticated
   using (bucket_id = 'ohome' and (owner = auth.uid() or public.is_admin()));
 
--- ── 9. 실시간 (역극·문답 티키타카) ───────────────────────────
+-- ── 10. 실시간 (역극·문답 티키타카) ──────────────────────────
 do $$
 declare t text;
 begin

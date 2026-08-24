@@ -1,10 +1,10 @@
 'use client';
 // 스케줄러 (4.12) — 월간 캘린더(정사각 블록) + 우측 D-day/투두(메인 위젯 데이터 공유) + 카테고리
 // 일정: 제목·기간·카테고리·색·메모·공개범위·매년 반복 · 일정 → D-day 승격 · 등록 권한 옵션
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useMainStore } from '@/lib/mainStore';
-import { useSched, SchedEvent, eventColor, eventOnDate } from '@/lib/schedStore';
+import { useSched, SchedEvent, SchedState, eventColor, eventOnDate } from '@/lib/schedStore';
 import { DdayWidget, TodoWidget } from '@/components/main/widgets';
 import { Modal, useConfirmDelete } from '@/components/ui/Modal';
 import { KInput, KTextarea, KSelect, KCheck, KDate, KToggle } from '@/components/ui/Kit';
@@ -18,12 +18,19 @@ import { eventsToIcs, googleCalendarUrl, parseIcs } from '@/lib/calendarInterop'
 const MONTHS = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 const fmt = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
+interface GoogleCalendarStatus {
+  configured: boolean;
+  connected: boolean;
+  calendarName?: string | null;
+  lastSyncedAt?: string | null;
+}
+
 export default function CalPage() {
   const { user, isAdmin } = useAuth();
   const toast = useToast();
   const {
     st, loaded, addEvent, importEvents, updateEvent, removeEvent,
-    patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn,
+    patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn, replaceState,
   } = useSched();
   const { state: mainState, updateWidget } = useMainStore();
   const del = useConfirmDelete();
@@ -34,6 +41,12 @@ export default function CalPage() {
   const [menuSet] = useMenuSettings();   // 달 표기 방식 (v1.9 — 메뉴 관리의 스케줄러 행)
   const [catMng, setCatMng] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
+  const [googleStatus, setGoogleStatus] = useState<GoogleCalendarStatus | null>(null);
+  const [googleSyncing, setGoogleSyncing] = useState(false);
+  const stateRef = useRef(st);
+  const autoReady = useRef(false);
+  const syncBusy = useRef(false);
+  const appliedSignature = useRef('');
   const importRef = useRef<HTMLInputElement>(null);
   // 일정 등록/수정 모달
   const [evOpen, setEvOpen] = useState(false);
@@ -42,6 +55,82 @@ export default function CalPage() {
     title: '', start: '', end: '', catId: '', color: '', useCatColor: true,
     memo: '', visibility: 'public' as SchedEvent['visibility'], yearly: false,
   });
+
+  useEffect(() => { stateRef.current = st; }, [st]);
+
+  const loadGoogleStatus = useCallback(async () => {
+    if (!isAdmin) return;
+    try {
+      const res = await fetch('/api/google-calendar/status', { cache: 'no-store' });
+      if (!res.ok) throw new Error();
+      setGoogleStatus(await res.json() as GoogleCalendarStatus);
+    } catch {
+      setGoogleStatus({ configured: false, connected: false });
+    }
+  }, [isAdmin]);
+
+  const runGoogleSync = useCallback(async (source?: SchedState, announce = false) => {
+    if (syncBusy.current) return;
+    syncBusy.current = true;
+    setGoogleSyncing(true);
+    try {
+      const res = await fetch('/api/google-calendar/sync', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(source ? { state: source } : {}),
+      });
+      const body = await res.json() as { state?: SchedState; syncedAt?: string; error?: string };
+      if (!res.ok || !body.state) throw new Error(body.error || '동기화 실패');
+      appliedSignature.current = JSON.stringify(body.state);
+      stateRef.current = body.state;
+      replaceState(body.state);
+      setGoogleStatus(s => s ? { ...s, connected: true, lastSyncedAt: body.syncedAt } : s);
+      if (announce) toast('Google 캘린더와 동기화했습니다');
+    } catch (error) {
+      if (announce) toast(error instanceof Error ? error.message : 'Google 캘린더 동기화에 실패했습니다');
+    } finally {
+      syncBusy.current = false;
+      setGoogleSyncing(false);
+    }
+  }, [replaceState, toast]);
+
+  useEffect(() => {
+    if (!loaded || !isAdmin) return;
+    void loadGoogleStatus();
+    const result = new URLSearchParams(window.location.search).get('google');
+    if (result) {
+      if (result === 'connected') toast('Google 캘린더 연결이 완료되었습니다');
+      else if (result === 'not-configured') toast('Google Calendar 서버 설정이 아직 필요합니다');
+      else toast('Google 캘린더 연결을 완료하지 못했습니다');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [loaded, isAdmin, loadGoogleStatus, toast]);
+
+  useEffect(() => {
+    if (!loaded || !isAdmin || !googleStatus?.connected || autoReady.current) return;
+    let cancelled = false;
+    void runGoogleSync().finally(() => { if (!cancelled) autoReady.current = true; });
+    return () => { cancelled = true; };
+  }, [loaded, isAdmin, googleStatus?.connected, runGoogleSync]);
+
+  useEffect(() => {
+    if (!loaded || !isAdmin || !googleStatus?.connected) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void runGoogleSync();
+    }, 60000);
+    return () => window.clearInterval(timer);
+  }, [loaded, isAdmin, googleStatus?.connected, runGoogleSync]);
+
+  useEffect(() => {
+    if (!loaded || !isAdmin || !googleStatus?.connected || !autoReady.current) return;
+    const signature = JSON.stringify(st);
+    if (signature === appliedSignature.current) return;
+    const timer = window.setTimeout(() => {
+      appliedSignature.current = signature;
+      void runGoogleSync(st);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [st, loaded, isAdmin, googleStatus?.connected, runGoogleSync]);
 
   if (!loaded) return <section className="page" />;
 
@@ -81,6 +170,15 @@ export default function CalPage() {
     } finally {
       if (importRef.current) importRef.current.value = '';
     }
+  };
+
+  const disconnectGoogle = async () => {
+    if (!window.confirm('Google 캘린더 자동 연동을 해제할까요? 기존 일정은 삭제되지 않습니다.')) return;
+    const res = await fetch('/api/google-calendar/status', { method: 'DELETE' });
+    if (!res.ok) { toast('연결을 해제하지 못했습니다'); return; }
+    autoReady.current = false;
+    setGoogleStatus(s => s ? { ...s, connected: false, calendarName: null, lastSyncedAt: null } : s);
+    toast('Google 캘린더 연결을 해제했습니다');
   };
 
   const todayStr = fmt(now.getFullYear(), now.getMonth(), now.getDate());
@@ -151,7 +249,7 @@ export default function CalPage() {
         <EditableDesc k="cal-desc" def="월간 캘린더 + 투두 + D-day" />
         {isAdmin && (
           <button className="btn btn-ghost" style={{ marginLeft: 'auto' }} onClick={() => setSyncOpen(true)}>
-            캘린더 연동
+            캘린더 연동{googleStatus?.connected ? ' · ON' : ''}
           </button>
         )}
       </div>
@@ -324,20 +422,52 @@ export default function CalPage() {
         actions={<button className="btn btn-dark" onClick={() => setSyncOpen(false)}>CLOSE</button>}>
         <div style={{ display: 'grid', gap: 12 }}>
           <div className="setup-way">
-            <b>O.HOME → Google·삼성</b>
-            <p>현재 볼 수 있는 일정을 ICS 파일로 내보냅니다. 휴대폰에서 파일을 열거나 Google 캘린더로 가져오세요.</p>
+            <b>Google 자동 양방향 연동</b>
+            {googleStatus?.connected ? (
+              <>
+                <p>
+                  <strong style={{ color: '#3f7652' }}>● 연결됨</strong>
+                  {googleStatus.calendarName ? ` · ${googleStatus.calendarName}` : ''}<br />
+                  O.HOME에서 바꾸면 자동 전송되고, Google 변경은 즉시 알림 + 60초 점검으로 가져옵니다.
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="btn btn-dark" disabled={googleSyncing}
+                    onClick={() => void runGoogleSync(stateRef.current, true)}>
+                    {googleSyncing ? '동기화 중…' : '지금 동기화'}
+                  </button>
+                  <button className="btn btn-ghost" onClick={() => void disconnectGoogle()}>연결 해제</button>
+                </div>
+                {googleStatus.lastSyncedAt && (
+                  <p className="hint" style={{ margin: '8px 0 0' }}>
+                    마지막 동기화 {new Date(googleStatus.lastSyncedAt).toLocaleString('ko-KR')}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p>
+                  Google 계정을 한 번 승인하면 O.HOME ↔ Google 캘린더가 자동으로 맞춰집니다.
+                  삼성 캘린더와 Notion Calendar에는 같은 Google 계정을 연결하세요.
+                </p>
+                <button className="btn btn-dark" disabled={!googleStatus?.configured}
+                  onClick={() => { window.location.href = '/api/google-calendar/connect'; }}>
+                  {googleStatus === null ? '확인 중…' : googleStatus.configured ? 'Google 계정 연결' : '서버 설정 필요'}
+                </button>
+              </>
+            )}
+          </div>
+          <div className="setup-way">
+            <b>수동 백업 · 내보내기</b>
+            <p>현재 볼 수 있는 일정을 ICS 파일로 저장합니다.</p>
             <button className="btn btn-dark" onClick={downloadCalendar}>ICS 내보내기</button>
           </div>
           <div className="setup-way">
-            <b>Google·삼성 → O.HOME</b>
-            <p>외부 캘린더에서 내보낸 ICS를 가져옵니다. 가져온 일정은 안전하게 ‘나만보기’로 저장하며 중복은 건너뜁니다.</p>
+            <b>수동 백업 · 가져오기</b>
+            <p>다른 캘린더의 ICS를 가져옵니다. 일정은 ‘나만보기’로 저장하며 중복은 건너뜁니다.</p>
             <input ref={importRef} type="file" accept=".ics,text/calendar" hidden
               onChange={e => { const file = e.target.files?.[0]; if (file) void importCalendar(file); }} />
             <button className="btn btn-ghost" onClick={() => importRef.current?.click()}>ICS 가져오기</button>
           </div>
-          <p className="hint" style={{ margin: 0 }}>
-            자동 양방향 동기화는 Google OAuth 서버가 추가로 필요합니다. 현재 방식은 계정 권한을 맡기지 않는 수동 가져오기·내보내기입니다.
-          </p>
         </div>
       </Modal>
 

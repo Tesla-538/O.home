@@ -24,18 +24,22 @@ export interface SchedEvent {
   memo?: string;
   visibility: Visibility;
   repeat: 'none' | 'yearly'; // 매년 반복
+  updatedAt?: string;         // Google Calendar 충돌 해결용 최종 수정 시각
+  googleEventId?: string;
+  googleUpdatedAt?: string;
 }
 
 // 배포 기본 — 더미 일정 없음 (v1.9)
 const SEED_EVENTS: SchedEvent[] = [];
 
-interface SchedState {
+export interface SchedState {
   events: SchedEvent[];
   cats: SchedCategory[];
   allowMember: boolean;      // 회원도 일정 등록 허용 (4.12 등록 권한 옵션)
+  googleDeletedIds?: string[];
 }
 
-export type NewSchedEvent = Omit<SchedEvent, 'id'>;
+export type NewSchedEvent = Omit<SchedEvent, 'id' | 'updatedAt' | 'googleEventId' | 'googleUpdatedAt'>;
 
 const DEFAULTS: SchedState = { events: SEED_EVENTS, cats: DEFAULT_SCHED_CATS, allowMember: false };
 const KEY = 'ohome.sched.v1';
@@ -57,8 +61,8 @@ export function useSched() {
       return n;
     });
   }, []);
-  const addEvent = useCallback((ev: Omit<SchedEvent, 'id'>) =>
-    apply(s => ({ ...s, events: [...s.events, { id: newId(), ...ev }] })), [apply]);
+  const addEvent = useCallback((ev: NewSchedEvent) =>
+    apply(s => ({ ...s, events: [...s.events, { id: newId(), ...ev, updatedAt: new Date().toISOString() }] })), [apply]);
   const importEvents = useCallback((events: NewSchedEvent[]) => {
     apply(s => {
       const seen = new Set(s.events.map(e => `${e.title}\u0000${e.start}\u0000${e.end ?? ''}`));
@@ -67,15 +71,24 @@ export function useSched() {
         const sig = `${event.title}\u0000${event.start}\u0000${event.end ?? ''}`;
         if (seen.has(sig)) continue;
         seen.add(sig);
-        next.push({ id: newId(), ...event });
+        next.push({ id: newId(), ...event, updatedAt: new Date().toISOString() });
       }
       return { ...s, events: next };
     });
   }, [apply]);
   const updateEvent = useCallback((id: string, p: Partial<SchedEvent>) =>
-    apply(s => ({ ...s, events: s.events.map(e => (e.id === id ? { ...e, ...p } : e)) })), [apply]);
+    apply(s => ({ ...s, events: s.events.map(e => (e.id === id ? { ...e, ...p, updatedAt: new Date().toISOString() } : e)) })), [apply]);
   const removeEvent = useCallback((id: string) =>
-    apply(s => ({ ...s, events: s.events.filter(e => e.id !== id) })), [apply]);
+    apply(s => {
+      const event = s.events.find(e => e.id === id);
+      return {
+        ...s,
+        events: s.events.filter(e => e.id !== id),
+        googleDeletedIds: event?.googleEventId
+          ? [...new Set([...(s.googleDeletedIds ?? []), event.googleEventId])]
+          : s.googleDeletedIds,
+      };
+    }), [apply]);
   const patchCat = useCallback((id: string, p: Partial<SchedCategory>) =>
     apply(s => ({ ...s, cats: s.cats.map(c => (c.id === id ? { ...c, ...p } : c)) })), [apply]);
   const addCat = useCallback(() =>
@@ -93,9 +106,10 @@ export function useSched() {
     return { ...s, events: next };
   }), [apply]);
   const setAllowMember = useCallback((v: boolean) => apply(s => ({ ...s, allowMember: v })), [apply]);
+  const replaceState = useCallback((next: SchedState) => apply(() => next), [apply]);
   return {
     st, loaded, addEvent, importEvents, updateEvent, removeEvent,
-    patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn,
+    patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn, replaceState,
   };
 }
 
