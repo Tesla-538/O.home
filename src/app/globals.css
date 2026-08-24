@@ -1886,7 +1886,7 @@ body{
     animation:none !important;
   }
   ::view-transition-old(page-content),::view-transition-new(page-content){animation:none !important}
-  html.route-entering #appMain{animation:none !important}
+  .route-frame{animation:none !important}
   .panel,.btn,.login-link,.pager button,.gnb button,.gnb a.gnb-link,.user-chip,.badge-dot,#appMain{transition:none !important}
   .btn:hover,.login-link:hover,.pager button:hover{transform:none}
 }
@@ -1908,17 +1908,20 @@ body{
 .page-head p{font-size:calc(13.5px*var(--fs,1));line-height:1.55;letter-spacing:-.005em}
 
 /* 상단 메뉴 이동: 셸은 유지하고 현재 콘텐츠만 짧게 빠진 뒤 새 페이지가 이어진다. */
-#appMain{view-transition-name:page-content;transform-origin:50% 22%;transition:opacity .18s ease,transform .18s ease,filter .18s ease}
-html.route-leaving #appMain{opacity:0;transform:translate3d(-10px,-2px,0) scale(.994);filter:blur(2px);pointer-events:none}
-html.route-entering #appMain{animation:page-route-in .42s var(--motion-spring) both}
-::view-transition-old(page-content){animation:page-vt-out .18s ease both}
-::view-transition-new(page-content){animation:page-vt-in .4s var(--motion-spring) both}
-@keyframes page-vt-out{to{opacity:0;transform:translate3d(-10px,-2px,0) scale(.994);filter:blur(2px)}}
-@keyframes page-vt-in{from{opacity:0;transform:translate3d(14px,5px,0) scale(.994);filter:blur(2.5px)}to{opacity:1;transform:none;filter:none}}
-@keyframes page-route-in{
-  0%{opacity:0;transform:translate3d(14px,5px,0) scale(.994);filter:blur(2.5px)}
-  58%{opacity:1;filter:blur(0)}
-  100%{opacity:1;transform:none;filter:none}
+#appMain{view-transition-name:page-content;transform-origin:50% 18%;transition:opacity .22s ease,transform .22s cubic-bezier(.4,0,1,1),filter .22s ease}
+html.route-leaving #appMain{opacity:0;transform:translate3d(0,-5px,0) scale(.985);filter:blur(3px);pointer-events:none}
+.route-frame{
+  width:100%;min-height:100%;transform-origin:50% 18%;will-change:opacity,transform,filter;
+  animation:mac-page-enter .56s cubic-bezier(.16,1,.3,1) both;
+}
+.route-frame>.page{animation:none}
+::view-transition-old(page-content){animation:mac-page-out .22s cubic-bezier(.4,0,1,1) both}
+::view-transition-new(page-content){animation:mac-page-enter .56s cubic-bezier(.16,1,.3,1) both}
+@keyframes mac-page-out{to{opacity:0;transform:translate3d(0,-5px,0) scale(.985);filter:blur(3px)}}
+@keyframes mac-page-enter{
+  0%{opacity:0;transform:translate3d(0,14px,0) scale(.978);filter:blur(5px)}
+  46%{opacity:.92;filter:blur(.8px)}
+  100%{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}
 }
 
 /* panel을 쓰지 않는 카드들도 동일한 표면 계층에 편입 */

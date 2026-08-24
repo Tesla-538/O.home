@@ -13,7 +13,6 @@ export function refreshPage() {
 
 type RouterLike = { push: (href: string) => void };
 let navTimer: ReturnType<typeof setTimeout> | null = null;
-let enterTimer: ReturnType<typeof setTimeout> | null = null;
 
 type TransitionDocument = Document & {
   startViewTransition?: (update: () => void | Promise<void>) => unknown;
@@ -58,23 +57,7 @@ export function PageFrame({ children }: { children: React.ReactNode }) {
   const [n, setN] = useState(0);
   const pathname = usePathname();
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('route-leaving');
-    // startViewTransition을 지원하지 않는 브라우저와 페이지 내부 router.push 이동도
-    // 새 화면이 들어오는 동작은 항상 보이게 한다.
-    root.classList.remove('route-entering');
-    void root.offsetWidth;
-    root.classList.add('route-entering');
-    if (enterTimer) clearTimeout(enterTimer);
-    enterTimer = setTimeout(() => {
-      root.classList.remove('route-entering');
-      enterTimer = null;
-    }, 460);
-    return () => {
-      if (enterTimer) clearTimeout(enterTimer);
-      enterTimer = null;
-      root.classList.remove('route-entering');
-    };
+    document.documentElement.classList.remove('route-leaving');
   }, [pathname]);
   useEffect(() => {
     const bump = () => {
@@ -88,5 +71,7 @@ export function PageFrame({ children }: { children: React.ReactNode }) {
     window.addEventListener(EVT, bump);
     return () => window.removeEventListener(EVT, bump);
   }, []);
-  return <React.Fragment key={n}>{children}</React.Fragment>;
+  // pathname을 key에 포함해 경로가 바뀔 때 실제 DOM 래퍼를 새로 만든다.
+  // 브라우저의 View Transition 지원이나 effect 타이밍에 기대지 않는 확실한 진입 애니메이션이다.
+  return <div className="route-frame" key={`${pathname}:${n}`}>{children}</div>;
 }
