@@ -20,7 +20,7 @@ const SET_KEY = 'ohome.notifset.v1'; // 회원별 알림 항목 on/off — { [us
 export const NOTIF_EVENT = 'ohome-notif';
 
 export const NOTIF_TYPE_LABEL: Record<NotifType, string> = {
-  rp: '역극 새 메시지', comment: '내 글 댓글', guest: '방명록 (관리자)',
+  rp: '장면보관함 새 메시지', comment: '내 글 댓글', guest: '방명록 (관리자)',
 };
 
 export function readNotifs(): Notif[] {

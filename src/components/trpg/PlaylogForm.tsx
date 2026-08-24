@@ -50,7 +50,7 @@ export function PlaylogForm({ initial, records, onSave, onCancel }: {
       && r.scenario.toLowerCase().includes(scenario.trim().toLowerCase()));
 
   const save = () => {
-    if (!scenario.trim()) { toast('Scenario를 입력해 주세요'); return; }
+    if (!scenario.trim()) { toast('에피소드 제목을 입력해 주세요'); return; }
     if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('Date는 YYYY-MM-DD 형식으로 입력해 주세요'); return; }
     onSave({
       date: date || undefined,
@@ -67,10 +67,10 @@ export function PlaylogForm({ initial, records, onSave, onCancel }: {
       <div className="panel" style={{ padding: 24, display: 'grid', gap: 12, alignContent: 'start' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <Field label="Date (optional)"><KDate value={date} onChange={setDate} placeholder="" style={{ width: '100%' }} /></Field>
-          <Field label="Playtime"><KInput value={playtime} onChange={e => setPlaytime(e.target.value)} /></Field>
+          <Field label="Length"><KInput value={playtime} onChange={e => setPlaytime(e.target.value)} /></Field>
         </div>
         <div style={{ position: 'relative' }}>
-          <Field label="Scenario">
+          <Field label="Episode">
             <KInput value={scenario}
               onChange={e => { setScenario(e.target.value); setScOpen(true); }}
               onBlur={() => setTimeout(() => setScOpen(false), 150)} />
@@ -96,25 +96,25 @@ export function PlaylogForm({ initial, records, onSave, onCancel }: {
             </div>
           )}
         </div>
-        <Field label="Scenario Link (optional)"><KInput value={scenarioLink} onChange={e => setScenarioLink(e.target.value)} /></Field>
+        <Field label="Reference Link (optional)"><KInput value={scenarioLink} onChange={e => setScenarioLink(e.target.value)} /></Field>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10 }}>
-          <Field label="Writer"><KInput value={writer} onChange={e => setWriter(e.target.value)} /></Field>
-          <Field label="Role"><KInput value={role} onChange={e => setRole(e.target.value)} /></Field>
+          <Field label="POV"><KInput value={writer} onChange={e => setWriter(e.target.value)} /></Field>
+          <Field label="Chapter"><KInput value={role} onChange={e => setRole(e.target.value)} /></Field>
         </div>
-        <Field label="With"><KInput value={withText} onChange={e => setWithText(e.target.value)} /></Field>
+        <Field label="Cast"><KInput value={withText} onChange={e => setWithText(e.target.value)} /></Field>
 
         {/* 로그 연결 — 외부 URL 또는 내 홈 백업 로그 검색 (4.16) */}
         <div>
           <label className="k-label" style={{ marginBottom: 5 }}>Url (optional)</label>
           <div className="mini-seg" style={{ marginBottom: 8 }}>
             <button className={linkMode === 'url' ? 'on' : ''} onClick={() => setLinkMode('url')}>외부 URL</button>
-            <button className={linkMode === 'log' ? 'on' : ''} onClick={() => setLinkMode('log')}>내 로그 연결</button>
+            <button className={linkMode === 'log' ? 'on' : ''} onClick={() => setLinkMode('log')}>설정노트 연결</button>
           </div>
           {linkMode === 'url' ? (
             <KInput value={url} onChange={e => setUrl(e.target.value)} />
           ) : (
             <div>
-              <KInput placeholder="로그 검색" value={logQuery} onChange={e => setLogQuery(e.target.value)} />
+              <KInput placeholder="설정노트 검색" value={logQuery} onChange={e => setLogQuery(e.target.value)} />
               <div style={{ marginTop: 6, maxHeight: 150, overflowY: 'auto', border: '1.5px solid var(--line)', borderRadius: 9 }}>
                 {logs
                   .filter(l => { const s = logQuery.trim().toLowerCase(); return !s || l.title.toLowerCase().includes(s); })
@@ -129,7 +129,7 @@ export function PlaylogForm({ initial, records, onSave, onCancel }: {
                       {logId === l.id && <span style={{ marginLeft: 'auto', color: 'var(--accent)', fontWeight: 700 }}>✓</span>}
                     </div>
                   ))}
-                {logs.length === 0 && <p className="hint" style={{ padding: 10 }}>백업된 로그가 없습니다</p>}
+                {logs.length === 0 && <p className="hint" style={{ padding: 10 }}>등록된 설정노트가 없습니다</p>}
               </div>
             </div>
           )}

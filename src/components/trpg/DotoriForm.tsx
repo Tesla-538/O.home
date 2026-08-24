@@ -36,7 +36,7 @@ export function DotoriForm({ initial, onSave, onCancel }: {
   const [cropOpen, setCropOpen] = useState(false);
 
   const save = async () => {
-    if (!name.trim()) { toast('시나리오 이름을 입력해 주세요'); return; }
+    if (!name.trim()) { toast('세계관 이름을 입력해 주세요'); return; }
     onSave({
       name: name.trim(), writer: writer.trim(), rule: rule.trim(), people: people.trim(),
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -58,7 +58,7 @@ export function DotoriForm({ initial, onSave, onCancel }: {
             ? <CropImg src={fileUrl} crop={crop} />
             : (!removed && initial?.imgId)
               ? <CroppedBlobImg fileRef={initial.imgId} crop={crop} ph="" />
-              : <div className="ph" style={{ position: 'absolute', inset: 0 }}><span style={{ fontSize: 10 }}>SCENARIO</span></div>}
+              : <div className="ph" style={{ position: 'absolute', inset: 0 }}><span style={{ fontSize: 10 }}>WORLD</span></div>}
         </div>
         <input id="dtImgF" type="file" accept="image/*" style={{ display: 'none' }}
           onChange={e => {
@@ -81,19 +81,19 @@ export function DotoriForm({ initial, onSave, onCancel }: {
       {/* 우: 정보 + 저장 */}
       <div>
         <div className="panel widget" style={{ marginBottom: 14 }}>
-          <h4>시나리오</h4>
+          <h4>세계관</h4>
           <div style={{ display: 'grid', gap: 9 }}>
-            <KInput placeholder="시나리오 이름" value={name} onChange={e => setName(e.target.value)} />
+            <KInput placeholder="세계관 이름" value={name} onChange={e => setName(e.target.value)} />
             <div style={{ display: 'flex', gap: 8 }}>
-              <KInput placeholder="라이터" value={writer} onChange={e => setWriter(e.target.value)} />
-              <KInput placeholder="룰" value={rule} onChange={e => setRule(e.target.value)} style={{ maxWidth: 130 }} />
-              <KInput placeholder="인원" value={people} onChange={e => setPeople(e.target.value)} style={{ maxWidth: 90 }} />
+              <KInput placeholder="장르" value={writer} onChange={e => setWriter(e.target.value)} />
+              <KInput placeholder="시대·배경" value={rule} onChange={e => setRule(e.target.value)} style={{ maxWidth: 130 }} />
+              <KInput placeholder="규모" value={people} onChange={e => setPeople(e.target.value)} style={{ maxWidth: 90 }} />
             </div>
             <KInput placeholder="태그 — 쉼표로 구분" value={tags} onChange={e => setTags(e.target.value)} />
-            <KInput placeholder="링크 (선택)" value={link} onChange={e => setLink(e.target.value)} />
+            <KInput placeholder="참고 링크 (선택)" value={link} onChange={e => setLink(e.target.value)} />
             <KSelect value={status} onChange={v => setStatus(v as DotoriStatus)}
               options={DOTORI_STATUS_KEYS.map(s => ({ value: s, label: trpgSet.statuses[s].label }))} />
-            <p className="hint" style={{ margin: 0 }}>뱃지는 공수표·일정 확정만 카드에 표시 — 완은 완 탭에서만 보입니다</p>
+            <p className="hint" style={{ margin: 0 }}>구상 단계부터 완성까지 진행 상태를 정해 둘 수 있습니다</p>
           </div>
         </div>
         <div className="form-actions">

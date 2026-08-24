@@ -35,10 +35,10 @@ export default function TCharsPage() {
   return (
     <section className="page">
       <div className="page-head">
-        <PageTitle>TRPG CHARACTERS</PageTitle>
-        <EditableDesc k="tchars-desc" def="1:1 인장 카드 — 클릭하면 표정과 소개를 볼 수 있습니다" />
+        <PageTitle>CHARACTER CODEX</PageTitle>
+        <EditableDesc k="tchars-desc" def="세계관 속 자캐를 표정·역할·소개와 함께 모아보는 도감" />
         <div className="head-actions">
-          <SearchBar placeholder="이름·시나리오·룰·역할 검색" onSearch={setQ} />
+          <SearchBar placeholder="이름·소속 세계관·분류·역할 검색" onSearch={setQ} />
           {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/tchars/new')}>＋ ADD</button>}
         </div>
       </div>

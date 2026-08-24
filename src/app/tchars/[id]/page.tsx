@@ -35,7 +35,7 @@ export default function TCharDetailPage() {
   if (!c) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>TRPG CHARACTERS</PageTitle><p>캐릭터를 찾을 수 없습니다</p></div>
+        <div className="page-head"><PageTitle>CHARACTER CODEX</PageTitle><p>캐릭터를 찾을 수 없습니다</p></div>
       </section>
     );
   }
@@ -45,7 +45,7 @@ export default function TCharDetailPage() {
   return (
     <section className="page">
       <div className="page-head">
-        <PageTitle>TRPG CHARACTERS</PageTitle>
+        <PageTitle>CHARACTER CODEX</PageTitle>
         <EditableDesc k="tchars-detail-desc" def="표정 썸네일을 누르면 이미지가 전환됩니다" />
         <div className="head-actions">
           {isAdmin && <button className="btn btn-dark" onClick={() => router.push(`/tchars/${c.id}/edit`)}>EDIT</button>}
@@ -98,12 +98,12 @@ export default function TCharDetailPage() {
           <div style={{ display: 'grid', gap: 7, padding: '12px 0', borderBottom: '1px dashed var(--line)', fontSize: 12.5 }}>
             {c.scenario && (
               <div style={{ display: 'flex', gap: 10 }}>
-                <b style={{ minWidth: 70, color: 'var(--faint)', fontWeight: 600 }}>Scenario</b>{c.scenario}
+                <b style={{ minWidth: 70, color: 'var(--faint)', fontWeight: 600 }}>World</b>{c.scenario}
               </div>
             )}
             {c.rule && (
               <div style={{ display: 'flex', gap: 10 }}>
-                <b style={{ minWidth: 70, color: 'var(--faint)', fontWeight: 600 }}>Rule</b>{c.rule}
+                <b style={{ minWidth: 70, color: 'var(--faint)', fontWeight: 600 }}>Type</b>{c.rule}
               </div>
             )}
             {c.role && (

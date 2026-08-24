@@ -106,7 +106,7 @@ export default function RpPage() {
     sel.memberIds.filter(id => id !== user.id).forEach(id =>
       pushNotif({
         type: 'rp', toUserId: id, href: '/rp', dedupeKey: `rp:${sel.id}`,
-        title: `역극 「${sel.title}」 새 메시지`,
+        title: `장면 「${sel.title}」 새 메시지`,
         body: t.slice(0, 60),
       }));
   };
@@ -136,7 +136,7 @@ export default function RpPage() {
   const pool = useMembers();
   const createRoom = () => {
     if (!user) return;
-    if (!nTitle.trim()) { toast('방 제목을 입력해 주세요'); return; }
+    if (!nTitle.trim()) { toast('장면 제목을 입력해 주세요'); return; }
     const members = Array.from(new Set([user.id, ...nMembers]));
     const room: RpRoom = {
       id: newId(), title: nTitle.trim(), relId: nRel === 'none' ? undefined : nRel,
@@ -202,7 +202,7 @@ export default function RpPage() {
   };
   const removeRoom = () => {
     if (!sel) return;
-    del.ask(`「${sel.title}」 방을 삭제하시겠습니까?`, () => {
+    del.ask(`장면 「${sel.title}」을 삭제하시겠습니까?`, () => {
       setRooms(rooms.filter(r => r.id !== sel.id));
       setSelId(null);
     }, `대화 ${sel.messages.length}개도 함께 삭제됩니다.`);
@@ -238,8 +238,8 @@ ${rows}
     return (
       <section className="page">
         {/* 비로그인 안내 — 관리자가 문구 수정 가능 (v1.9), 헤더 표시 옵션에도 항상 표시 */}
-        <div className="page-head"><PageTitle>ROLEPLAY</PageTitle>
-          <EditableDesc k="rp-gate-desc" def="역극은 로그인한 참여자에게만 표시됩니다" always /></div>
+        <div className="page-head"><PageTitle>SCENE ARCHIVE</PageTitle>
+          <EditableDesc k="rp-gate-desc" def="장면보관함은 로그인한 참여자에게만 표시됩니다" always /></div>
       </section>
     );
   }
@@ -270,22 +270,22 @@ ${rows}
   return (
     <section className={`page ${mFocus ? 'rp-focus' : ''}`}>
       <div className="page-head">
-        <PageTitle>ROLEPLAY</PageTitle>
-        <EditableDesc k="rp-desc" def="실시간 채팅형 · 참여자에게만 존재 노출 · 캐릭터 선택 발화" />
+        <PageTitle>SCENE ARCHIVE</PageTitle>
+        <EditableDesc k="rp-desc" def="대사와 지문을 캐릭터별로 쌓아 장면 초안을 만드는 공간" />
       </div>
 
       <div className={`rp-layout ${mListOpen ? 'mopen' : ''}`}>
         {/* 모바일 전용 접힘 바 — 탭하면 방 목록·상태 필터가 펼쳐짐 (v1.9) */}
         <button type="button" className="rp-mfold" onClick={() => setMListOpen(o => !o)}>
-          <b>{sel ? sel.title : '방 목록'}</b>
-          <small>MY ROOMS {myRooms.length} {mListOpen ? '▴' : '▾'}</small>
+          <b>{sel ? sel.title : '장면 목록'}</b>
+          <small>MY SCENES {myRooms.length} {mListOpen ? '▴' : '▾'}</small>
         </button>
         {/* 방 목록 — 내 참여 방만 · 헤더 고정, 리스트만 내부 스크롤 */}
         <div className="panel rp-rooms">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 6px 12px', flexShrink: 0 }}>
-            <b style={{ fontSize: 12, letterSpacing: '.1em', color: 'var(--sub)' }}>MY ROOMS</b>
+            <b style={{ fontSize: 12, letterSpacing: '.1em', color: 'var(--sub)' }}>MY SCENES</b>
             <button className="btn btn-dark" style={{ padding: '0 12px', height: 30, fontSize: 11 }}
-              onClick={() => setNewOpen(true)}>＋ NEW ROOM</button>
+              onClick={() => setNewOpen(true)}>＋ NEW SCENE</button>
           </div>
           <div className="rp-rooms-list">
             {myRooms.map(r => (
@@ -297,7 +297,7 @@ ${rows}
             ))}
             {myRooms.length === 0 && (
               <p className="hint" style={{ padding: '10px 6px 0' }}>
-                {fStatus === 'all' ? '참여 중인 방이 없습니다' : '이 상태의 방이 없습니다'}
+                {fStatus === 'all' ? '참여 중인 장면이 없습니다' : '이 상태의 장면이 없습니다'}
               </p>
             )}
           </div>
@@ -435,7 +435,7 @@ ${rows}
             </>
           ) : (
             <div style={{ display: 'grid', placeItems: 'center', flex: 1 }}>
-              <p className="hint">방을 개설하면 여기에 채팅이 표시됩니다</p>
+              <p className="hint">장면을 만들면 여기에 대화와 지문이 표시됩니다</p>
             </div>
           )}
         </div>
@@ -457,8 +457,8 @@ ${rows}
       </div>
 
       {/* 방 개설 — 제목 + 기반 자관(선택) + 참여 회원 (4.9) */}
-      <Modal open={newOpen} onClose={() => setNewOpen(false)} small title="역극 방 개설"
-        desc="비참여자에게는 방의 존재가 보이지 않습니다" dirty
+      <Modal open={newOpen} onClose={() => setNewOpen(false)} small title="새 장면 만들기"
+        desc="함께 쓰는 장면은 지정한 참여자에게만 보입니다" dirty
         actions={<>
           <button className="btn btn-ghost" onClick={() => setNewOpen(false)}>CANCEL</button>
           <button className="btn btn-dark" onClick={createRoom}>ADD</button>
@@ -522,8 +522,8 @@ ${rows}
       </Modal>
 
       {/* 완결 확인 (삭제 아님 — END/CANCEL) */}
-      <ConfirmModal open={endAsk} title="역극을 완결 처리하시겠습니까?"
-        body="완결 후에는 공개 전환과 로그 내보내기를 사용할 수 있습니다."
+      <ConfirmModal open={endAsk} title="장면을 완성 처리하시겠습니까?"
+        body="완성 후에는 공개 전환과 원고 내보내기를 사용할 수 있습니다."
         onClose={() => setEndAsk(false)}
         buttons={[
           { label: 'END', kind: 'dark', onClick: () => { patchRoom({ status: 'done' }); setEndAsk(false); } },

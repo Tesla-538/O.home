@@ -62,7 +62,7 @@ export const ROLE_LABEL: Record<FontRole, { label: string; desc?: string }> = {
   title: { label: '타이틀 폰트', desc: '배너 캡션 등 세리프 자리 전체' },
   pagetitle: { label: '메뉴 타이틀 폰트' },
   subtitle: { label: '서브타이틀 폰트', desc: '타이틀 아래 설명 문구' },
-  logosub: { label: '로고 서브타이틀 폰트', desc: '상단바 로고 아랫줄 문구 — TRPG 티켓 하단 문구도 따라감' },
+  logosub: { label: '로고 서브타이틀 폰트', desc: '상단바 로고 아랫줄 문구 — 설정노트 티켓 하단 문구도 따라감' },
   menu: { label: '메뉴 폰트', desc: '상단 메뉴' },
   dropdown: { label: '드롭다운 폰트', desc: '하위메뉴 드롭다운 — 기본은 메뉴 폰트를 따라감' },
   body: { label: '본문 폰트', desc: '사이트 기본 글꼴 — 별도 폰트를 지정하지 않은 모든 텍스트' },

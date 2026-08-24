@@ -40,7 +40,7 @@ export type ImgProtectArea = 'board' | 'comm' | 'tchar' | 'chars' | 'rels';
 export const IMG_PROTECT_AREAS: { key: ImgProtectArea; label: string; paths: string[] }[] = [
   { key: 'board', label: '게시판 (갤러리·로드비 포함)', paths: ['/board', '/backup', '/roadview'] },
   { key: 'comm', label: '커미션', paths: ['/comm', '/comm-apply'] },
-  { key: 'tchar', label: 'TRPG 캐릭터', paths: ['/tchars'] },
+  { key: 'tchar', label: '자캐도감', paths: ['/tchars'] },
   { key: 'chars', label: '자캐 (캐릭터)', paths: ['/chars'] },
   { key: 'rels', label: '자관', paths: ['/rels'] },
 ];
@@ -58,6 +58,34 @@ export function defaultTree(): MenuGroupNode[] {
   return DEFAULT_MENU.map(m => m.children
     ? { id: `g-${m.label}`, label: m.label, items: m.children.map(c => ({ href: c.href })) }
     : { id: `g-${m.label}`, label: m.label, href: m.href, items: [] });
+}
+
+const WORLD_ITEMS: MenuLeaf[] = [
+  { href: '/dotori', label: '세계관' },
+  { href: '/tchars', label: '자캐도감' },
+  { href: '/playlog', label: '에피소드' },
+  { href: '/trpg', label: '설정노트' },
+  { href: '/rp', label: '장면보관함' },
+  { href: '/rels', label: '관계도' },
+];
+
+/** 기존 기기의 TRPG 메뉴를 데이터 손실 없이 새 세계관 구조로 한 번 정규화한다. */
+function normalizeWorldTree(tree: MenuGroupNode[]): MenuGroupNode[] {
+  const legacyHrefs = new Set(WORLD_ITEMS.map(x => x.href));
+  const worldAt = tree.findIndex(g => g.label === 'TRPG' || g.id === 'g-TRPG'
+    || g.items.some(x => ['/dotori', '/tchars', '/playlog', '/trpg'].includes(x.href)));
+  if (worldAt < 0) return tree;
+  const previous = tree[worldAt];
+  const saved = new Map(tree.flatMap(g => g.items).map(x => [x.href, x]));
+  const next = tree.map((g, i) => i === worldAt
+    ? {
+      ...previous,
+      id: previous.id === 'g-TRPG' ? 'g-세계관' : previous.id,
+      label: previous.label === 'TRPG' ? '세계관' : previous.label,
+      items: WORLD_ITEMS.map(x => ({ ...saved.get(x.href), ...x })),
+    }
+    : { ...g, items: g.items.filter(x => !legacyHrefs.has(x.href)) });
+  return next;
 }
 
 /** v1 설정(groupOrder/hidden/labels) → 트리 마이그레이션 */
@@ -84,11 +112,11 @@ export const newGroupId = () => `g-${newId()}`;
 
 export const PLAYLOG_COLS: { key: string; label: string }[] = [
   { key: 'date', label: 'Date' },
-  { key: 'scenario', label: 'Scenario' },
-  { key: 'writer', label: 'Writer' },
-  { key: 'with', label: 'With' },
-  { key: 'role', label: 'Role' },
-  { key: 'playtime', label: 'Playtime' },
+  { key: 'scenario', label: 'Episode' },
+  { key: 'writer', label: 'POV' },
+  { key: 'with', label: 'Cast' },
+  { key: 'role', label: 'Chapter' },
+  { key: 'playtime', label: 'Length' },
   { key: 'url', label: 'Url' },
 ];
 
@@ -115,19 +143,24 @@ export function useMenuSettings(): [MenuSettings, (patch: Partial<MenuSettings>)
       const raw = getRawSetting(KEY);
       if (raw) {
         const p = JSON.parse(raw) as Partial<MenuSettings>;
-        setSt({
+        const tree = normalizeWorldTree(p.tree ?? migrateTree(p));
+        const next = {
           ...DEFAULT_MENU_SETTINGS,
           ...p,
-          // v1(노출 온오프) 설정만 있으면 자유 트리로 마이그레이션 (v1.9)
-          tree: p.tree ?? migrateTree(p),
-        });
+          tree,
+        };
+        setSt(next);
+        if (JSON.stringify(tree) !== JSON.stringify(p.tree)) setSetting(KEY, next);
       }
     } catch { /* 기본값 */ }
     setLoaded(true);
     const sync = () => {
       try {
         const raw = getRawSetting(KEY);
-        if (raw) setSt(s => ({ ...s, ...JSON.parse(raw) }));
+        if (raw) {
+          const p = JSON.parse(raw) as Partial<MenuSettings>;
+          setSt(s => ({ ...s, ...p, tree: normalizeWorldTree(p.tree ?? migrateTree(p)) }));
+        }
       } catch { /* 무시 */ }
     };
     window.addEventListener('ohome-menuset', sync);

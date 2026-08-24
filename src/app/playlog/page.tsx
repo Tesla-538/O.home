@@ -77,11 +77,11 @@ export default function PlaylogPage() {
   return (
     <section className="page">
       <div className="page-head">
-        <PageTitle>PLAY LOG</PageTitle>
-        <EditableDesc k="playlog-desc" def="다녀온 세션 기록 — 표 형식" />
+        <PageTitle>EPISODES</PageTitle>
+        <EditableDesc k="playlog-desc" def="세계관별 사건과 이야기의 흐름을 에피소드 단위로 기록" />
         <div className="head-actions">
-          <SearchBar placeholder="시나리오·라이터·동행 검색" onSearch={v => { setQ(v); setPage(1); }} />
-          {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/playlog/new')}>＋ ADD RECORD</button>}
+          <SearchBar placeholder="에피소드·시점·등장인물 검색" onSearch={v => { setQ(v); setPage(1); }} />
+          {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/playlog/new')}>＋ ADD EPISODE</button>}
         </div>
       </div>
 
@@ -105,11 +105,11 @@ export default function PlaylogPage() {
                   Date {editOn ? '⠿' : desc ? '▾' : '▴'}
                 </th>
               )}
-              {show('scenario') && <th>Scenario</th>}
-              {show('writer') && <th>Writer</th>}
-              {show('with') && <th>With</th>}
-              {show('role') && <th>Role</th>}
-              {show('playtime') && <th>Playtime</th>}
+              {show('scenario') && <th>Episode</th>}
+              {show('writer') && <th>POV</th>}
+              {show('with') && <th>Cast</th>}
+              {show('role') && <th>Chapter</th>}
+              {show('playtime') && <th>Length</th>}
               {show('url') && <th aria-label="Url" />}
               {isAdmin && !isMobile && <th aria-label="관리" />}
             </tr>
@@ -121,7 +121,7 @@ export default function PlaylogPage() {
                 {show('scenario') && (
                   <td className="td-sc">
                     {r.scenarioLink
-                      ? <a href={r.scenarioLink} target="_blank" rel="noreferrer" data-tip="시나리오 링크 (새 탭)">{r.scenario}</a>
+                      ? <a href={r.scenarioLink} target="_blank" rel="noreferrer" data-tip="에피소드 참고 링크 (새 탭)">{r.scenario}</a>
                       : r.scenario}
                   </td>
                 )}
@@ -140,7 +140,7 @@ export default function PlaylogPage() {
                     {r.url ? (
                       <a href={r.url} target="_blank" rel="noreferrer" data-tip="링크 열기 (새 탭)"><ClipIcon /></a>
                     ) : r.logId ? (
-                      <a data-tip="백업 로그 보기" style={{ cursor: 'var(--cur-pointer,pointer)' }}
+                      <a data-tip="연결된 설정노트 보기" style={{ cursor: 'var(--cur-pointer,pointer)' }}
                         onClick={() => router.push(`/trpg/${r.logId}`)}><ClipIcon /></a>
                     ) : null}
                   </td>
@@ -166,7 +166,7 @@ export default function PlaylogPage() {
         {!editOn && <Pager page={page} total={totalPages} onChange={setPage} />}
       </div>
 
-      <ConfirmModal open={delFor !== null} title="기록을 삭제하시겠습니까?"
+      <ConfirmModal open={delFor !== null} title="에피소드를 삭제하시겠습니까?"
         body={`"${delFor?.scenario}" — 삭제하면 복구할 수 없습니다.`}
         onClose={() => setDelFor(null)}
         buttons={[

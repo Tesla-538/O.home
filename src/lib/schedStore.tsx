@@ -9,7 +9,7 @@ import { getRawSetting, setSetting } from './settingStore';
 export interface SchedCategory { id: string; label: string; color: string }
 
 export const DEFAULT_SCHED_CATS: SchedCategory[] = [
-  { id: 'sc-trpg', label: 'TRPG 세션', color: '#b39b6b' },
+  { id: 'sc-trpg', label: '창작 일정', color: '#b39b6b' },
   { id: 'sc-due', label: '마감', color: '#a63a45' },
   { id: 'sc-anniv', label: '기념일', color: '#4c6a8e' },
 ];

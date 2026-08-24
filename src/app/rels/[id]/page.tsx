@@ -353,7 +353,7 @@ export default function RelDetailPage() {
   if (!rel || (rel.visibility === 'private' && !isAdmin) || (rel.visibility === 'member' && !user)) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>RELATIONS</PageTitle><p>자관을 찾을 수 없거나 열람 권한이 없습니다</p></div>
+        <div className="page-head"><PageTitle>RELATION MAP</PageTitle><p>관계도를 찾을 수 없거나 열람 권한이 없습니다</p></div>
       </section>
     );
   }
@@ -1017,7 +1017,7 @@ export default function RelDetailPage() {
       {/* 역극 · 로그 연동 리스트 (4.5) — 역극: 내 참여 방 + 공개 전환된 완결 방 */}
       <div className="g2" style={{ marginTop: 16 }}>
         <div className="panel widget" style={{ margin: 0 }}>
-          <h4>역극 <span className="more" onClick={() => router.push('/rp')}>더보기 ›</span></h4>
+          <h4>장면 <span className="more" onClick={() => router.push('/rp')}>더보기 ›</span></h4>
           {relRooms.length > 0 ? relRooms.map(rm => (
             <div key={rm.id} className="dday-row" style={{ cursor: 'var(--cur-pointer,pointer)' }} onClick={() => router.push('/rp')}>
               <span>{rm.title}</span>
@@ -1026,7 +1026,7 @@ export default function RelDetailPage() {
               </b>
             </div>
           )) : (
-            <p className="hint" style={{ margin: 0 }}>이 자관 기반으로 진행된 역극이 여기에 표시됩니다</p>
+            <p className="hint" style={{ margin: 0 }}>이 관계를 바탕으로 만든 장면이 여기에 표시됩니다</p>
           )}
         </div>
         <div className="panel widget" style={{ margin: 0 }}>

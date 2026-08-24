@@ -115,7 +115,7 @@ export default function TrpgDetailPage() {
   const [eC2, setEC2] = useState('#242b36');
 
   const saveEdit = async () => {
-    if (!e.title.trim()) { toast('시나리오 타이틀을 입력해 주세요'); return; }
+    if (!e.title.trim()) { toast('노트 제목을 입력해 주세요'); return; }
     // 본문 교체 준비 — 본문은 목록과 분리 저장이라(v2.0) 이제 TrpgLogBody 조각으로 만든다
     let bodyPatch: Partial<TrpgLogBody> = {};
     if (bodyMode === 'file' && eFile) {
@@ -222,7 +222,7 @@ export default function TrpgDetailPage() {
     return (
       <section className="page">
         {/* 안내 문구는 환경설정 > TRPG에서 수정 — 관리자는 이 화면을 볼 수 없다 */}
-        <div className="page-head"><PageTitle>TRPG LOG</PageTitle>
+        <div className="page-head"><PageTitle>SETTING NOTES</PageTitle>
           <EditableDesc k="trpg-lock-desc" def="비밀번호를 입력하면 열람할 수 있습니다" always /></div>
         <div className="panel" style={{ maxWidth: 420, margin: '0 auto', padding: 26, display: 'grid', gap: 10 }}>
           <KInput type="password" placeholder="비밀번호" value={pwTry} onChange={e => setPwTry(e.target.value)}
@@ -271,7 +271,7 @@ html,body{margin:0!important;padding:0!important;height:auto!important;min-heigh
   return (
     <section className="page">
       <div className="page-head">
-        <PageTitle>TRPG LOG</PageTitle>
+        <PageTitle>SETTING NOTES</PageTitle>
         <p>{logNo(l)}{[l.writer, l.withText].filter(Boolean).map(x => ` · ${x}`).join('')}{l.date ? ` · ${l.date.replace(/-/g, '.')}` : ''}</p>
         <div className="head-actions">
           {rel && <button className="btn btn-dark" onClick={() => router.push(`/rels/${rel.id}`)}>{rel.name} ›</button>}
@@ -344,7 +344,7 @@ html,body{margin:0!important;padding:0!important;height:auto!important;min-heigh
       </div>
 
       {/* 로그 정보 수정 모달 — 메타 + 본문 교체(파일/직접 수정) + 썸네일 교체(이미지/색) */}
-      <Modal open={eOpen} onClose={() => setEOpen(false)} title="로그 정보 수정"
+      <Modal open={eOpen} onClose={() => setEOpen(false)} title="설정노트 정보 수정"
         dirty
         actions={<>
           <button className="btn btn-ghost" onClick={() => setEOpen(false)}>CANCEL</button>
@@ -352,7 +352,7 @@ html,body{margin:0!important;padding:0!important;height:auto!important;min-heigh
         </>}>
         <div style={{ display: 'grid', gap: 9 }}>
           <div style={{ display: 'flex', gap: 8 }}>
-            <KInput placeholder="시나리오 타이틀 (필수)" value={e.title} onChange={ev => setE(s => ({ ...s, title: ev.target.value }))} />
+            <KInput placeholder="노트 제목 (필수)" value={e.title} onChange={ev => setE(s => ({ ...s, title: ev.target.value }))} />
             {/* № 자리 표시 텍스트 전체를 직접 입력 — 비우면 자동 № 0XX */}
             <KInput placeholder="№ 표기 (선택 — 비우면 자동)" value={e.noText} onChange={ev => setE(s => ({ ...s, noText: ev.target.value }))}
               style={{ maxWidth: 200 }} />
@@ -364,7 +364,7 @@ html,body{margin:0!important;padding:0!important;height:auto!important;min-heigh
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <KSelect minWidth={140} value={e.relId} onChange={v => setE(s => ({ ...s, relId: v }))}
-              options={[{ value: 'none', label: '자관 연동 없음' }, ...rels.map(r => ({ value: r.id, label: r.name }))]} />
+              options={[{ value: 'none', label: '관계도 연동 없음' }, ...rels.map(r => ({ value: r.id, label: r.name }))]} />
             <KDate value={e.date} onChange={v => setE(s => ({ ...s, date: v }))} style={{ flex: 1 }} />
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -497,7 +497,7 @@ html,body{margin:0!important;padding:0!important;height:auto!important;min-heigh
           onApply={c => { setEThumbCrop(c); setECropOpen(false); }} />
       )}
 
-      <ConfirmModal open={delAsk} title="로그를 삭제하시겠습니까?" body="삭제한 로그는 복구할 수 없습니다."
+      <ConfirmModal open={delAsk} title="설정노트를 삭제하시겠습니까?" body="삭제한 설정노트는 복구할 수 없습니다."
         onClose={() => setDelAsk(false)}
         buttons={[
           { label: 'DELETE', kind: 'accent', onClick: () => {

@@ -55,8 +55,8 @@ export default function DotoriPage() {
   return (
     <section className="page" onClick={() => setStatusFor(null)}>
       <div className="page-head">
-        <PageTitle>DOTORI</PageTitle>
-        <EditableDesc k="dotori-desc" def="가고 싶은 시나리오 저장함 — 도토리처럼 모아두기" />
+        <PageTitle>WORLD ARCHIVE</PageTitle>
+        <EditableDesc k="dotori-desc" def="이야기의 무대와 핵심 설정을 세계별로 모아두는 곳" />
       </div>
 
       {/* 상태 필터 탭 + 검색·ADD — 필터 줄 오른쪽 정렬 (v1.9 사용자 요청) */}
@@ -69,7 +69,7 @@ export default function DotoriPage() {
           ))}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <SearchBar placeholder="시나리오·라이터·태그 검색" onSearch={setQ} />
+          <SearchBar placeholder="세계관·장르·키워드 검색" onSearch={setQ} />
           {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/dotori/new')}>＋ ADD</button>}
         </div>
       </div>
@@ -106,10 +106,10 @@ export default function DotoriPage() {
               )}
             </div>
             <div className="bd">
-              {/* 이름 클릭 = 시나리오 링크 (새 탭) · 카드 클릭 = 편집 (관리자) */}
+              {/* 이름 클릭 = 참고 링크 (새 탭) · 카드 클릭 = 편집 (관리자) */}
               <b className={`nm ${it.link ? 'has-link' : ''}`}
                 onClick={e => { if (it.link) { e.stopPropagation(); window.open(it.link, '_blank'); } }}
-                data-tip={it.link ? '시나리오 링크 열기 (새 탭)' : undefined}>
+                data-tip={it.link ? '참고 링크 열기 (새 탭)' : undefined}>
                 {it.name}
               </b>
               <small className="meta">
@@ -127,12 +127,12 @@ export default function DotoriPage() {
       {shown.length === 0 && (
         <div className="panel" style={{ textAlign: 'center', padding: 48 }}>
           <p style={{ fontSize: 13, color: 'var(--faint)' }}>
-            {query ? '검색 결과가 없습니다' : '이 탭에 도토리가 없습니다'}
+            {query ? '검색 결과가 없습니다' : '이 상태의 세계관이 없습니다'}
           </p>
         </div>
       )}
 
-      <ConfirmModal open={delFor !== null} title="도토리를 삭제하시겠습니까?"
+      <ConfirmModal open={delFor !== null} title="세계관을 삭제하시겠습니까?"
         body={`"${delFor?.name}" — 삭제하면 복구할 수 없습니다.`}
         onClose={() => setDelFor(null)}
         buttons={[

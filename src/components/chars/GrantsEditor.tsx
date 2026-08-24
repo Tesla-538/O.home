@@ -91,13 +91,13 @@ export function GrantsEditor({ value, onChange }: {
           </span>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <div className="mini-seg">
-              <button className={g.level === 'play' ? 'on' : ''} onClick={() => setLevel(g.userId, 'play')}>역극 플레이</button>
+              <button className={g.level === 'play' ? 'on' : ''} onClick={() => setLevel(g.userId, 'play')}>장면 참여</button>
               <button className={g.level === 'edit' ? 'on' : ''} onClick={() => setLevel(g.userId, 'edit')}>편집까지</button>
             </div>
             <span className="fx" style={{ cursor: 'var(--cur-pointer,pointer)' }} data-tip="권한 해제"
               onClick={() => del.ask(`「${g.member!.nickname}」의 권한을 해제하시겠습니까?`,
                 () => remove(g.userId),
-                '이 회원은 더 이상 이 캐릭터로 역극에 참여하거나 편집할 수 없습니다.')}>✕</span>
+                '이 회원은 더 이상 이 캐릭터로 장면에 참여하거나 편집할 수 없습니다.')}>✕</span>
           </div>
         </div>
       ))}

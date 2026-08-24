@@ -18,14 +18,14 @@ export default function PlaylogNewPage() {
   if (!isAdmin) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>PLAY LOG</PageTitle><p>관리자 전용 페이지</p></div>
+        <div className="page-head"><PageTitle>EPISODES</PageTitle><p>관리자 전용 페이지</p></div>
       </section>
     );
   }
 
   return (
     <section className="page">
-      <div className="page-head"><PageTitle>ADD RECORD</PageTitle><EditableDesc k="playlog-new-desc" def="플레이기록 추가" /></div>
+      <div className="page-head"><PageTitle>ADD EPISODE</PageTitle><EditableDesc k="playlog-new-desc" def="새 에피소드의 흐름과 등장인물을 기록합니다" /></div>
       <PlaylogForm initial={null} records={records}
         onCancel={() => router.push('/playlog')}
         onSave={v => {

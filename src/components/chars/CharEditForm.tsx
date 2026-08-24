@@ -249,7 +249,7 @@ export function CharEditForm({ initial, onSave, onCancel, auMode, existingIds }:
         {/* 상대 캐릭터 회원 권한 — 역극 플레이 / 편집까지 (3차 회원-캐릭터 연결, v1.9) — AU 편집에선 base 소관 */}
         {!auMode && initial?.own === false && (
           <>
-            <label className="k-label" style={{ margin: '6px 0 0' }}>회원 권한 — 역극 플레이 · 캐릭터 편집</label>
+            <label className="k-label" style={{ margin: '6px 0 0' }}>회원 권한 — 장면 참여 · 캐릭터 편집</label>
             <GrantsEditor value={grants} onChange={setGrants} />
           </>
         )}

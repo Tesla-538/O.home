@@ -21,14 +21,14 @@ export default function PlaylogEditPage() {
   if (!isAdmin || !r) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>PLAY LOG</PageTitle><p>기록을 찾을 수 없거나 권한이 없습니다</p></div>
+        <div className="page-head"><PageTitle>EPISODES</PageTitle><p>에피소드를 찾을 수 없거나 권한이 없습니다</p></div>
       </section>
     );
   }
 
   return (
     <section className="page">
-      <div className="page-head"><PageTitle>EDIT RECORD</PageTitle><p>{r.scenario}</p></div>
+      <div className="page-head"><PageTitle>EDIT EPISODE</PageTitle><p>{r.scenario}</p></div>
       <PlaylogForm initial={r} records={records}
         onCancel={() => router.push('/playlog')}
         onSave={v => {

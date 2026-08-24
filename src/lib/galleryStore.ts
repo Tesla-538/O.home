@@ -154,11 +154,10 @@ export interface TrpgSettings {
 }
 export const DEFAULT_TRPG_SETTINGS: TrpgSettings = {
   statuses: {
-    // 기존 하드코딩 뱃지 색 계승 (pledge: 반투명 잉크 → hex 근사 / confirmed: 포인트 레드)
-    pledge: { label: '공수표', bg: '#23262b', border: '#b9bdc4', fg: '#ffffff' },
-    undecided: { label: '일정 미정', bg: '#7a8089', border: '#7a8089', fg: '#ffffff' },
-    confirmed: { label: '일정 확정', bg: '#a63a45', border: '#a63a45', fg: '#ffffff' },
-    done: { label: '완', bg: '#3c434d', border: '#3c434d', fg: '#ffffff' },
+    pledge: { label: '구상 중', bg: '#23262b', border: '#b9bdc4', fg: '#ffffff' },
+    undecided: { label: '초안', bg: '#7a8089', border: '#7a8089', fg: '#ffffff' },
+    confirmed: { label: '정리 중', bg: '#a63a45', border: '#a63a45', fg: '#ffffff' },
+    done: { label: '완성', bg: '#3c434d', border: '#3c434d', fg: '#ffffff' },
   },
 };
 
@@ -180,7 +179,11 @@ export function useTrpgSettings(): [TrpgSettings, (patch: Partial<TrpgSettings>)
       const raw = getRawSetting(TRPG_SET_KEY);
       if (raw) {
         const p = JSON.parse(raw) as Partial<TrpgSettings>;
-        setSt({ statuses: { ...DEFAULT_TRPG_SETTINGS.statuses, ...(p.statuses ?? {}) } });
+        const merged = { ...DEFAULT_TRPG_SETTINGS.statuses, ...(p.statuses ?? {}) };
+        const legacy: Record<string, string> = { '공수표': '구상 중', '일정 미정': '초안', '일정 확정': '정리 중', '완': '완성' };
+        const statuses = Object.fromEntries(Object.entries(merged).map(([k, v]) => [k, { ...v, label: legacy[v.label] ?? v.label }])) as TrpgSettings['statuses'];
+        setSt({ statuses });
+        if (Object.values(merged).some(v => legacy[v.label])) setSetting(TRPG_SET_KEY, { statuses });
       }
     } catch { /* 기본값 */ }
     setLoaded(true);

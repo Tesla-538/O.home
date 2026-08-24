@@ -111,7 +111,7 @@ export default function MemberDetailPage() {
                   {(c.thumbId ?? c.arts?.[0]) && <CroppedBlobImg fileRef={c.thumbId ?? c.arts?.[0]} crop={c.thumbCrop} ph={c.thumbClass} />}
                 </div>
                 <b style={{ fontSize: 12.5 }}>{c.name}</b>
-                <small style={{ color: 'var(--faint)', fontSize: 10.5 }}>{level === 'edit' ? '편집까지' : '역극 플레이'}</small>
+                <small style={{ color: 'var(--faint)', fontSize: 10.5 }}>{level === 'edit' ? '편집까지' : '장면 참여'}</small>
               </div>
             ))}
           </div>

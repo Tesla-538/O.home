@@ -54,7 +54,7 @@ import { migrateTo, findOrphanFiles } from '@/lib/transfer';
 import { FIRESTORE_RULES, STORAGE_RULES } from '@/lib/firebaseRules';
 
 const CATEGORIES = [
-  '디자인', '메인 페이지', '위젯', '메뉴 관리', '게시판 관리', '자관 질문', '커미션', 'TRPG', '감상타래', '메모장',
+  '디자인', '메인 페이지', '위젯', '메뉴 관리', '게시판 관리', '자관 질문', '커미션', '세계관', '감상타래', '메모장',
   '폰트', '마우스 커서', 'BGM', '무드 리스트', '회원/보안', '데이터 백업',
 ] as const;
 
@@ -1514,7 +1514,7 @@ function DataPane() {
   return (
     <div className="set-sec">
       <h3>데이터 백업</h3>
-      <div className="d">글·캐릭터·자관·역극 등 모든 데이터(JSON)와 이미지 전부를 zip 하나로 — 다른 브라우저/PC 이전용</div>
+      <div className="d">글·캐릭터·관계도·장면 등 모든 데이터(JSON)와 이미지 전부를 zip 하나로 — 다른 브라우저/PC 이전용</div>
 
       {/* 로컬로 먼저 꾸민 뒤 서버를 붙인 경우에만 — 서버에 없는 설정이 남아 있을 때만 나타난다 (v2.0) */}
       {serverOn && unsynced.length > 0 && (
@@ -1774,7 +1774,7 @@ function MenuPane() {
   const [mtab, setMtab] = useState<'basic' | 'perm'>('basic');   // 기본(구성) / 권한 탭 (v1.9)
   // 역극 비로그인 안내 문구 (v1.9 — pagetext 'rp-gate-desc')
   const [rpGate, setRpGate] = useState('');
-  useEffect(() => { setRpGate(getPageText('rp-gate-desc', '역극은 로그인한 참여자에게만 표시됩니다')); }, []);
+  useEffect(() => { setRpGate(getPageText('rp-gate-desc', '장면보관함은 로그인한 참여자에게만 표시됩니다')); }, []);
   const leaveWith = (action: 'save' | 'discard') => {
     if (action === 'save') patch({ tree, removedBoards: removed });
     else revert();
@@ -2101,7 +2101,7 @@ function MenuPane() {
       {del.element}
       {/* 기본 구성 리셋 확인 (v1.9) — 드래프트만 교체, SAVE로 확정 */}
       <ConfirmModal open={resetAsk} title="메뉴를 기본 구성으로 되돌리시겠습니까?"
-        body="기본 제공 메뉴 구성(자놀·게시판·TRPG·커미션·기록·방명록)으로 편집 화면이 바뀝니다. SAVE를 눌러야 실제 메뉴에 반영됩니다."
+        body="기본 제공 메뉴 구성(자놀·게시판·세계관·커미션·기록·방명록)으로 편집 화면이 바뀝니다. SAVE를 눌러야 실제 메뉴에 반영됩니다."
         onClose={() => setResetAsk(false)}
         buttons={[
           { label: 'RESET', kind: 'dark', onClick: () => { setDraft(defaultTree()); setDraftRemoved([]); setResetAsk(false); } },
@@ -2120,7 +2120,7 @@ function MenuPane() {
   );
 }
 
-/** TRPG 탭 (4.15, v1.9) — 도토리 상태 카테고리 라벨 + 뱃지 색 + 플레이기록 표시 열 */
+/** 세계관 탭 — 세계관 진행 상태 + 에피소드 표시 열 */
 function TrpgPane() {
   const [settings, patch] = useTrpgSettings();
   const [ms, patchMenu] = useMenuSettings();   // 플레이기록 표시 열 (4.16 — 저장 위치는 메뉴 설정)
@@ -2141,8 +2141,8 @@ function TrpgPane() {
   return (
     <div className="set-sec">
       {/* 비밀번호 걸린 로그의 안내 문구 — 관리자는 그 화면을 볼 수 없어 여기서 편집 (사용자 요청) */}
-      <h3>로그 열람 안내 문구</h3>
-      <div className="d">비밀번호를 건 로그에 들어갔을 때 보이는 문구입니다 — 관리자에게는 그 화면이 뜨지 않아 여기서 고칩니다</div>
+      <h3>설정노트 열람 안내 문구</h3>
+      <div className="d">비밀번호를 건 설정노트에 들어갔을 때 보이는 문구입니다 — 관리자에게는 그 화면이 뜨지 않아 여기서 고칩니다</div>
       <div className="set-row" style={{ alignItems: 'center' }}>
         <div className="l"><b>비밀번호 안내</b><small>비우면 기본 문구로 표시됩니다</small></div>
         <KInput value={lockDesc}
@@ -2150,8 +2150,8 @@ function TrpgPane() {
           placeholder="비밀번호를 입력하면 열람할 수 있습니다" style={{ width: 300 }} />
       </div>
 
-      <h3>도토리 상태 카테고리</h3>
-      <div className="d">라벨과 뱃지 색(배경/테두리/글씨) — 카드 뱃지는 공수표·일정 확정만 표시</div>
+      <h3>세계관 진행 상태</h3>
+      <div className="d">구상부터 완성까지 사용할 상태 이름과 뱃지 색을 정합니다</div>
       {DOTORI_STATUS_KEYS.map(k => {
         const st = settings.statuses[k];
         return (
@@ -2175,8 +2175,8 @@ function TrpgPane() {
 
       {/* 플레이기록 표시 열 — PC/모바일 각각 (4.16 v1.8 · v1.9에서 TRPG 탭 하단 배치) */}
       <hr style={{ margin: '24px 0', border: 'none', borderTop: '1.5px solid var(--line)' }} />
-      <h3>플레이기록 표시 열</h3>
-      <div className="d">PC와 모바일에서 보여줄 열을 각각 선택 (기본: PC 전체 7열 · 모바일 Date/Scenario/Role/Playtime)</div>
+      <h3>에피소드 표시 열</h3>
+      <div className="d">PC와 모바일에서 보여줄 열을 각각 선택 (기본: PC 전체 7열 · 모바일 Date/Episode/Chapter/Length)</div>
       {/* 라벨 폭 고정 — PC/모바일 폭 차이로 두 줄 체크박스 시작점이 어긋나던 것 정렬 (v1.9) */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l" style={{ width: 64, flexShrink: 0 }}><b>PC</b></div>
@@ -2607,7 +2607,7 @@ function FontPane() {
   return (
     <div className="set-sec">
       <h3>폰트 라이브러리</h3>
-      <div className="d">캐릭터 프로필·자관 이름·시나리오 타이틀 등에서 이 목록 중 선택해 사용 — 원하는 폰트만 남기고 삭제 가능</div>
+      <div className="d">캐릭터 프로필·관계도 이름·설정노트 제목 등에서 이 목록 중 선택해 사용 — 원하는 폰트만 남기고 삭제 가능</div>
 
       {fonts.map(f => <FontRow key={f.id} f={f} />)}
       {hiddenCount > 0 && (
@@ -2784,7 +2784,7 @@ function SettingsInner() {
             <RelQPane />
           ) : tab === '커미션' ? (
             <CommPane />
-          ) : tab === 'TRPG' ? (
+          ) : tab === '세계관' ? (
             <TrpgPane />
           ) : tab === '감상타래' ? (
             <ThreadPane />

@@ -140,7 +140,7 @@ export default function TrpgPage() {
   };
 
   const add = async () => {
-    if (!nTitle.trim()) { toast('시나리오 타이틀을 입력해 주세요'); return; }
+    if (!nTitle.trim()) { toast('노트 제목을 입력해 주세요'); return; }
     const id = newId();
     // 파일이 있으면 등록 시점에 직접 읽음 — 읽기 완료 전에 ADD를 눌러도 본문이 비지 않음
     const bodyText = nFile ? await decodeText(nFile) : nBody;
@@ -176,7 +176,7 @@ export default function TrpgPage() {
     setAddOpen(false);
     setNNo(''); setNVis('public'); setNPw(''); setNListHidden(false); setNTitle(''); setNCatch(''); setNWriter(''); setNWith(''); setNBody(''); setNFileName(''); setNDate(''); setNFile(null);
     setNThumb(null); setNThumbUrl(''); setNThumbCrop(undefined);
-    toast(nFile ? '로그가 등록되었습니다 — 원본 파일도 보관됩니다' : '로그가 등록되었습니다');
+    toast(nFile ? '설정노트가 등록되었습니다 — 원본 파일도 보관됩니다' : '설정노트가 등록되었습니다');
   };
 
   // 티켓 썸네일 — 업로드 이미지 > 지정 색(단색/그라데이션) > 데모 ph
@@ -219,11 +219,11 @@ export default function TrpgPage() {
   return (
     <section className="page">
       <div className="page-head">
-        <PageTitle>TRPG LOG</PageTitle>
-        <EditableDesc k="trpg-desc" def="티켓형 스킨 · 시나리오 타이틀 폰트 개별 설정 · 우측 자관 뱃지로 필터" />
+        <PageTitle>SETTING NOTES</PageTitle>
+        <EditableDesc k="trpg-desc" def="인물·장소·법칙·사건 등 세계관의 세부 설정을 자유롭게 보관" />
         <div className="head-actions">
           <SearchBar onSearch={setQ} />
-          {isAdmin && <button className="btn btn-dark" style={{ whiteSpace: 'nowrap' }} onClick={() => setAddOpen(true)}>＋ ADD LOG</button>}
+          {isAdmin && <button className="btn btn-dark" style={{ whiteSpace: 'nowrap' }} onClick={() => setAddOpen(true)}>＋ ADD NOTE</button>}
         </div>
       </div>
       <div className="trpg-layout">
@@ -262,13 +262,13 @@ export default function TrpgPage() {
             )}
           {visible.length === 0 && (
             <div className="panel" style={{ textAlign: 'center', padding: 44, fontSize: 13, color: 'var(--faint)' }}>
-              로그가 없습니다
+              설정노트가 없습니다
             </div>
           )}
         </div>
         {/* 자관 연동 필터 (v1.2) */}
         <div className="panel tagside">
-          <h4>자관 필터</h4>
+          <h4>관계도 필터</h4>
           <div className={`tag ${filter === 'all' ? 'on' : ''}`} onClick={() => setFilter('all')}>
             전체 <small>{logs.length}</small>
           </div>
@@ -295,7 +295,7 @@ export default function TrpgPage() {
       </div>
 
       {/* ＋ ADD LOG (4.3 — 본문 입력 3방식) */}
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="로그 등록"
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="설정노트 등록"
         desc="본문: 파일 업로드(.txt/.html — 내용 자동 판별) 또는 붙여넣기/직접 작성"
         actions={<>
           <button className="btn btn-ghost" onClick={() => setAddOpen(false)}>CANCEL</button>
@@ -303,7 +303,7 @@ export default function TrpgPage() {
         </>}>
         <div style={{ display: 'grid', gap: 9 }}>
           <div style={{ display: 'flex', gap: 8 }}>
-            <KInput placeholder="시나리오 타이틀 (필수)" value={nTitle} onChange={e => setNTitle(e.target.value)} />
+            <KInput placeholder="노트 제목 (필수)" value={nTitle} onChange={e => setNTitle(e.target.value)} />
             {/* № 자리 표시 텍스트 전체를 직접 입력 — 비우면 자동 № 0XX */}
             <KInput placeholder="№ 표기 (선택 — 비우면 자동)" value={nNo} onChange={e => setNNo(e.target.value)}
               style={{ maxWidth: 200 }} />
@@ -315,7 +315,7 @@ export default function TrpgPage() {
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <KSelect minWidth={140} value={nRel} onChange={setNRel}
-              options={[{ value: 'none', label: '자관 연동 없음' }, ...rels.map(r => ({ value: r.id, label: r.name }))]} />
+              options={[{ value: 'none', label: '관계도 연동 없음' }, ...rels.map(r => ({ value: r.id, label: r.name }))]} />
             <KDate value={nDate} onChange={setNDate} style={{ flex: 1 }} />
           </div>
           {/* 접근권한 + 열람 비밀번호 (선택) — 권한이 없어도 비밀번호를 아는 사람은 열람 가능.
@@ -395,7 +395,7 @@ export default function TrpgPage() {
                 onDrop={e => { e.preventDefault(); readFile(e.dataTransfer.files?.[0]); }}>
                 {nFileName
                   ? <b>{nFileName} — 읽기 완료 ({nBody.length.toLocaleString()}자)</b>
-                  : <><b style={{ display: 'block', marginBottom: 3 }}>.txt / .html 파일을 끌어다 놓거나 클릭</b>크리스탈리아 등 로그 툴 내보내기 파일 그대로 — 내용 자동 판별</>}
+                  : <><b style={{ display: 'block', marginBottom: 3 }}>.txt / .html 파일을 끌어다 놓거나 클릭</b>기존 로그 도구에서 내보낸 파일도 그대로 보관 — 내용 자동 판별</>}
               </div>
             </>
           ) : (

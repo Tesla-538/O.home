@@ -33,8 +33,8 @@ export default function RelsPage() {
   return (
     <section className="page">
       <div className="page-head">
-        <PageTitle>RELATIONS</PageTitle>
-        <EditableDesc k="rels-desc" def="자관 목록 · 4:3 가로 썸네일 · 공개범위: 전체공개/멤버공개/나만보기" />
+        <PageTitle>RELATION MAP</PageTitle>
+        <EditableDesc k="rels-desc" def="세계관 속 인물 사이의 관계와 타임라인을 한곳에 정리" />
         <div className="head-actions">
           <SearchBar onSearch={setQ} />
           {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/rels/new')}>＋ ADD RELATION</button>}

@@ -18,14 +18,14 @@ export default function DotoriNewPage() {
   if (!isAdmin) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>DOTORI</PageTitle><p>관리자 전용 페이지</p></div>
+        <div className="page-head"><PageTitle>WORLD ARCHIVE</PageTitle><p>관리자 전용 페이지</p></div>
       </section>
     );
   }
 
   return (
     <section className="page">
-      <div className="page-head"><PageTitle>ADD DOTORI</PageTitle><EditableDesc k="dotori-new-desc" def="가고 싶은 시나리오 등록" /></div>
+      <div className="page-head"><PageTitle>ADD WORLD</PageTitle><EditableDesc k="dotori-new-desc" def="새 세계관의 기본 정보를 등록합니다" /></div>
       <DotoriForm initial={null}
         onCancel={() => router.push('/dotori')}
         onSave={v => {
@@ -33,7 +33,7 @@ export default function DotoriNewPage() {
             id: newId(), ...v, link: v.link, ph: 'cool', date: new Date().toISOString(),
           };
           setItems([it, ...items]);
-          toast('도토리가 등록되었습니다');
+          toast('세계관이 등록되었습니다');
           router.push('/dotori');
         }} />
     </section>

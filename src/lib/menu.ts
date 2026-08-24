@@ -11,15 +11,15 @@ export interface MenuItem {
 /** 배치 가능한 기능(모듈) 전체 — href → 기본 이름. 메뉴 트리에 넣어야 노출됨 (3장 메뉴 선택제) */
 export const FEATURES: { href: string; label: string }[] = [
   { href: '/chars', label: '캐릭터' },
-  { href: '/rels', label: '자관' },
-  { href: '/rp', label: '역극' },
+  { href: '/rels', label: '관계도' },
+  { href: '/rp', label: '장면보관함' },
   { href: '/board', label: '리스트' },
   { href: '/backup', label: '갤러리' },
   { href: '/roadview', label: '로드비' },
-  { href: '/tchars', label: '캐릭터' },   // TRPG 캐릭터 — 자놀 캐릭터와는 href로 구분
-  { href: '/trpg', label: '로그 백업' },
-  { href: '/dotori', label: '도토리' },
-  { href: '/playlog', label: '플레이기록' },
+  { href: '/tchars', label: '자캐도감' },
+  { href: '/trpg', label: '설정노트' },
+  { href: '/dotori', label: '세계관' },
+  { href: '/playlog', label: '에피소드' },
   { href: '/comm', label: '커미션' },
   { href: '/comm-apply', label: '신청자 리스트' },
   { href: '/cal', label: '스케줄러' },
@@ -34,8 +34,6 @@ export const DEFAULT_MENU: MenuItem[] = [
     label: '자놀',
     children: [
       { label: '캐릭터', href: '/chars' },
-      { label: '자관', href: '/rels' },
-      { label: '역극', href: '/rp' },
     ],
   },
   {
@@ -47,12 +45,14 @@ export const DEFAULT_MENU: MenuItem[] = [
     ],
   },
   {
-    label: 'TRPG',
+    label: '세계관',
     children: [
-      { label: '캐릭터', href: '/tchars' },
-      { label: '로그 백업', href: '/trpg' },
-      { label: '도토리', href: '/dotori' },
-      { label: '플레이기록', href: '/playlog' },
+      { label: '세계관', href: '/dotori' },
+      { label: '자캐도감', href: '/tchars' },
+      { label: '에피소드', href: '/playlog' },
+      { label: '설정노트', href: '/trpg' },
+      { label: '장면보관함', href: '/rp' },
+      { label: '관계도', href: '/rels' },
     ],
   },
   {

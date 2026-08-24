@@ -21,14 +21,14 @@ export default function DotoriEditPage() {
   if (!isAdmin || !it) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>DOTORI</PageTitle><p>항목을 찾을 수 없거나 권한이 없습니다</p></div>
+        <div className="page-head"><PageTitle>WORLD ARCHIVE</PageTitle><p>항목을 찾을 수 없거나 권한이 없습니다</p></div>
       </section>
     );
   }
 
   return (
     <section className="page">
-      <div className="page-head"><PageTitle>EDIT DOTORI</PageTitle><p>{it.name}</p></div>
+      <div className="page-head"><PageTitle>EDIT WORLD</PageTitle><p>{it.name}</p></div>
       <DotoriForm initial={it}
         onCancel={() => router.push('/dotori')}
         onSave={v => {

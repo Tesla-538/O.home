@@ -11,14 +11,14 @@ export default function TCharEditPage() {
   if (!isAdmin) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>TRPG CHARACTERS</PageTitle><p>관리자 전용 페이지</p></div>
+        <div className="page-head"><PageTitle>CHARACTER CODEX</PageTitle><p>관리자 전용 페이지</p></div>
       </section>
     );
   }
   return (
     <section className="page">
       <div className="page-head">
-        <PageTitle>TRPG CHARACTERS</PageTitle>
+        <PageTitle>CHARACTER CODEX</PageTitle>
         <EditableDesc k="tchars-edit-desc" def="캐릭터 수정" />
       </div>
       <TCharForm editId={id} />
