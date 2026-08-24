@@ -109,7 +109,9 @@ export async function exchangeCode(code: string, redirectUri: string) {
 }
 
 export async function calendarName(accessToken: string): Promise<string> {
-  const data = await googleFetch<{ summary?: string }>(accessToken, '/calendars/primary');
+  // calendar.calendarlist.readonly 범위로 읽을 수 있는 엔드포인트를 사용한다.
+  // /calendars/primary는 더 넓은 calendar.readonly 권한을 요구한다.
+  const data = await googleFetch<{ summary?: string }>(accessToken, '/users/me/calendarList/primary');
   return data.summary?.trim() || 'Google Calendar';
 }
 
