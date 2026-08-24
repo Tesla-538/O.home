@@ -65,6 +65,19 @@ export async function primeSettings(): Promise<void> {
   if (!be) return;
   try {
     const all = await be.fetchAllSettings();
+    // DB 정책상 일정 원본은 관리자에게만 보인다. 원본이 빠진 방문자 세션에는
+    // 서버가 과거·비공개 항목을 제거한 공개용 투영본을 넣는다. 예전에 브라우저에
+    // 남은 전체 일정 사본도 여기서 반드시 덮어써 개인정보가 다시 나타나지 않게 한다.
+    const schedKey = 'ohome.sched.v1';
+    if (!Object.prototype.hasOwnProperty.call(all, schedKey)) {
+      try {
+        const res = await fetch('/api/public-schedule', { cache: 'no-store' });
+        const body = await res.json() as { state?: unknown };
+        all[schedKey] = body.state ?? { events: [], cats: [], allowMember: false, todoMigrated: true };
+      } catch {
+        all[schedKey] = { events: [], cats: [], allowMember: false, todoMigrated: true };
+      }
+    }
     Object.entries(all).forEach(([k, v]) => {
       // null = 지워진 값(초기화가 그렇게 저장한다). 캐시에 담으면 화면이 기본값 대신
       // null을 받아 깨지므로 아예 없는 것으로 둔다.

@@ -216,7 +216,8 @@ export default function CalPage() {
 
   // 모든 일정은 TO-DO와 하나의 항목을 공유한다. 완료한 일정은 숨기되
   // 「기록」을 켠 완료 항목은 과거 기록으로 캘린더에 남긴다.
-  const eventsOn = (date: string) => st.events.filter(e => canSee(e) && (!e.done || e.keepRecord) && eventOnDate(e, date));
+  const eventsOn = (date: string) => st.events.filter(e =>
+    (isAdmin || date >= todayStr) && canSee(e) && (!e.done || e.keepRecord) && eventOnDate(e, date));
   // 오른쪽 카드가 보여 줄 날짜 — 달력 칸을 누르면 바뀐다 (v2.0)
   const pickedEvents = eventsOn(picked);
 

@@ -160,7 +160,10 @@ drop policy if exists "invite_use" on public.invite_codes;
 create policy "invite_use" on public.invite_codes for update using (used_by is null);
 
 drop policy if exists "settings_select" on public.site_settings;
-create policy "settings_select" on public.site_settings for select using (true);
+-- 일정 원본에는 과거·비공개 기록이 있으므로 관리자만 직접 읽는다.
+-- 방문자는 앱의 /api/public-schedule에서 정제된 오늘 이후 공개 일정만 받는다.
+create policy "settings_select" on public.site_settings for select
+  using (key <> 'ohome.sched.v1' or public.is_admin());
 drop policy if exists "settings_write" on public.site_settings;
 create policy "settings_write" on public.site_settings for all to authenticated
   using (public.is_admin()) with check (public.is_admin());

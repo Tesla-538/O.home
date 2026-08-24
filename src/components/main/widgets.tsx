@@ -15,7 +15,7 @@ import { CroppedBlobImg, CropValue } from '@/components/ui/CropEditor';
 import { useLocalList } from '@/lib/postStore';
 import { RoadItem, ROAD_SEED, BackupPost, BACKUP_SEED } from '@/lib/galleryStore';
 import { DiaryPost, DIARY_SEED, Mood, MOOD_SEED, moodTint } from '@/lib/diaryStore';
-import { useSched, eventColor, eventOnDate } from '@/lib/schedStore';
+import { useSched, eventColor, eventOnDate, SchedEvent } from '@/lib/schedStore';
 import { StickyMemo, MEMO_SEED, MEMO_SIZE_W, useMemoSettings } from '@/lib/memoStore';
 import { BlobImg, useBlobUrl } from '@/lib/blobStore';
 import { normalizeInternalLink } from '@/lib/link';
@@ -265,13 +265,18 @@ export function DdayWidget({ conf }: { conf: WidgetConf }) {
 
 /* ---------- TO-DO — 관리자 클릭 시 관리 모달 (4.12 확정) ---------- */
 export function TodoWidget({ conf, date }: { conf: WidgetConf; date?: string }) {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { editOn } = useMainStore();
   const { st, updateEvent } = useSched();
   const [open, setOpen] = useState(false);
   const now = new Date();
-  const shownDate = date ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const items = st.events.filter(e => eventOnDate(e, shownDate));
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const shownDate = date ?? today;
+  const canSee = (visibility: SchedEvent['visibility']) =>
+    isAdmin || visibility === 'public' || (visibility === 'member' && !!user);
+  // 본인은 전체 기록을 보고, 방문자는 오늘 이후의 공개 범위 항목만 본다.
+  const items = st.events.filter(e =>
+    (isAdmin || shownDate >= today) && canSee(e.visibility) && eventOnDate(e, shownDate));
   useEditEvent(conf.id, () => setOpen(true));   // 편집모드 우클릭 → 설정 (v1.9)
 
   return (
