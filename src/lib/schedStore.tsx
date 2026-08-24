@@ -35,6 +35,8 @@ interface SchedState {
   allowMember: boolean;      // 회원도 일정 등록 허용 (4.12 등록 권한 옵션)
 }
 
+export type NewSchedEvent = Omit<SchedEvent, 'id'>;
+
 const DEFAULTS: SchedState = { events: SEED_EVENTS, cats: DEFAULT_SCHED_CATS, allowMember: false };
 const KEY = 'ohome.sched.v1';
 
@@ -57,6 +59,19 @@ export function useSched() {
   }, []);
   const addEvent = useCallback((ev: Omit<SchedEvent, 'id'>) =>
     apply(s => ({ ...s, events: [...s.events, { id: newId(), ...ev }] })), [apply]);
+  const importEvents = useCallback((events: NewSchedEvent[]) => {
+    apply(s => {
+      const seen = new Set(s.events.map(e => `${e.title}\u0000${e.start}\u0000${e.end ?? ''}`));
+      const next = [...s.events];
+      for (const event of events) {
+        const sig = `${event.title}\u0000${event.start}\u0000${event.end ?? ''}`;
+        if (seen.has(sig)) continue;
+        seen.add(sig);
+        next.push({ id: newId(), ...event });
+      }
+      return { ...s, events: next };
+    });
+  }, [apply]);
   const updateEvent = useCallback((id: string, p: Partial<SchedEvent>) =>
     apply(s => ({ ...s, events: s.events.map(e => (e.id === id ? { ...e, ...p } : e)) })), [apply]);
   const removeEvent = useCallback((id: string) =>
@@ -79,7 +94,7 @@ export function useSched() {
   }), [apply]);
   const setAllowMember = useCallback((v: boolean) => apply(s => ({ ...s, allowMember: v })), [apply]);
   return {
-    st, loaded, addEvent, updateEvent, removeEvent,
+    st, loaded, addEvent, importEvents, updateEvent, removeEvent,
     patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn,
   };
 }

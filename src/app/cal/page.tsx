@@ -1,7 +1,7 @@
 'use client';
 // 스케줄러 (4.12) — 월간 캘린더(정사각 블록) + 우측 D-day/투두(메인 위젯 데이터 공유) + 카테고리
 // 일정: 제목·기간·카테고리·색·메모·공개범위·매년 반복 · 일정 → D-day 승격 · 등록 권한 옵션
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useMainStore } from '@/lib/mainStore';
 import { useSched, SchedEvent, eventColor, eventOnDate } from '@/lib/schedStore';
@@ -13,6 +13,7 @@ import { DragList } from '@/components/ui/DragList';
 import { EditableDesc, PageTitle } from '@/components/ui/PageText';
 import { useToast } from '@/components/ui/Toast';
 import { useMenuSettings } from '@/lib/menuStore';
+import { eventsToIcs, googleCalendarUrl, parseIcs } from '@/lib/calendarInterop';
 
 const MONTHS = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 const fmt = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -21,7 +22,7 @@ export default function CalPage() {
   const { user, isAdmin } = useAuth();
   const toast = useToast();
   const {
-    st, loaded, addEvent, updateEvent, removeEvent,
+    st, loaded, addEvent, importEvents, updateEvent, removeEvent,
     patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn,
   } = useSched();
   const { state: mainState, updateWidget } = useMainStore();
@@ -32,6 +33,8 @@ export default function CalPage() {
   const [picked, setPicked] = useState(() => fmt(now.getFullYear(), now.getMonth(), now.getDate()));
   const [menuSet] = useMenuSettings();   // 달 표기 방식 (v1.9 — 메뉴 관리의 스케줄러 행)
   const [catMng, setCatMng] = useState(false);
+  const [syncOpen, setSyncOpen] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
   // 일정 등록/수정 모달
   const [evOpen, setEvOpen] = useState(false);
   const [evId, setEvId] = useState<string | null>(null);   // null = 신규
@@ -45,6 +48,40 @@ export default function CalPage() {
   const canWrite = isAdmin || (st.allowMember && !!user);
   const canSee = (e: SchedEvent) =>
     isAdmin || e.visibility === 'public' || (e.visibility === 'member' && !!user);
+
+  const downloadCalendar = () => {
+    const visible = st.events.filter(canSee).sort((a, b) => a.start.localeCompare(b.start));
+    const blob = new Blob([eventsToIcs(visible)], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ohome-calendar.ics';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(`${visible.length}개 일정을 ICS로 내보냈습니다`);
+  };
+
+  const importCalendar = async (file: File) => {
+    try {
+      const parsed = parseIcs(await file.text());
+      if (parsed.length === 0) { toast('읽을 수 있는 일정이 없습니다'); return; }
+      const catId = st.cats[0]?.id ?? '';
+      const seen = new Set(st.events.map(e => `${e.title}\u0000${e.start}\u0000${e.end ?? ''}`));
+      let skipped = 0;
+      const fresh = parsed.filter(e => {
+        const sig = `${e.title}\u0000${e.start}\u0000${e.end ?? ''}`;
+        if (seen.has(sig)) { skipped += 1; return false; }
+        seen.add(sig);
+        return true;
+      }).map(e => ({ ...e, catId, visibility: 'private' as const }));
+      importEvents(fresh);
+      toast(`${fresh.length}개 가져옴${skipped ? ` · 중복 ${skipped}개 건너뜀` : ''}`);
+    } catch {
+      toast('ICS 파일을 읽지 못했습니다');
+    } finally {
+      if (importRef.current) importRef.current.value = '';
+    }
+  };
 
   const todayStr = fmt(now.getFullYear(), now.getMonth(), now.getDate());
   const firstDow = new Date(view.y, view.m, 1).getDay();
@@ -112,6 +149,11 @@ export default function CalPage() {
       <div className="page-head">
         <PageTitle>SCHEDULER</PageTitle>
         <EditableDesc k="cal-desc" def="월간 캘린더 + 투두 + D-day" />
+        {isAdmin && (
+          <button className="btn btn-ghost" style={{ marginLeft: 'auto' }} onClick={() => setSyncOpen(true)}>
+            캘린더 연동
+          </button>
+        )}
       </div>
 
       <div className="cal-layout">
@@ -265,10 +307,37 @@ export default function CalPage() {
               ]} />
             <KCheck label="매년 반복" checked={f.yearly} onChange={v => setF(s => ({ ...s, yearly: v }))} />
             {isAdmin && f.title.trim() && f.start && (
-              <button className="btn btn-ghost" style={{ padding: '5px 11px', fontSize: 10.5, marginLeft: 'auto' }}
-                onClick={promoteDday}>D-day 등록</button>
+              <>
+                <a className="btn btn-ghost" style={{ padding: '5px 11px', fontSize: 10.5, marginLeft: 'auto' }}
+                  href={googleCalendarUrl({ title: f.title.trim(), start: f.start, end: f.end || undefined, memo: f.memo.trim() || undefined })}
+                  target="_blank" rel="noreferrer">Google 캘린더에 추가 ↗</a>
+                <button className="btn btn-ghost" style={{ padding: '5px 11px', fontSize: 10.5 }}
+                  onClick={promoteDday}>D-day 등록</button>
+              </>
             )}
           </div>
+        </div>
+      </Modal>
+
+      <Modal open={syncOpen} onClose={() => setSyncOpen(false)} small title="캘린더 연동"
+        desc="Google 캘린더를 중심으로 연결하면 삼성 캘린더와 Notion Calendar에서도 같은 일정을 볼 수 있습니다."
+        actions={<button className="btn btn-dark" onClick={() => setSyncOpen(false)}>CLOSE</button>}>
+        <div style={{ display: 'grid', gap: 12 }}>
+          <div className="setup-way">
+            <b>O.HOME → Google·삼성</b>
+            <p>현재 볼 수 있는 일정을 ICS 파일로 내보냅니다. 휴대폰에서 파일을 열거나 Google 캘린더로 가져오세요.</p>
+            <button className="btn btn-dark" onClick={downloadCalendar}>ICS 내보내기</button>
+          </div>
+          <div className="setup-way">
+            <b>Google·삼성 → O.HOME</b>
+            <p>외부 캘린더에서 내보낸 ICS를 가져옵니다. 가져온 일정은 안전하게 ‘나만보기’로 저장하며 중복은 건너뜁니다.</p>
+            <input ref={importRef} type="file" accept=".ics,text/calendar" hidden
+              onChange={e => { const file = e.target.files?.[0]; if (file) void importCalendar(file); }} />
+            <button className="btn btn-ghost" onClick={() => importRef.current?.click()}>ICS 가져오기</button>
+          </div>
+          <p className="hint" style={{ margin: 0 }}>
+            자동 양방향 동기화는 Google OAuth 서버가 추가로 필요합니다. 현재 방식은 계정 권한을 맡기지 않는 수동 가져오기·내보내기입니다.
+          </p>
         </div>
       </Modal>
 
