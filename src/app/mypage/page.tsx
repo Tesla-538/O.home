@@ -17,6 +17,7 @@ import { ColorField } from '@/components/ui/ColorField';
 import { fileDrop } from '@/lib/dnd';
 import { useToast } from '@/components/ui/Toast';
 import { PageTitle, EditableDesc } from '@/components/ui/PageText';
+import { ProfileAvatarImage } from '@/components/ui/ProfileAvatarImage';
 
 export default function MyPage() {
   const router = useRouter();
@@ -96,8 +97,7 @@ export default function MyPage() {
                 border: '1px solid var(--line)',
               }} onClick={() => { setAvColor(user.avatarColor ?? '#6b7280'); setAvOpen(true); }} data-tip="프로필 이미지 변경"
                 {...fileDrop(fl => changeAvatar(fl[0]))}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {avatarSrc && <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                {avatarSrc && <ProfileAvatarImage src={avatarSrc} />}
               </div>
               <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
                 onChange={e => { changeAvatar(e.target.files?.[0]); e.target.value = ''; }} />
