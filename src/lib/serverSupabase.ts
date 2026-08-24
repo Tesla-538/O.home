@@ -26,7 +26,9 @@ export function serviceSupabase(): SupabaseClient {
 export async function requireAdmin(request?: Request): Promise<User> {
   const bearer = request?.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
   const user = bearer
-    ? (await serviceSupabase().auth.getUser(bearer)).data.user
+    ? (await createClient(url(), anon(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      }).auth.getUser(bearer)).data.user
     : await serverUser();
   if (!user) throw new Error('UNAUTHORIZED');
   const sb = serviceSupabase();
