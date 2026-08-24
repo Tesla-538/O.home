@@ -26,6 +26,7 @@ interface AuthCtx {
   signup: (id: string, password: string, nickname: string, inviteCode: string, email?: string) => Promise<Result>;
   findId: (email: string) => Promise<Result & { foundId?: string }>;
   resetPassword: (email: string) => Promise<Result & { tempPassword?: string }>;
+  completePasswordReset: (password: string) => Promise<Result>;
   logout: () => Promise<void>;
   updateProfile: (patch: { nickname?: string; avatarUrl?: string | null; avatarColor?: string | null; currentPassword?: string; newPassword?: string }) => Promise<Result>;
   /** 서버(DB) 연결 없이 브라우저 계정으로 도는 중인지 — 개발·오프라인 */
@@ -166,6 +167,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { ok: true, tempPassword: temp };
   }, [server, be]);
 
+  const completePasswordReset = useCallback(async (password: string): Promise<Result> => {
+    if (password.length < 6) return { ok: false, error: '새 비밀번호는 6자 이상이어야 합니다.' };
+    if (!server || !be) return { ok: false, error: '서버에 연결된 홈에서만 사용할 수 있습니다.' };
+    return be.updatePassword(password);
+  }, [server, be]);
+
   const updateProfile = useCallback(async (patch: {
     nickname?: string; avatarUrl?: string | null; avatarColor?: string | null; currentPassword?: string; newPassword?: string;
   }): Promise<Result> => {
@@ -218,7 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <Ctx.Provider value={{
       user, isAdmin: user?.role === 'admin',
-      login, signup, findId, resetPassword, logout, updateProfile, mock: !server,
+      login, signup, findId, resetPassword, completePasswordReset, logout, updateProfile, mock: !server,
     }}>
       {children}
     </Ctx.Provider>

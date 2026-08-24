@@ -9,6 +9,13 @@ import {
 const BUCKET = 'ohome';
 const PROBE = ['profiles', 'site_settings', 'posts', 'characters'];
 
+function authError(message: string): string {
+  if (/email not confirmed/i.test(message)) return '이메일 인증이 끝나지 않았습니다 — 관리자에게 인증 설정을 확인해 달라고 해 주세요.';
+  if (/invalid login credentials/i.test(message)) return '이메일 또는 비밀번호가 올바르지 않습니다.';
+  if (/rate limit/i.test(message)) return '요청이 너무 많습니다 — 잠시 뒤 다시 시도해 주세요.';
+  return message;
+}
+
 export async function createSupabaseBackend(
   cfg: Extract<BackendConfig, { kind: 'supabase' }>,
 ): Promise<Backend> {
@@ -82,7 +89,7 @@ export async function createSupabaseBackend(
 
     async signIn(id, password) {
       const { error } = await sb.auth.signInWithPassword({ email: id, password });
-      return error ? { ok: false, error: error.message } : { ok: true };
+      return error ? { ok: false, error: authError(error.message) } : { ok: true };
     },
 
     async signUp(id, password, nickname) {
@@ -93,8 +100,14 @@ export async function createSupabaseBackend(
     async signOut() { await sb.auth.signOut(); },
 
     async resetPassword(email) {
-      const { error } = await sb.auth.resetPasswordForEmail(email);
-      return error ? { ok: false, error: error.message } : { ok: true };
+      const redirectTo = typeof window === 'undefined' ? undefined : `${window.location.origin}/reset-password`;
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+      return error ? { ok: false, error: authError(error.message) } : { ok: true };
+    },
+
+    async updatePassword(password) {
+      const { error } = await sb.auth.updateUser({ password });
+      return error ? { ok: false, error: authError(error.message) } : { ok: true };
     },
 
     async updateProfile(patch) {
