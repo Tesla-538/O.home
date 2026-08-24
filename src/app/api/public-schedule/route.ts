@@ -27,7 +27,6 @@ export async function GET() {
   } catch (error) {
     console.error('[ohome] public schedule projection failed', error);
     return Response.json({
-      error: error instanceof Error ? error.message : 'PUBLIC_SCHEDULE_FAILED',
       state: { events: [], cats: [], allowMember: false, todoMigrated: true },
     },
       { headers: { 'Cache-Control': 'private, no-store, max-age=0' } });
