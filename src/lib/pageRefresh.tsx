@@ -13,6 +13,7 @@ export function refreshPage() {
 
 type RouterLike = { push: (href: string) => void };
 let navTimer: ReturnType<typeof setTimeout> | null = null;
+let enterTimer: ReturnType<typeof setTimeout> | null = null;
 
 type TransitionDocument = Document & {
   startViewTransition?: (update: () => void | Promise<void>) => unknown;
@@ -49,7 +50,7 @@ export function navigatePage(router: RouterLike, href: string) {
     router.push(href);
     // pathname이 같고 query만 달라지는 이동도 화면이 숨은 채 남지 않게 한다.
     setTimeout(() => document.documentElement.classList.remove('route-leaving'), 260);
-  }, 120);
+  }, 180);
 }
 
 /** children에 key를 걸어 remount — layout에서 <main> 안을 감싼다 */
@@ -57,7 +58,23 @@ export function PageFrame({ children }: { children: React.ReactNode }) {
   const [n, setN] = useState(0);
   const pathname = usePathname();
   useEffect(() => {
-    document.documentElement.classList.remove('route-leaving');
+    const root = document.documentElement;
+    root.classList.remove('route-leaving');
+    // startViewTransition을 지원하지 않는 브라우저와 페이지 내부 router.push 이동도
+    // 새 화면이 들어오는 동작은 항상 보이게 한다.
+    root.classList.remove('route-entering');
+    void root.offsetWidth;
+    root.classList.add('route-entering');
+    if (enterTimer) clearTimeout(enterTimer);
+    enterTimer = setTimeout(() => {
+      root.classList.remove('route-entering');
+      enterTimer = null;
+    }, 460);
+    return () => {
+      if (enterTimer) clearTimeout(enterTimer);
+      enterTimer = null;
+      root.classList.remove('route-entering');
+    };
   }, [pathname]);
   useEffect(() => {
     const bump = () => {
