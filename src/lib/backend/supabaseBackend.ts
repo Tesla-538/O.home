@@ -113,11 +113,14 @@ export async function createSupabaseBackend(
     async updateProfile(patch) {
       const { data } = await sb.auth.getUser();
       if (!data.user) return { ok: false, error: '로그인이 필요합니다.' };
-      const row: Record<string, unknown> = { id: data.user.id };
+      // profiles.nickname은 NOT NULL이다. 일부 필드만 바꿀 때 upsert를 쓰면 INSERT 경로에서
+      // nickname 누락 검사가 먼저 걸려 아바타·색상 저장이 실패한다. 기존 사용자 행만 부분 수정한다.
+      const row: Record<string, unknown> = {};
       if (patch.nickname !== undefined) row.nickname = patch.nickname;
       if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl;
       if (patch.avatarColor !== undefined) row.avatar_color = patch.avatarColor;
-      const { error } = await sb.from('profiles').upsert(row, { onConflict: 'id' });
+      if (Object.keys(row).length === 0) return { ok: true };
+      const { error } = await sb.from('profiles').update(row).eq('id', data.user.id);
       return error ? { ok: false, error: error.message } : { ok: true };
     },
 
