@@ -3,9 +3,9 @@ import { googleConfig } from '@/lib/googleCalendarServer';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await requireAdmin();
+    const user = await requireAdmin(request);
     const { data } = await serviceSupabase().from('calendar_connections')
       .select('calendar_name,last_synced_at,channel_expiration').eq('user_id', user.id).maybeSingle();
     return Response.json({
@@ -21,9 +21,9 @@ export async function GET() {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
-    const user = await requireAdmin();
+    const user = await requireAdmin(request);
     const { error } = await serviceSupabase().from('calendar_connections').delete().eq('user_id', user.id);
     if (error) throw error;
     return Response.json({ connected: false });

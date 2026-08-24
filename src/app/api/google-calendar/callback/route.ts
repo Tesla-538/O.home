@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   calendarName, encryptToken, exchangeCode, syncGoogleCalendar, watchGoogleCalendar,
 } from '@/lib/googleCalendarServer';
-import { requireAdmin, serviceSupabase } from '@/lib/serverSupabase';
+import { serviceSupabase } from '@/lib/serverSupabase';
 
 export const runtime = 'nodejs';
 
@@ -21,14 +21,13 @@ export async function GET(request: NextRequest) {
     const expectedUser = request.cookies.get('ohome_gcal_uid')?.value;
     if (!code || !state || !expected || state !== expected) return finish(request, 'invalid-state');
 
-    const user = await requireAdmin();
-    if (!expectedUser || expectedUser !== user.id) return finish(request, 'invalid-user');
+    if (!expectedUser) return finish(request, 'invalid-user');
 
     const redirectUri = `${request.nextUrl.origin}/api/google-calendar/callback`;
     const token = await exchangeCode(code, redirectUri);
     const sb = serviceSupabase();
     const { data: old } = await sb.from('calendar_connections')
-      .select('refresh_token_enc').eq('user_id', user.id).maybeSingle();
+      .select('refresh_token_enc').eq('user_id', expectedUser).maybeSingle();
     const refreshTokenEnc = token.refresh_token
       ? await encryptToken(token.refresh_token)
       : old?.refresh_token_enc;
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
     const name = await calendarName(token.access_token!);
     const now = new Date().toISOString();
     const { error } = await sb.from('calendar_connections').upsert({
-      user_id: user.id,
+      user_id: expectedUser,
       provider: 'google',
       refresh_token_enc: refreshTokenEnc,
       calendar_id: 'primary',
@@ -46,8 +45,8 @@ export async function GET(request: NextRequest) {
     });
     if (error) throw error;
 
-    await syncGoogleCalendar(user.id);
-    await watchGoogleCalendar(user.id, request.nextUrl.origin);
+    await syncGoogleCalendar(expectedUser);
+    await watchGoogleCalendar(expectedUser, request.nextUrl.origin);
     return finish(request, 'connected');
   } catch (error) {
     console.error('[ohome] Google Calendar callback failed', error);

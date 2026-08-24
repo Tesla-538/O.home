@@ -7,7 +7,7 @@ export const maxDuration = 30;
 
 export async function POST(request: Request) {
   try {
-    const user = await requireAdmin();
+    const user = await requireAdmin(request);
     const body = await request.json().catch(() => ({})) as { state?: CalendarState };
     const state = await syncGoogleCalendar(user.id, body.state);
     return Response.json({ state, syncedAt: new Date().toISOString() });

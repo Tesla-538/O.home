@@ -25,6 +25,16 @@ interface GoogleCalendarStatus {
   lastSyncedAt?: string | null;
 }
 
+async function googleAuthHeaders(): Promise<Record<string, string>> {
+  const { createBrowserClient } = await import('@supabase/ssr');
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+  if (!url || !key) return {};
+  const sb = createBrowserClient(url, key);
+  const { data } = await sb.auth.getSession();
+  return data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {};
+}
+
 export default function CalPage() {
   const { user, isAdmin } = useAuth();
   const toast = useToast();
@@ -61,7 +71,7 @@ export default function CalPage() {
   const loadGoogleStatus = useCallback(async () => {
     if (!isAdmin) return;
     try {
-      const res = await fetch('/api/google-calendar/status', { cache: 'no-store' });
+      const res = await fetch('/api/google-calendar/status', { cache: 'no-store', headers: await googleAuthHeaders() });
       if (!res.ok) throw new Error();
       setGoogleStatus(await res.json() as GoogleCalendarStatus);
     } catch {
@@ -76,7 +86,7 @@ export default function CalPage() {
     try {
       const res = await fetch('/api/google-calendar/sync', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...await googleAuthHeaders() },
         body: JSON.stringify(source ? { state: source } : {}),
       });
       const body = await res.json() as { state?: SchedState; syncedAt?: string; error?: string };
@@ -174,11 +184,22 @@ export default function CalPage() {
 
   const disconnectGoogle = async () => {
     if (!window.confirm('Google 캘린더 자동 연동을 해제할까요? 기존 일정은 삭제되지 않습니다.')) return;
-    const res = await fetch('/api/google-calendar/status', { method: 'DELETE' });
+    const res = await fetch('/api/google-calendar/status', { method: 'DELETE', headers: await googleAuthHeaders() });
     if (!res.ok) { toast('연결을 해제하지 못했습니다'); return; }
     autoReady.current = false;
     setGoogleStatus(s => s ? { ...s, connected: false, calendarName: null, lastSyncedAt: null } : s);
     toast('Google 캘린더 연결을 해제했습니다');
+  };
+
+  const connectGoogle = async () => {
+    try {
+      const res = await fetch('/api/google-calendar/connect', { method: 'POST', headers: await googleAuthHeaders() });
+      const body = await res.json() as { url?: string; error?: string };
+      if (!res.ok || !body.url) throw new Error(body.error || 'Google 연결을 시작하지 못했습니다');
+      window.location.href = body.url;
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Google 연결을 시작하지 못했습니다');
+    }
   };
 
   const todayStr = fmt(now.getFullYear(), now.getMonth(), now.getDate());
@@ -450,7 +471,7 @@ export default function CalPage() {
                   삼성 캘린더와 Notion Calendar에는 같은 Google 계정을 연결하세요.
                 </p>
                 <button className="btn btn-dark" disabled={!googleStatus?.configured}
-                  onClick={() => { window.location.href = '/api/google-calendar/connect'; }}>
+                  onClick={() => void connectGoogle()}>
                   {googleStatus === null ? '확인 중…' : googleStatus.configured ? 'Google 계정 연결' : '서버 설정 필요'}
                 </button>
               </>

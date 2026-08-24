@@ -23,8 +23,11 @@ export function serviceSupabase(): SupabaseClient {
   return createClient(url(), key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-export async function requireAdmin(): Promise<User> {
-  const user = await serverUser();
+export async function requireAdmin(request?: Request): Promise<User> {
+  const bearer = request?.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const user = bearer
+    ? (await serviceSupabase().auth.getUser(bearer)).data.user
+    : await serverUser();
   if (!user) throw new Error('UNAUTHORIZED');
   const sb = serviceSupabase();
   const { data } = await sb.from('profiles').select('role').eq('id', user.id).maybeSingle();
