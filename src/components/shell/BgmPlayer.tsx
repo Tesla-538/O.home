@@ -4,6 +4,8 @@
 // 브라우저 정책상 소리 재생은 사용자의 첫 클릭부터 시작
 import React, { useEffect, useRef, useState } from 'react';
 import { useBgm } from '@/lib/bgmStore';
+import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 /** 흐르는 글씨 — 재생 중이고 글자가 넘칠 때만 무한 스크롤, 평소엔 말줄임.
  *  넘침 판정은 숨김 측정용 스팬으로 — 마운트 직후(레이아웃·폰트 확정 전) 1회 측정만 하면
@@ -60,11 +62,18 @@ const ListIcon = () => (
 );
 
 export function BgmPlayer() {
-  const { state } = useBgm();
+  const { state, addTrack } = useBgm();
+  const { isAdmin } = useAuth();
+  const router = useRouter();
   const { tracks, settings } = state;
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [listOpen, setListOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newUrl, setNewUrl] = useState('');
+  const [addError, setAddError] = useState('');
   const [volume, setVolume] = useState(settings.volume);
   // 접기 상태 — 방문자별 기억 (4.1)
   const [folded, setFolded] = useState(false);
@@ -245,6 +254,18 @@ export function BgmPlayer() {
     window.addEventListener('pointerup', up);
   };
 
+  const submitTrack = () => {
+    if (!addTrack(newTitle, newDesc, newUrl)) {
+      setAddError('제목과 올바른 YouTube 링크를 입력해 주세요.');
+      return;
+    }
+    setNewTitle('');
+    setNewDesc('');
+    setNewUrl('');
+    setAddError('');
+    setAdding(false);
+  };
+
   if (!settings.enabled || tracks.length === 0) return null;
 
   return (
@@ -285,13 +306,38 @@ export function BgmPlayer() {
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: -1 }} onClick={() => setListOpen(false)} />
           <div className="bgm-list on">
-            <div className="h">BGM LIST</div>
+            <div className="h">BGM LIST <span>{tracks.length}</span></div>
             {tracks.map((t, i) => (
               <div key={t.id} className={`it ${i === idx ? 'on' : ''}`}
                 onClick={() => { playAt(i); setListOpen(false); }}>
                 <b>{t.title}</b><small>{t.desc}</small>
               </div>
             ))}
+            {isAdmin && (
+              <div className="bgm-admin" onClick={e => e.stopPropagation()}>
+                {adding ? (
+                  <div className="bgm-add-form">
+                    <input aria-label="곡 제목" placeholder="곡 제목" value={newTitle}
+                      onChange={e => { setNewTitle(e.target.value); setAddError(''); }} />
+                    <input aria-label="가수 또는 설명" placeholder="가수 / 설명 (선택)" value={newDesc}
+                      onChange={e => setNewDesc(e.target.value)} />
+                    <input aria-label="YouTube 링크" placeholder="YouTube 링크" value={newUrl}
+                      onChange={e => { setNewUrl(e.target.value); setAddError(''); }}
+                      onKeyDown={e => { if (e.key === 'Enter') submitTrack(); }} />
+                    {addError && <p>{addError}</p>}
+                    <div>
+                      <button className="save" onClick={submitTrack}>추가</button>
+                      <button onClick={() => { setAdding(false); setAddError(''); }}>취소</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button className="bgm-add-open" onClick={() => setAdding(true)}>＋ 새 곡 추가</button>
+                )}
+                <button className="bgm-manage" onClick={() => { setListOpen(false); router.push('/settings?tab=BGM'); }}>
+                  순서 변경 · 수정 · 삭제
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
