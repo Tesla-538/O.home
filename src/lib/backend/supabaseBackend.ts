@@ -113,14 +113,32 @@ export async function createSupabaseBackend(
     async updateProfile(patch) {
       const { data } = await sb.auth.getUser();
       if (!data.user) return { ok: false, error: '로그인이 필요합니다.' };
-      // profiles.nickname은 NOT NULL이다. 일부 필드만 바꿀 때 upsert를 쓰면 INSERT 경로에서
-      // nickname 누락 검사가 먼저 걸려 아바타·색상 저장이 실패한다. 기존 사용자 행만 부분 수정한다.
+      // 일부 오래된 설치에서는 Auth 계정은 있지만 profiles 행이 없을 수 있다.
+      // 행이 있으면 부분 수정하고, 없으면 NOT NULL인 nickname까지 채워 본인 행을 복구한다.
       const row: Record<string, unknown> = {};
       if (patch.nickname !== undefined) row.nickname = patch.nickname;
       if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl;
       if (patch.avatarColor !== undefined) row.avatar_color = patch.avatarColor;
       if (Object.keys(row).length === 0) return { ok: true };
-      const { error } = await sb.from('profiles').update(row).eq('id', data.user.id);
+
+      const { data: profile, error: readError } = await sb.from('profiles')
+        .select('id').eq('id', data.user.id).maybeSingle();
+      if (readError) return { ok: false, error: readError.message };
+
+      if (profile) {
+        const { error } = await sb.from('profiles').update(row).eq('id', data.user.id);
+        return error ? { ok: false, error: error.message } : { ok: true };
+      }
+
+      const nickname = (patch.nickname
+        ?? data.user.user_metadata?.nickname
+        ?? data.user.email?.split('@')[0]
+        ?? 'user') as string;
+      const { error } = await sb.from('profiles').insert({
+        id: data.user.id,
+        nickname,
+        ...row,
+      });
       return error ? { ok: false, error: error.message } : { ok: true };
     },
 
