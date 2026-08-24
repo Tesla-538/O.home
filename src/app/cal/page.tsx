@@ -214,7 +214,7 @@ export default function CalPage() {
     cells.push({ y: view.m === 11 ? view.y + 1 : view.y, m, d: idx, dimmed: true });
   }
 
-  const eventsOn = (date: string) => st.events.filter(e => canSee(e) && eventOnDate(e, date));
+  const eventsOn = (date: string) => st.events.filter(e => e.kind !== 'todo' && canSee(e) && eventOnDate(e, date));
   // 오른쪽 카드가 보여 줄 날짜 — 달력 칸을 누르면 바뀐다 (v2.0)
   const pickedEvents = eventsOn(picked);
 
@@ -277,7 +277,7 @@ export default function CalPage() {
           {(() => {
             const today = fmt(now.getFullYear(), now.getMonth(), now.getDate());
             const list = st.events
-              .filter(canSee)
+              .filter(e => e.kind !== 'todo' && canSee(e))
               .map(e => {
                 let d = e.start;
                 if (e.repeat === 'yearly') {
@@ -375,7 +375,7 @@ export default function CalPage() {
             )}
           </div>
           {ddayConf && <DdayWidget conf={ddayConf} />}
-          {todoConf && <TodoWidget conf={todoConf} />}
+          {todoConf && <TodoWidget conf={todoConf} date={picked} />}
           <div className="panel widget">
             <h4>카테고리 {isAdmin && <span className="more" onClick={() => setCatMng(true)}>관리 ›</span>}</h4>
             {st.cats.map(c => (

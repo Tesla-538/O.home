@@ -14,6 +14,8 @@ export interface CalendarEvent {
   memo?: string;
   visibility: 'public' | 'member' | 'private';
   repeat: 'none' | 'yearly';
+  kind?: 'event' | 'todo';
+  done?: boolean;
   updatedAt?: string;
   googleEventId?: string;
   googleUpdatedAt?: string;
@@ -24,6 +26,7 @@ export interface CalendarState {
   cats: { id: string; label: string; color: string }[];
   allowMember: boolean;
   googleDeletedIds?: string[];
+  todoMigrated?: boolean;
 }
 
 interface Connection {
@@ -144,12 +147,15 @@ const plusDay = (date: string, amount: number) => {
 function toGoogle(e: CalendarEvent) {
   const endInclusive = e.end && e.end >= e.start ? e.end : e.start;
   return {
-    summary: e.title,
+    summary: e.kind === 'todo' ? `${e.done ? '☑' : '☐'} ${e.title}` : e.title,
     description: e.memo ?? '',
     start: { date: e.start },
     end: { date: plusDay(endInclusive, 1) },
     recurrence: e.repeat === 'yearly' ? ['RRULE:FREQ=YEARLY'] : undefined,
-    extendedProperties: { private: { ohomeId: e.id, ohomeVisibility: e.visibility, ohomeCatId: e.catId } },
+    extendedProperties: { private: {
+      ohomeId: e.id, ohomeVisibility: e.visibility, ohomeCatId: e.catId,
+      ohomeKind: e.kind ?? 'event', ohomeDone: e.done ? 'true' : 'false',
+    } },
   };
 }
 
@@ -159,14 +165,17 @@ function fromGoogle(g: GoogleEvent, fallbackCat: string): CalendarEvent | null {
   const rawEnd = g.end?.date ?? g.end?.dateTime?.slice(0, 10);
   const end = g.end?.date && rawEnd ? plusDay(rawEnd, -1) : rawEnd;
   const p = g.extendedProperties?.private ?? {};
+  const kind = p.ohomeKind === 'todo' ? 'todo' : 'event';
+  const rawTitle = g.summary?.trim() || '(제목 없음)';
   return {
     id: p.ohomeId || `gcal-${g.id}`,
-    title: g.summary?.trim() || '(제목 없음)', start,
+    title: kind === 'todo' ? rawTitle.replace(/^[☐☑]\s*/, '') : rawTitle, start,
     end: end && end !== start ? end : undefined,
     catId: p.ohomeCatId || fallbackCat,
     memo: g.description?.trim() || undefined,
     visibility: (['public', 'member', 'private'].includes(p.ohomeVisibility) ? p.ohomeVisibility : 'private') as CalendarEvent['visibility'],
     repeat: g.recurrence?.some(x => /FREQ=YEARLY/.test(x)) ? 'yearly' : 'none',
+    kind, done: kind === 'todo' ? p.ohomeDone === 'true' || /^☑/.test(rawTitle) : undefined,
     googleEventId: g.id,
     googleUpdatedAt: g.updated,
     updatedAt: g.updated,

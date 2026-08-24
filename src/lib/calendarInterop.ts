@@ -50,7 +50,7 @@ export function eventsToIcs(events: SchedEvent[]): string {
       `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${compactDate(event.start)}`,
       `DTEND;VALUE=DATE:${compactDate(shiftDate(inclusiveEnd, 1))}`,
-      `SUMMARY:${escapeIcs(event.title)}`,
+      `SUMMARY:${escapeIcs(event.kind === 'todo' ? `${event.done ? '☑' : '☐'} ${event.title}` : event.title)}`,
     );
     if (event.memo) rows.push(`DESCRIPTION:${escapeIcs(event.memo)}`);
     if (event.repeat === 'yearly') rows.push('RRULE:FREQ=YEARLY');

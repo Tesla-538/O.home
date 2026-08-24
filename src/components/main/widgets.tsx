@@ -10,12 +10,12 @@ import { Modal } from '@/components/ui/Modal';
 import { KTextarea, KSelect, KStep, KCheck } from '@/components/ui/Kit';
 import { ColorField } from '@/components/ui/ColorField';
 import { useFonts } from '@/lib/fontStore';
-import { BannerEditor, BannerSlide, DEMO_SLIDES, DdayEditor, DecoEditor, TodoEditor, TodoSetItem } from '@/components/main/widgetEditors';
+import { BannerEditor, BannerSlide, DEMO_SLIDES, DdayEditor, DecoEditor, TodoEditor } from '@/components/main/widgetEditors';
 import { CroppedBlobImg, CropValue } from '@/components/ui/CropEditor';
 import { useLocalList } from '@/lib/postStore';
 import { RoadItem, ROAD_SEED, BackupPost, BACKUP_SEED } from '@/lib/galleryStore';
 import { DiaryPost, DIARY_SEED, Mood, MOOD_SEED, moodTint } from '@/lib/diaryStore';
-import { useSched, eventColor } from '@/lib/schedStore';
+import { useSched, eventColor, eventOnDate } from '@/lib/schedStore';
 import { StickyMemo, MEMO_SEED, MEMO_SIZE_W, useMemoSettings } from '@/lib/memoStore';
 import { BlobImg, useBlobUrl } from '@/lib/blobStore';
 import { normalizeInternalLink } from '@/lib/link';
@@ -261,16 +261,15 @@ export function DdayWidget({ conf }: { conf: WidgetConf }) {
 }
 
 /* ---------- TO-DO — 관리자 클릭 시 관리 모달 (4.12 확정) ---------- */
-export function TodoWidget({ conf }: { conf: WidgetConf }) {
+export function TodoWidget({ conf, date }: { conf: WidgetConf; date?: string }) {
   const { isAdmin } = useAuth();
-  const { editOn, updateWidget } = useMainStore();
+  const { editOn } = useMainStore();
+  const { st, updateEvent } = useSched();
   const [open, setOpen] = useState(false);
-  const items = (conf.settings.items as TodoSetItem[]) ?? [];
+  const now = new Date();
+  const shownDate = date ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const items = st.events.filter(e => e.kind === 'todo' && eventOnDate(e, shownDate));
   useEditEvent(conf.id, () => setOpen(true));   // 편집모드 우클릭 → 설정 (v1.9)
-
-  const setItems = (next: TodoSetItem[]) => {
-    updateWidget(conf.id, { settings: { ...conf.settings, items: next } }, { persist: true });
-  };
 
   return (
     <div className="panel widget" style={{ cursor: isAdmin ? 'pointer' : undefined }}
@@ -279,20 +278,20 @@ export function TodoWidget({ conf }: { conf: WidgetConf }) {
         if ((e.target as HTMLElement).closest('.k-check') || (e.target as HTMLElement).closest('.modal-ov')) return;
         setOpen(true);
       }}>
-      <h4>TO-DO {isAdmin && <span className="more">관리 ›</span>}</h4>
-      {items.map((it, i) => (
-        <label className={`todo-row k-check ${it.done ? 'done' : ''}`} key={`${it.text}-${i}`}
+      <h4><span>TO-DO{date ? ` · ${date.slice(5).replace('-', '.')}` : ''}</span>{isAdmin && <span className="more">관리 ›</span>}</h4>
+      {items.map(it => (
+        <label className={`todo-row k-check ${it.done ? 'done' : ''}`} key={it.id}
           style={!isAdmin ? { pointerEvents: 'none' } : undefined}>
-          <input type="checkbox" checked={it.done}
-            onChange={ev => setItems(items.map((x, j) => (j === i ? { ...x, done: ev.target.checked } : x)))} />
-          <span className="box" /><span>{it.text}</span>
+          <input type="checkbox" checked={!!it.done}
+            onChange={ev => updateEvent(it.id, { done: ev.target.checked })} />
+          <span className="box" /><span>{it.title}</span>
         </label>
       ))}
-      {items.length === 0 && <p className="hint">할 일이 없습니다</p>}
+      {items.length === 0 && <p className="hint">{date ? '이 날짜에 할 일이 없습니다' : '오늘 할 일이 없습니다'}</p>}
 
       <Modal open={open} onClose={() => setOpen(false)} title="투두 관리"
         desc="추가 · 체크 · 삭제 · ⠿ 드래그로 순서 조정 — 환경설정 「위젯」에서도 관리 가능">
-        {open && <TodoEditor conf={conf} />}
+        {open && <TodoEditor conf={conf} date={date} />}
         <div className="modal-actions">
           <button className="btn btn-dark" onClick={() => setOpen(false)}>CLOSE</button>
         </div>
@@ -310,7 +309,7 @@ export function UpcomingWidget() {
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   // 오늘 포함 이후 일정 — 매년 반복은 올해 날짜로 환산해 가장 가까운 3개
   const upcoming = st.events
-    .filter(e => isAdmin || e.visibility === 'public' || (e.visibility === 'member' && !!user))
+    .filter(e => e.kind !== 'todo' && (isAdmin || e.visibility === 'public' || (e.visibility === 'member' && !!user)))
     .map(e => {
       let d = e.start;
       if (e.repeat === 'yearly') {

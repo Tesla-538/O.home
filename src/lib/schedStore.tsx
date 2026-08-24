@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { newId } from './postStore';
 import type { Visibility } from './charStore';
-import { getRawSetting, setSetting } from './settingStore';
+import { getRawSetting, onSettingChange, setSetting } from './settingStore';
 
 export interface SchedCategory { id: string; label: string; color: string }
 
@@ -24,6 +24,8 @@ export interface SchedEvent {
   memo?: string;
   visibility: Visibility;
   repeat: 'none' | 'yearly'; // 매년 반복
+  kind?: 'event' | 'todo';   // 미지정은 기존 일반 일정 · todo는 날짜별 TO-DO
+  done?: boolean;            // TO-DO 완료 여부
   updatedAt?: string;         // Google Calendar 충돌 해결용 최종 수정 시각
   googleEventId?: string;
   googleUpdatedAt?: string;
@@ -37,6 +39,7 @@ export interface SchedState {
   cats: SchedCategory[];
   allowMember: boolean;      // 회원도 일정 등록 허용 (4.12 등록 권한 옵션)
   googleDeletedIds?: string[];
+  todoMigrated?: boolean;    // 구형 mainStore TO-DO를 일정 저장소로 1회 이관
 }
 
 export type NewSchedEvent = Omit<SchedEvent, 'id' | 'updatedAt' | 'googleEventId' | 'googleUpdatedAt'>;
@@ -50,10 +53,40 @@ export function useSched() {
   useEffect(() => {
     try {
       const raw = getRawSetting(KEY);
-      if (raw) setSt({ ...DEFAULTS, ...JSON.parse(raw) });
+      let next: SchedState = raw ? { ...DEFAULTS, ...JSON.parse(raw) } : { ...DEFAULTS };
+      if (!next.todoMigrated) {
+        try {
+          const mainRaw = getRawSetting('ohome.main.v1');
+          const main = mainRaw ? JSON.parse(mainRaw) as { widgets?: { type?: string; settings?: { items?: { text?: string; done?: boolean; date?: string }[] } }[] } : null;
+          const legacy = main?.widgets?.find(w => w.type === 'todo')?.settings?.items ?? [];
+          const now = new Date();
+          const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          const catId = next.cats[0]?.id ?? '';
+          const migrated = legacy.filter(x => x.text?.trim()).map(x => ({
+            id: newId(), title: x.text!.trim(), start: x.date || today, catId,
+            visibility: 'public' as const, repeat: 'none' as const,
+            kind: 'todo' as const, done: !!x.done, updatedAt: new Date().toISOString(),
+          }));
+          next = { ...next, events: [...next.events, ...migrated], todoMigrated: true };
+          setSetting(KEY, next);
+        } catch {
+          next = { ...next, todoMigrated: true };
+        }
+      }
+      setSt(next);
     } catch { /* 기본값 */ }
     setLoaded(true);
   }, []);
+  // 캘린더 본문·메인 TO-DO·설정 에디터가 각각 훅을 사용하므로, 한 곳의 저장을 나머지에도 즉시 반영
+  useEffect(() => onSettingChange(key => {
+    if (key !== KEY) return;
+    queueMicrotask(() => {
+      try {
+        const raw = getRawSetting(KEY);
+        if (raw) setSt({ ...DEFAULTS, ...JSON.parse(raw) });
+      } catch { /* 현재 상태 유지 */ }
+    });
+  }), []);
   const apply = useCallback((fn: (s: SchedState) => SchedState) => {
     setSt(s => {
       const n = fn(s);

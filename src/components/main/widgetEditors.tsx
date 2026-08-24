@@ -13,6 +13,7 @@ import { normalizeInternalLink } from '@/lib/link';
 import { KSelect } from '@/components/ui/Kit';
 import { ColorField } from '@/components/ui/ColorField';
 import { useFonts } from '@/lib/fontStore';
+import { useSched, eventOnDate } from '@/lib/schedStore';
 
 /* ---------- MEMO · 자유 텍스트 — settings.text (+ freetext: 폰트·크기·색·정렬, v1.9) ---------- */
 export function TextSettingEditor({ conf }: { conf: WidgetConf }) {
@@ -129,45 +130,52 @@ export function DdayEditor({ conf }: { conf: WidgetConf }) {
   );
 }
 
-/* ---------- TO-DO — settings.items: {text, done}[] ---------- */
-export interface TodoSetItem { text: string; done: boolean }
+/* ---------- TO-DO — 스케줄러 일정 저장소의 kind:'todo' 항목 ---------- */
+export interface TodoSetItem { text: string; done: boolean; date?: string } // 구버전 이관 타입
 
-export function TodoEditor({ conf }: { conf: WidgetConf }) {
-  const { updateWidget } = useMainStore();
+export function TodoEditor({ conf: _conf, date }: { conf: WidgetConf; date?: string }) {
+  const { st, addEvent, updateEvent, removeEvent, reorderOn } = useSched();
   const [newText, setNewText] = useState('');
-  const items = (conf.settings.items as TodoSetItem[]) ?? [];
-  const set = (next: TodoSetItem[]) =>
-    updateWidget(conf.id, { settings: { ...conf.settings, items: next } }, { persist: true });
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const [newDate, setNewDate] = useState(date ?? today);
+  useEffect(() => { if (date) setNewDate(date); }, [date]);
+  const items = st.events.filter(e => e.kind === 'todo' && (!date || eventOnDate(e, date)));
 
   const add = () => {
-    if (!newText.trim()) return;
-    set([...items, { text: newText.trim(), done: false }]);
+    if (!newText.trim() || !newDate) return;
+    addEvent({
+      title: newText.trim(), start: newDate, catId: st.cats[0]?.id ?? '',
+      visibility: 'public', repeat: 'none', kind: 'todo', done: false,
+    });
     setNewText('');
   };
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 150px auto', gap: 8, marginBottom: 12 }}>
         <KInput placeholder="새 할 일" value={newText} onChange={e => setNewText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') add(); }} />
+        <KDate value={newDate} onChange={setNewDate} />
         <button className="btn btn-dark" style={{ whiteSpace: 'nowrap' }} onClick={add}>ADD</button>
       </div>
       <DragList
         items={items}
-        keyOf={it => `${it.text}`}
-        onReorder={set}
-        render={(it, i) => (
+        keyOf={it => it.id}
+        onReorder={next => reorderOn(next.map(it => it.id))}
+        render={it => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 4px', borderBottom: '1px dashed var(--line)' }}>
             <span className="drag-h">⠿</span>
-            <KCheck checked={it.done} onChange={v => set(items.map((x, j) => (j === i ? { ...x, done: v } : x)))} />
-            <span style={{ fontSize: 13, textDecoration: it.done ? 'line-through' : undefined, color: it.done ? 'var(--faint)' : undefined }}>{it.text}</span>
+            <KCheck checked={!!it.done} onChange={v => updateEvent(it.id, { done: v })} />
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13, textDecoration: it.done ? 'line-through' : undefined, color: it.done ? 'var(--faint)' : undefined }}>{it.title}</span>
+            <KDate value={it.start} onChange={v => updateEvent(it.id, { start: v, end: undefined })} style={{ width: 142 }} />
             {/* 높이 24px 짝수 고정 + flex 세로 중앙 (v1.9 사용자 피드백) */}
             <button className="btn btn-ghost" style={{ marginLeft: 'auto', height: 24, padding: '0 11px', fontSize: 10.5, display: 'inline-flex', alignItems: 'center' }}
-              onClick={() => set(items.filter((_, j) => j !== i))}>DELETE</button>
+              onClick={() => removeEvent(it.id)}>DELETE</button>
           </div>
         )}
       />
-      {items.length === 0 && <p className="hint">할 일이 없습니다</p>}
+      {items.length === 0 && <p className="hint">{date ? '이 날짜에 할 일이 없습니다' : '등록된 할 일이 없습니다'}</p>}
     </div>
   );
 }
