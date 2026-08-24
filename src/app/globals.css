@@ -107,7 +107,7 @@ a{color:inherit;text-decoration:none}
 .user-wrap{position:relative}
 .user-chip{display:flex;align-items:center;gap:10px;font-size:calc(12px*var(--fs,1));color:var(--top-fg);white-space:nowrap;cursor:var(--cur-pointer,pointer);padding:6px 10px;border-radius:9px;transition:.15s}
 .user-chip:hover{background:rgba(255,255,255,.08)}
-.user-chip .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6b7280,#3c434d);border:.333333px solid var(--line);display:grid;place-items:center;color:#fff;font-size:calc(12px*var(--fs,1));font-weight:700;overflow:hidden}
+.user-chip .avatar{position:relative;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6b7280,#3c434d);border:0;display:block;color:#fff;font-size:calc(12px*var(--fs,1));font-weight:700;overflow:hidden}
 .user-menu{
   position:absolute;right:0;top:calc(100% + 8px);min-width:132px;display:none;z-index:80;
   background:var(--dd-bg);border:1px solid var(--line-dark);border-radius:11px;padding:5px;

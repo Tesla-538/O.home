@@ -4,22 +4,33 @@ import React from 'react';
 
 /** 모든 프로필 썸네일이 크기와 무관하게 같은 중심·비율로 보이게 한다. */
 export function ProfileAvatarImage({ src, compact = false }: { src: string; compact?: boolean }) {
-  return (
+  const image = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt=""
       style={{
         display: 'block',
-        // 헤더에서는 큰 프로필(84px)과 같은 렌더링 면적을 만든 뒤 28px로 정확히 축소한다.
-        // 작은 원에 1px 테두리를 직접 적용해서 사진 비율이 달라지는 문제를 피한다.
-        width: compact ? '300%' : '100%',
-        height: compact ? '300%' : '100%',
+        width: '100%',
+        height: '100%',
         objectFit: 'cover',
         objectPosition: '50% 50%',
-        transform: compact ? 'scale(0.3333333333)' : undefined,
-        transformOrigin: '0 0',
       }}
     />
   );
+
+  if (compact) {
+    return (
+      <span style={{
+        position: 'absolute', left: 0, top: 0,
+        display: 'block', width: 84, height: 84,
+        border: '1px solid var(--line)', borderRadius: '50%', overflow: 'hidden',
+        transform: 'scale(0.3333333333)', transformOrigin: '0 0',
+      }}>
+        {image}
+      </span>
+    );
+  }
+
+  return image;
 }
