@@ -174,29 +174,29 @@ a{color:inherit;text-decoration:none}
 
 /* ---------- BGM 플레이어 (4.1 — 1차에서 유튜브 연동) ---------- */
 .bgm{
-  position:fixed;right:20px;bottom:20px;z-index:70;display:flex;align-items:center;gap:11px;
+  position:fixed;right:20px;bottom:20px;z-index:70;display:flex;align-items:center;gap:6px;
   width:360px;height:58px;box-sizing:border-box;
   background:var(--bgm-bg);backdrop-filter:blur(10px);color:var(--bgm-fg);
-  border:1px solid var(--line-dark);border-radius:40px;padding:9px 17px 9px 10px;
+  border:1px solid var(--line-dark);border-radius:40px;padding:8px 12px 8px 8px;
   box-shadow:var(--sh-md);
 }
-.bgm .disc{width:34px;height:34px;border-radius:50%;background:conic-gradient(#565d68,#2b3038,#565d68,#2b3038,#565d68);display:grid;place-items:center;animation:spin 7s linear infinite}
+.bgm .disc{width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:conic-gradient(#565d68,#2b3038,#565d68,#2b3038,#565d68);display:grid;place-items:center;animation:spin 7s linear infinite}
 .bgm .disc::after{content:"";width:9px;height:9px;border-radius:50%;background:#14161a;border:2px solid #757c87}
 @keyframes spin{to{transform:rotate(360deg)}}
-.bgm .title{font-size:calc(11px*var(--fs,1));max-width:96px;flex:1;color:var(--bgm-fg);opacity:.7;min-width:0}
+.bgm .title{font-size:calc(11px*var(--fs,1));max-width:none;flex:1 1 auto;color:var(--bgm-fg);opacity:.7;min-width:0}
 .bgm .title .tt{color:var(--bgm-fg);font-size:calc(11.5px*var(--fs,1));font-weight:600;opacity:1}
 /* 흐르는 글씨 — 재생 중 + 넘칠 때만 (Marquee) */
-.bgm .title .mq{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:96px}
+.bgm .title .mq{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:none;width:100%}
 .bgm .title .mq.run{text-overflow:clip}
 .bgm .mq-in{display:inline-flex;gap:28px;animation:mqScroll 9s linear infinite}
 @keyframes mqScroll{from{transform:translateX(0)}to{transform:translateX(calc(-50% - 14px))}}
-.bgm .ctrl{display:flex;gap:2px}
-.bgm .ctrl button{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:calc(10px*var(--fs,1));color:var(--bgm-ic);transition:.15s}
+.bgm .ctrl{display:flex;gap:0;flex:0 0 auto}
+.bgm .ctrl button{width:23px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:calc(9.5px*var(--fs,1));color:var(--bgm-ic);transition:.15s}
 .bgm .ctrl button:hover{background:rgba(255,255,255,.12);color:var(--bgm-fg)}
 /* 리스트 픽토그램 — 선(stroke) 아이콘, 아이콘색(--bgm-ic) 테마 연동 */
 .bgm .ctrl .lst svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block}
 /* 접기 (4.1): 디스크만 남는 미니 상태 · 접기 화살표 버튼 */
-.bgm .fold-btn{width:18px;height:26px;display:grid;place-items:center;color:var(--bgm-ic);font-size:calc(11px*var(--fs,1));border-radius:6px;transition:.15s}
+.bgm .fold-btn{width:16px;height:26px;flex:0 0 16px;display:grid;place-items:center;color:var(--bgm-ic);font-size:calc(11px*var(--fs,1));border-radius:6px;transition:.15s}
 .bgm .fold-btn:hover{color:var(--bgm-fg)}
 .bgm.folded{padding:6px;gap:0;cursor:var(--cur-pointer,pointer)}
 .bgm.folded .title,.bgm.folded .ctrl,.bgm.folded .vol,.bgm.folded .fold-btn,.bgm.folded .bgm-list{display:none}
@@ -223,7 +223,7 @@ a{color:inherit;text-decoration:none}
 .bgm-add-form p{margin:0;color:#ff9b9b;font-size:calc(9px*var(--fs,1));line-height:1.35}
 .bgm-add-form>div{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .bgm-add-form button.save{background:var(--accent-soft,var(--accent));border-color:transparent;color:#fff}
-.vol{width:64px;height:3px;border-radius:3px;background:#454b55;position:relative;cursor:var(--cur-pointer,pointer)}
+.vol{width:50px;flex:0 0 50px;height:3px;border-radius:3px;background:#454b55;position:relative;cursor:var(--cur-pointer,pointer)}
 .vol i{position:absolute;left:0;top:0;height:100%;width:62%;background:var(--bgm-vol);border-radius:3px}
 .vol i::after{content:"";position:absolute;right:-4px;top:-3.5px;width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5)}
 
