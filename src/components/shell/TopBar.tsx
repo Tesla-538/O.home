@@ -216,7 +216,7 @@ export function TopBar() {
             </span>
             {/* 기본 아바타는 이니셜 없이 단색/그라데이션 (v1.9) */}
             <div className="avatar" style={!avatarSrc && user.avatarColor ? { background: user.avatarColor } : undefined}>
-              {avatarSrc && <ProfileAvatarImage src={avatarSrc} />}
+              {avatarSrc && <ProfileAvatarImage src={avatarSrc} compact />}
             </div>
             {user.nickname} <span style={{ fontSize: 9, color: '#8d939d' }}>▾</span>
           </div>
