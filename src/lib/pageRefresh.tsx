@@ -14,51 +14,48 @@ export function refreshPage() {
 type RouterLike = { push: (href: string) => void };
 let navTimer: ReturnType<typeof setTimeout> | null = null;
 
-type TransitionDocument = Document & {
-  startViewTransition?: (update: () => void | Promise<void>) => unknown;
-};
+/** 현재 페이지를 고정된 시각 복사본으로 남겨 새 페이지와 겹쳐 교차 전환한다. */
+function makeRouteGhost() {
+  document.querySelectorAll('.route-ghost').forEach(el => el.remove());
+  const main = document.getElementById('appMain');
+  const frame = main?.querySelector('.route-frame');
+  if (!main || !frame) return null;
+  const rect = main.getBoundingClientRect();
+  const ghost = document.createElement('div');
+  ghost.className = 'route-ghost';
+  ghost.setAttribute('aria-hidden', 'true');
+  Object.assign(ghost.style, {
+    left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`,
+  });
+  const copy = frame.cloneNode(true) as HTMLElement;
+  copy.className = 'route-ghost-copy';
+  copy.style.marginTop = `${-main.scrollTop}px`;
+  copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+  // 외부 플레이어를 복제하면 새 스트림을 요청할 수 있어 시각 복사본에서는 제외한다.
+  copy.querySelectorAll('iframe,video,audio').forEach(el => el.remove());
+  ghost.appendChild(copy);
+  document.body.appendChild(ghost);
+  return ghost;
+}
 
-/** 상단 메뉴 이동용 짧은 exit → enter 전환. 모션 감소 설정에서는 지연 없이 이동한다. */
+/** 기존 화면과 새 화면을 겹쳐 전환한다. 이동 시작 전 빈 대기 구간을 만들지 않는다. */
 export function navigatePage(router: RouterLike, href: string) {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduced) { router.push(href); return; }
-  const doc = document as TransitionDocument;
-  if (doc.startViewTransition) {
-    const from = window.location.href;
-    void doc.startViewTransition(async () => {
-      router.push(href);
-      // Next가 새 DOM을 커밋할 때까지 이전 화면 스냅샷을 유지한다.
-      await new Promise<void>(resolve => {
-        const started = performance.now();
-        const check = () => {
-          if (window.location.href !== from || performance.now() - started > 1500) {
-            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-          } else {
-            requestAnimationFrame(check);
-          }
-        };
-        check();
-      });
-    });
-    return;
-  }
   if (navTimer) return;
-  document.documentElement.classList.add('route-leaving');
+  const ghost = makeRouteGhost();
+  // 먼저 기다리거나 화면을 지우지 않고 즉시 다음 경로 렌더를 시작한다.
+  router.push(href);
   navTimer = setTimeout(() => {
     navTimer = null;
-    router.push(href);
-    // pathname이 같고 query만 달라지는 이동도 화면이 숨은 채 남지 않게 한다.
-    setTimeout(() => document.documentElement.classList.remove('route-leaving'), 260);
-  }, 180);
+    ghost?.remove();
+  }, 760);
 }
 
 /** children에 key를 걸어 remount — layout에서 <main> 안을 감싼다 */
 export function PageFrame({ children }: { children: React.ReactNode }) {
   const [n, setN] = useState(0);
   const pathname = usePathname();
-  useEffect(() => {
-    document.documentElement.classList.remove('route-leaving');
-  }, [pathname]);
   useEffect(() => {
     const bump = () => {
       setN(v => v + 1);
