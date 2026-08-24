@@ -11,7 +11,7 @@
   --gold:#b39b6b;
   /* Apple 한글 UI 계열 기본 스택 — macOS/iOS는 Apple SD Gothic Neo,
      Windows/Android는 웹폰트 Pretendard로 최대한 같은 인상을 유지한다. */
-  --apple-ui-base:'Pretendard','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR','Malgun Gothic',sans-serif;
+  --apple-ui-base:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Segoe UI','Noto Sans KR','Malgun Gothic',sans-serif;
   --serif-base:var(--apple-ui-base);
   --sans-base:var(--apple-ui-base);
   --serif:var(--serif-base);
@@ -47,6 +47,11 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 body{
   font-family:var(--sans);color:var(--ink);letter-spacing:-.015em;
   font-weight:var(--fw-body,400);
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-kerning:normal;
   background:
     radial-gradient(1100px 500px at 50% -10%,rgba(255,255,255,.10),transparent 60%),
     linear-gradient(var(--bg-angle,180deg),var(--bg-g1) 0%,var(--bg-g2) 100%); /* 각도 = 환경설정 (v1.9) */
@@ -72,8 +77,8 @@ a{color:inherit;text-decoration:none}
   background:var(--top-bg);backdrop-filter:blur(12px);
   border-bottom:1px solid var(--line-dark);
 }
-.brand{font-family:var(--serif);font-size:calc(21px*var(--fs,1));letter-spacing:.32em;font-weight:600;color:var(--top-brand);cursor:var(--cur-pointer,pointer);white-space:nowrap}
-.brand small{display:block;font-family:var(--font-logosub,var(--sans));font-weight:var(--fw-logosub,400);font-size:calc(8.5px*var(--fs,1)*var(--fs-logosub,1));letter-spacing:.42em;color:#8d939d;margin-top:-2px}
+.brand{font-family:var(--serif);font-size:calc(21px*var(--fs,1));letter-spacing:.18em;font-weight:600;color:var(--top-brand);cursor:var(--cur-pointer,pointer);white-space:nowrap}
+.brand small{display:block;font-family:var(--font-logosub,var(--sans));font-weight:var(--fw-logosub,400);font-size:calc(9px*var(--fs,1)*var(--fs-logosub,1));letter-spacing:.22em;color:#a0a5ae;margin-top:-1px}
 .brand small.al-left{text-align:left}.brand small.al-center{text-align:center}.brand small.al-right{text-align:right}
 .gnb{display:flex;gap:2px;flex:1;min-width:0;position:relative;--fs:var(--fs-menu,1)} /* min-width:0 — 가용 폭 그대로 측정 (⋯ 수납 계산, v1.9) */
 .gnb button,.gnb a.gnb-link{
@@ -211,8 +216,9 @@ a{color:inherit;text-decoration:none}
 
 /* ---------- 공통 레이아웃 ---------- */
 /* 하단 여백은 BGM 미니 플레이어(약 73px)를 가리지 않는 최소치 — 과하면 불필요한 스크롤 발생 */
-.page{max-width:1180px;margin:0 auto;padding:16px 28px 80px;animation:fade .35s}
-@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+.page{max-width:1180px;margin:0 auto;padding:16px 28px 80px;animation:page-in .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes page-in{from{opacity:0;transform:translateY(5px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .page-head{position:relative;color:#eceef1;margin-bottom:16px;display:grid;grid-template-columns:1fr auto;align-items:end;column-gap:20px}
 /* 메뉴 타이틀 — 별도 역할(기본은 타이틀 폰트·크기를 따름, 크기는 두 배율 곱)
    클릭 시 해당 메뉴 초기 페이지로 이동 — 텍스트 커서/드래그 선택 금지 */
@@ -1752,7 +1758,7 @@ body{
   -webkit-backdrop-filter:blur(28px) saturate(155%);
   backdrop-filter:blur(28px) saturate(155%);
 }
-.brand{font-weight:650;text-shadow:0 1px 18px rgba(255,255,255,.12)}
+.brand{font-weight:600;text-shadow:0 1px 18px rgba(255,255,255,.12)}
 .gnb button,.gnb a.gnb-link,.user-chip,.badge-dot{
   transition:color .2s var(--motion-spring),background .2s var(--motion-spring),box-shadow .2s var(--motion-spring),transform .2s var(--motion-spring);
 }
@@ -1828,6 +1834,9 @@ body{
   box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 2px 7px rgba(0,0,0,.08);
   transition:transform .18s var(--motion-spring),background .18s var(--motion-spring),border-color .18s var(--motion-spring),box-shadow .18s var(--motion-spring),color .18s var(--motion-spring);
 }
+.btn{font-size:max(12px,calc(12.5px*var(--fs,1))) !important}
+.k-input,.k-textarea,.k-select .cur{font-size:max(13px,calc(13px*var(--fs,1))) !important}
+.set-nav button{font-size:max(12px,calc(13px*var(--fs,1))) !important}
 .btn::before{
   content:"";position:absolute;left:1px;right:1px;top:1px;height:42%;border-radius:inherit;
   background:linear-gradient(180deg,rgba(255,255,255,.2),transparent);pointer-events:none;
@@ -1872,7 +1881,11 @@ body{
 }
 
 @media (prefers-reduced-motion:reduce){
-  .panel,.btn,.login-link,.pager button,.gnb button,.gnb a.gnb-link,.user-chip,.badge-dot{transition:none}
+  html:focus-within{scroll-behavior:auto}
+  .page,.grp .sub,.user-menu,.notif-menu,.k-sel-pop,.k-cal,.modal,.modal-ov,.toast,.up-busy,.bgm-list,.ctx-menu,.boot-wait i{
+    animation:none !important;
+  }
+  .panel,.btn,.login-link,.pager button,.gnb button,.gnb a.gnb-link,.user-chip,.badge-dot,#appMain{transition:none !important}
   .btn:hover,.login-link:hover,.pager button:hover{transform:none}
 }
 
@@ -1887,10 +1900,14 @@ body{
 .page{padding-top:24px}
 .page-head{margin-bottom:20px}
 .page-head h1{
-  font-size:calc(32px*var(--fs,1));font-weight:var(--fw-pagetitle,var(--fw-title,650));
-  letter-spacing:.09em;text-shadow:0 2px 22px rgba(0,0,0,.22);
+  font-size:calc(32px*var(--fs,1));font-weight:var(--fw-pagetitle,var(--fw-title,700));
+  letter-spacing:.025em;text-shadow:0 2px 22px rgba(0,0,0,.22);
 }
-.page-head p{font-size:calc(13px*var(--fs,1));line-height:1.55}
+.page-head p{font-size:calc(13.5px*var(--fs,1));line-height:1.55;letter-spacing:-.005em}
+
+/* 상단 메뉴 이동: 셸은 유지하고 현재 콘텐츠만 짧게 빠진 뒤 새 페이지가 이어진다. */
+#appMain{transition:opacity .12s ease,transform .12s ease,filter .12s ease}
+html.route-leaving #appMain{opacity:0;transform:translateY(-3px);filter:blur(1.5px);pointer-events:none}
 
 /* panel을 쓰지 않는 카드들도 동일한 표면 계층에 편입 */
 .char-card,.rel-card,.ticket,.bticket,.cm-total-slot,.cm-meta .mail{
@@ -2036,7 +2053,7 @@ body{
 @media (max-width:620px){
   .page{padding-top:18px}
   .page-head{margin-bottom:16px}
-  .page-head h1{font-size:calc(26px*var(--fs,1));letter-spacing:.07em}
+  .page-head h1{font-size:calc(26px*var(--fs,1));letter-spacing:.02em}
   .cal-layout>.panel.cal{padding:14px}
   .cal-grid{gap:4px}
   .set-nav{position:static}

@@ -2,6 +2,7 @@
 // 같은 메뉴 재클릭 = 그 페이지를 처음 상태로 다시 그리기 (v1.9 사용자 확정)
 // 브라우저 새로고침이 아니라 페이지 subtree만 remount — BGM·상단바 등 셸은 그대로 유지된다.
 import React, { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 const EVT = 'ohome-page-refresh';
 
@@ -10,9 +11,30 @@ export function refreshPage() {
   window.dispatchEvent(new Event(EVT));
 }
 
+type RouterLike = { push: (href: string) => void };
+let navTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 상단 메뉴 이동용 짧은 exit → enter 전환. 모션 감소 설정에서는 지연 없이 이동한다. */
+export function navigatePage(router: RouterLike, href: string) {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) { router.push(href); return; }
+  if (navTimer) return;
+  document.documentElement.classList.add('route-leaving');
+  navTimer = setTimeout(() => {
+    navTimer = null;
+    router.push(href);
+    // pathname이 같고 query만 달라지는 이동도 화면이 숨은 채 남지 않게 한다.
+    setTimeout(() => document.documentElement.classList.remove('route-leaving'), 900);
+  }, 120);
+}
+
 /** children에 key를 걸어 remount — layout에서 <main> 안을 감싼다 */
 export function PageFrame({ children }: { children: React.ReactNode }) {
   const [n, setN] = useState(0);
+  const pathname = usePathname();
+  useEffect(() => {
+    document.documentElement.classList.remove('route-leaving');
+  }, [pathname]);
   useEffect(() => {
     const bump = () => {
       setN(v => v + 1);

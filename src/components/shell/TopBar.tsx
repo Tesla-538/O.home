@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { useMainStore } from '@/lib/mainStore';
 import { useBlobUrl } from '@/lib/blobStore';
 import { ProfileAvatarImage } from '@/components/ui/ProfileAvatarImage';
-import { refreshPage } from '@/lib/pageRefresh';
+import { navigatePage, refreshPage } from '@/lib/pageRefresh';
 import { useToast } from '@/components/ui/Toast';
 import { KToggle } from '@/components/ui/Kit';
 import {
@@ -79,7 +79,7 @@ export function TopBar() {
     if (guardNav(href)) return;
     // 같은 메뉴 재클릭 — 브라우저 새로고침 대신 페이지만 처음 상태로 다시 그림 (BGM이 끊기지 않게, v1.9)
     if (href === pathname) { refreshPage(); return; }
-    router.push(href);
+    navigatePage(router, href);
   };
 
   // 상위 메뉴 개수 무제한 (v1.9) — 바 폭을 넘치는 항목은 「⋯」 드롭다운으로 자동 이동 (priority+)
