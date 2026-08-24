@@ -23,7 +23,7 @@ import { useThreadSettings, ThreadWork, THREAD_SEED, ThreadCat, threadBadgeStyle
 import { useTrpgSettings, DOTORI_STATUS_KEYS, DotoriStatus, dotoriBadgeStyle } from '@/lib/galleryStore';
 import { useMemoSettings } from '@/lib/memoStore';
 import {
-  useMenuSettings, MenuSettings, MenuPerm, MenuVis, PLAYLOG_COLS,
+  useMenuSettings, MenuPerm, MenuVis,
   MenuGroupNode, MenuLeaf, defaultTree, newGroupId, menuLabelFor, extraBoardHref,
   IMG_PROTECT_AREAS,
 } from '@/lib/menuStore';
@@ -2120,24 +2120,14 @@ function MenuPane() {
   );
 }
 
-/** 세계관 탭 — 세계관 진행 상태 + 에피소드 표시 열 */
+/** 세계관 탭 — 세계관 진행 상태 */
 function TrpgPane() {
   const [settings, patch] = useTrpgSettings();
-  const [ms, patchMenu] = useMenuSettings();   // 플레이기록 표시 열 (4.16 — 저장 위치는 메뉴 설정)
   // 비밀번호 걸린 로그의 안내 문구 (pagetext 'trpg-lock-desc')
   const [lockDesc, setLockDesc] = useState('');
   useEffect(() => { setLockDesc(getPageText('trpg-lock-desc', '비밀번호를 입력하면 열람할 수 있습니다')); }, []);
   const patchStatus = (k: DotoriStatus, p: Partial<(typeof settings.statuses)[DotoriStatus]>) =>
     patch({ statuses: { ...settings.statuses, [k]: { ...settings.statuses[k], ...p } } });
-  // 균등 칸 그리드 — 항목 폭이 라벨 길이에 안 흔들려 PC/모바일 두 줄이 세로로 정렬됨 (v1.9)
-  const colToggle = (list: string[], k: keyof MenuSettings) => (
-    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: `repeat(${PLAYLOG_COLS.length}, 1fr)`, gap: 6, justifyItems: 'center' }}>
-      {PLAYLOG_COLS.map(c => (
-        <KCheck key={c.key} label={c.label} checked={list.includes(c.key)}
-          onChange={v => patchMenu({ [k]: v ? [...list, c.key] : list.filter(x => x !== c.key) } as Partial<MenuSettings>)} />
-      ))}
-    </div>
-  );
   return (
     <div className="set-sec">
       {/* 비밀번호 걸린 로그의 안내 문구 — 관리자는 그 화면을 볼 수 없어 여기서 편집 (사용자 요청) */}
@@ -2172,20 +2162,6 @@ function TrpgPane() {
           </div>
         );
       })}
-
-      {/* 플레이기록 표시 열 — PC/모바일 각각 (4.16 v1.8 · v1.9에서 TRPG 탭 하단 배치) */}
-      <hr style={{ margin: '24px 0', border: 'none', borderTop: '1.5px solid var(--line)' }} />
-      <h3>에피소드 표시 열</h3>
-      <div className="d">PC와 모바일에서 보여줄 열을 각각 선택 (기본: PC 전체 7열 · 모바일 Date/Episode/Chapter/Length)</div>
-      {/* 라벨 폭 고정 — PC/모바일 폭 차이로 두 줄 체크박스 시작점이 어긋나던 것 정렬 (v1.9) */}
-      <div className="set-row" style={{ flexWrap: 'wrap' }}>
-        <div className="l" style={{ width: 64, flexShrink: 0 }}><b>PC</b></div>
-        {colToggle(ms.playlogPc, 'playlogPc')}
-      </div>
-      <div className="set-row" style={{ flexWrap: 'wrap' }}>
-        <div className="l" style={{ width: 64, flexShrink: 0 }}><b>모바일</b></div>
-        {colToggle(ms.playlogMobile, 'playlogMobile')}
-      </div>
     </div>
   );
 }

@@ -25,7 +25,7 @@ export default function PlaylogNewPage() {
 
   return (
     <section className="page">
-      <div className="page-head"><PageTitle>ADD EPISODE</PageTitle><EditableDesc k="playlog-new-desc" def="새 에피소드의 흐름과 등장인물을 기록합니다" /></div>
+      <div className="page-head"><PageTitle>ADD EPISODE</PageTitle><EditableDesc k="playlog-new-desc" def="장면 일러스트를 첨부하고 짧은 설명을 남깁니다" /></div>
       <PlaylogForm initial={null} records={records}
         onCancel={() => router.push('/playlog')}
         onSave={v => {

@@ -1,149 +1,171 @@
-﻿'use client';
-// 플레이기록 입력 폼 (4.16 v1.8) — 라벨 영문 통일 · 플레이스홀더 없음 ·
-// 시나리오 자동완성(기존 기록 검색 드롭다운) · 로그 연결(외부 URL / 내 백업 로그 검색 토글)
+'use client';
+// 에피소드 입력 폼 — 제목과 장면 일러스트, 장면별 짧은 설명만 기록한다.
 import React, { useState } from 'react';
-import { PlayRecord, TrpgLog, TRPG_SEED } from '@/lib/galleryStore';
-import { useLocalList } from '@/lib/postStore';
-import { KInput, KDate } from '@/components/ui/Kit';
+import { EpisodeScene, PlayRecord } from '@/lib/galleryStore';
+import { newId } from '@/lib/postStore';
+import { KInput, KDate, KTextarea } from '@/components/ui/Kit';
+import { BlobImg, putBlob } from '@/lib/blobStore';
 import { useToast } from '@/components/ui/Toast';
 
 export interface PlaylogFormValue {
-  date?: string; scenario: string; scenarioLink?: string;
+  date?: string;
+  scenario: string;
+  summary?: string;
+  scenes: EpisodeScene[];
   writer: string; withText: string; role: string; playtime: string;
-  url?: string; logId?: string;
+  scenarioLink?: string; url?: string; logId?: string;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="k-label" style={{ marginBottom: 5 }}>{label}</label>
-      {children}
-    </div>
-  );
+interface DraftScene extends EpisodeScene {
+  file?: File;
+  preview?: string;
 }
 
-export function PlaylogForm({ initial, records, onSave, onCancel }: {
+function ScenePreview({ scene }: { scene: DraftScene }) {
+  if (scene.preview) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={scene.preview} alt="" />;
+  }
+  return <BlobImg fileRef={scene.imgId} ph="" label="일러스트를 첨부하세요" />;
+}
+
+export function PlaylogForm({ initial, onSave, onCancel }: {
   initial: PlayRecord | null;
-  records: PlayRecord[];            // 시나리오 자동완성 소스
+  records: PlayRecord[];
   onSave: (v: PlaylogFormValue) => void;
   onCancel: () => void;
 }) {
   const toast = useToast();
   const isNew = !initial;
-  const [logs] = useLocalList<TrpgLog>('ohome.trpg.v1', TRPG_SEED);
   const [date, setDate] = useState(initial?.date ?? '');
-  const [scenario, setScenario] = useState(initial?.scenario ?? '');
-  const [scenarioLink, setScenarioLink] = useState(initial?.scenarioLink ?? '');
-  const [writer, setWriter] = useState(initial?.writer ?? '');
-  const [withText, setWithText] = useState(initial?.withText ?? '');
-  const [role, setRole] = useState(initial?.role ?? '');
-  const [playtime, setPlaytime] = useState(initial?.playtime ?? '');
-  const [linkMode, setLinkMode] = useState<'url' | 'log'>(initial?.logId ? 'log' : 'url');
-  const [url, setUrl] = useState(initial?.url ?? '');
-  const [logId, setLogId] = useState(initial?.logId ?? '');
-  const [logQuery, setLogQuery] = useState('');
-  const [scOpen, setScOpen] = useState(false);
+  const [title, setTitle] = useState(initial?.scenario ?? '');
+  const [summary, setSummary] = useState(initial?.summary ?? '');
+  const [scenes, setScenes] = useState<DraftScene[]>(() =>
+    (initial?.scenes ?? []).map(scene => ({ ...scene }))
+  );
+  const [saving, setSaving] = useState(false);
 
-  // 시나리오 자동완성 — 기존 기록에서 이름 중복 제거
-  const scPool = [...new Map(records.map(r => [r.scenario, r])).values()]
-    .filter(r => scenario.trim() && r.scenario !== scenario
-      && r.scenario.toLowerCase().includes(scenario.trim().toLowerCase()));
+  const addFiles = (files: FileList | File[]) => {
+    const added = Array.from(files).filter(file => file.type.startsWith('image/')).map(file => ({
+      id: newId(), caption: '', file, preview: URL.createObjectURL(file),
+    }));
+    if (added.length) setScenes(current => [...current, ...added]);
+  };
 
-  const save = () => {
-    if (!scenario.trim()) { toast('에피소드 제목을 입력해 주세요'); return; }
-    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('Date는 YYYY-MM-DD 형식으로 입력해 주세요'); return; }
-    onSave({
-      date: date || undefined,
-      scenario: scenario.trim(),
-      scenarioLink: scenarioLink.trim() || undefined,
-      writer: writer.trim(), withText: withText.trim(), role: role.trim(), playtime: playtime.trim(),
-      url: linkMode === 'url' ? (url.trim() || undefined) : undefined,
-      logId: linkMode === 'log' ? (logId || undefined) : undefined,
+  const patchScene = (id: string, patch: Partial<DraftScene>) =>
+    setScenes(current => current.map(scene => scene.id === id ? { ...scene, ...patch } : scene));
+
+  const move = (index: number, by: number) => {
+    const to = index + by;
+    if (to < 0 || to >= scenes.length) return;
+    setScenes(current => {
+      const next = [...current];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
     });
   };
 
-  return (
-    <div className="write-grid">
-      <div className="panel" style={{ padding: 24, display: 'grid', gap: 12, alignContent: 'start' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <Field label="Date (optional)"><KDate value={date} onChange={setDate} placeholder="" style={{ width: '100%' }} /></Field>
-          <Field label="Length"><KInput value={playtime} onChange={e => setPlaytime(e.target.value)} /></Field>
-        </div>
-        <div style={{ position: 'relative' }}>
-          <Field label="Episode">
-            <KInput value={scenario}
-              onChange={e => { setScenario(e.target.value); setScOpen(true); }}
-              onBlur={() => setTimeout(() => setScOpen(false), 150)} />
-          </Field>
-          {/* 자동완성 드롭다운 — 클릭 시 이름·링크 채움 (4.16) */}
-          {scOpen && scPool.length > 0 && (
-            <div style={{
-              position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 30,
-              background: 'var(--panel-solid)', border: '1.5px solid var(--line)', borderRadius: 9,
-              boxShadow: 'var(--sh-dd)', overflow: 'hidden',
-            }}>
-              {scPool.slice(0, 6).map(r => (
-                <div key={r.id} style={{ padding: '8px 12px', cursor: 'var(--cur-pointer,pointer)', fontSize: 12.5, borderBottom: '1px dashed var(--line)' }}
-                  onMouseDown={() => {
-                    setScenario(r.scenario);
-                    if (r.scenarioLink) setScenarioLink(r.scenarioLink);
-                    if (r.writer && !writer) setWriter(r.writer);
-                    setScOpen(false);
-                  }}>
-                  <b>{r.scenario}</b> <small style={{ color: 'var(--faint)' }}>{r.writer}</small>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <Field label="Reference Link (optional)"><KInput value={scenarioLink} onChange={e => setScenarioLink(e.target.value)} /></Field>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10 }}>
-          <Field label="POV"><KInput value={writer} onChange={e => setWriter(e.target.value)} /></Field>
-          <Field label="Chapter"><KInput value={role} onChange={e => setRole(e.target.value)} /></Field>
-        </div>
-        <Field label="Cast"><KInput value={withText} onChange={e => setWithText(e.target.value)} /></Field>
+  const save = async () => {
+    if (!title.trim()) { toast('에피소드 제목을 입력해 주세요'); return; }
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('날짜는 YYYY-MM-DD 형식으로 입력해 주세요'); return; }
+    setSaving(true);
+    try {
+      const savedScenes = await Promise.all(scenes.map(async scene => ({
+        id: scene.id,
+        imgId: scene.file ? await putBlob(scene.file) : scene.imgId,
+        caption: scene.caption.trim(),
+      })));
+      onSave({
+        date: date || undefined,
+        scenario: title.trim(), summary: summary.trim() || undefined,
+        scenes: savedScenes,
+        writer: initial?.writer ?? '', withText: initial?.withText ?? '',
+        role: initial?.role ?? '', playtime: initial?.playtime ?? '',
+        scenarioLink: initial?.scenarioLink, url: initial?.url, logId: initial?.logId,
+      });
+    } catch {
+      toast('이미지 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요');
+      setSaving(false);
+    }
+  };
 
-        {/* 로그 연결 — 외부 URL 또는 내 홈 백업 로그 검색 (4.16) */}
-        <div>
-          <label className="k-label" style={{ marginBottom: 5 }}>Url (optional)</label>
-          <div className="mini-seg" style={{ marginBottom: 8 }}>
-            <button className={linkMode === 'url' ? 'on' : ''} onClick={() => setLinkMode('url')}>외부 URL</button>
-            <button className={linkMode === 'log' ? 'on' : ''} onClick={() => setLinkMode('log')}>설정노트 연결</button>
+  return (
+    <div className="episode-form-layout">
+      <div className="panel episode-form">
+        <div className="episode-basic-fields">
+          <div>
+            <label className="k-label">에피소드 제목</label>
+            <KInput value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 첫 번째 만남" />
           </div>
-          {linkMode === 'url' ? (
-            <KInput value={url} onChange={e => setUrl(e.target.value)} />
-          ) : (
-            <div>
-              <KInput placeholder="설정노트 검색" value={logQuery} onChange={e => setLogQuery(e.target.value)} />
-              <div style={{ marginTop: 6, maxHeight: 150, overflowY: 'auto', border: '1.5px solid var(--line)', borderRadius: 9 }}>
-                {logs
-                  .filter(l => { const s = logQuery.trim().toLowerCase(); return !s || l.title.toLowerCase().includes(s); })
-                  .map(l => (
-                    <div key={l.id} onClick={() => setLogId(logId === l.id ? '' : l.id)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 8, padding: '7px 11px', cursor: 'var(--cur-pointer,pointer)',
-                        fontSize: 12.5, borderBottom: '1px dashed var(--line)',
-                        background: logId === l.id ? 'rgba(127,127,127,.12)' : undefined,
-                      }}>
-                      <b>№ {String(l.no).padStart(3, '0')}</b> {l.title}
-                      {logId === l.id && <span style={{ marginLeft: 'auto', color: 'var(--accent)', fontWeight: 700 }}>✓</span>}
-                    </div>
-                  ))}
-                {logs.length === 0 && <p className="hint" style={{ padding: 10 }}>등록된 설정노트가 없습니다</p>}
-              </div>
-            </div>
-          )}
+          <div>
+            <label className="k-label">날짜 <span>(선택)</span></label>
+            <KDate value={date} onChange={setDate} placeholder="" style={{ width: '100%' }} />
+          </div>
         </div>
-        <p className="hint" style={{ margin: 0 }}>Date를 비워두면 표 맨 아래에 추가됩니다</p>
+        <div>
+          <label className="k-label">에피소드 한 줄 소개 <span>(선택)</span></label>
+          <KInput value={summary} onChange={e => setSummary(e.target.value)} placeholder="이 에피소드의 전체 흐름을 짧게 적어 주세요" />
+        </div>
+
+        <div className="episode-scenes-head">
+          <div>
+            <b>장면 일러스트</b>
+            <p>사진을 여러 장 한꺼번에 선택할 수 있고, 각 장면 아래에 설명을 달 수 있습니다.</p>
+          </div>
+          <label className="btn btn-dark episode-upload-btn">
+            ＋ 사진 첨부
+            <input type="file" accept="image/*" multiple hidden onChange={e => {
+              if (e.target.files) addFiles(e.target.files);
+              e.target.value = '';
+            }} />
+          </label>
+        </div>
+
+        {scenes.length === 0 ? (
+          <label className="episode-empty-drop">
+            <span>＋</span>
+            <b>장면 일러스트를 첨부하세요</b>
+            <small>PNG · JPG · WEBP 등 이미지 파일, 여러 장 선택 가능</small>
+            <input type="file" accept="image/*" multiple hidden onChange={e => {
+              if (e.target.files) addFiles(e.target.files);
+              e.target.value = '';
+            }} />
+          </label>
+        ) : (
+          <div className="episode-scene-editor-list">
+            {scenes.map((scene, index) => (
+              <article className="episode-scene-editor" key={scene.id}>
+                <div className="episode-scene-number">SCENE {String(index + 1).padStart(2, '0')}</div>
+                <div className="episode-scene-thumb"><ScenePreview scene={scene} /></div>
+                <div className="episode-scene-fields">
+                  <label className="k-label">장면 설명</label>
+                  <KTextarea value={scene.caption} onChange={e => patchScene(scene.id, { caption: e.target.value })}
+                    placeholder="이 장면에서 무슨 일이 일어나는지 간단하게 적어 주세요" rows={3} />
+                  <div className="episode-scene-actions">
+                    <label className="btn btn-ghost">
+                      사진 교체
+                      <input type="file" accept="image/*" hidden onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) patchScene(scene.id, { file, preview: URL.createObjectURL(file) });
+                        e.target.value = '';
+                      }} />
+                    </label>
+                    <button className="btn btn-ghost" onClick={() => move(index, -1)} disabled={index === 0}>↑</button>
+                    <button className="btn btn-ghost" onClick={() => move(index, 1)} disabled={index === scenes.length - 1}>↓</button>
+                    <button className="btn btn-ghost" onClick={() => setScenes(current => current.filter(x => x.id !== scene.id))}>삭제</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div>
-        <div className="form-actions">
-          <button className="btn btn-onbk" onClick={onCancel}>CANCEL</button>
-          <button className="btn btn-accent" onClick={save}>
-            {isNew ? 'ADD' : 'SAVE'}
-          </button>
-        </div>
+      <div className="form-actions episode-form-actions">
+        <button className="btn btn-onbk" onClick={onCancel} disabled={saving}>CANCEL</button>
+        <button className="btn btn-accent" onClick={save} disabled={saving}>
+          {saving ? 'UPLOADING…' : isNew ? 'ADD' : 'SAVE'}
+        </button>
       </div>
     </div>
   );

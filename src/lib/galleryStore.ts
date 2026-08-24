@@ -215,18 +215,27 @@ export interface DotoriItem {
 
 export const DOTORI_SEED: DotoriItem[] = [];
 
-/* ---------- TRPG 플레이기록 (4.16) — 표 형식 ---------- */
+/* ---------- 에피소드 아카이브 — 장면 일러스트 + 짧은 설명 ---------- */
+export interface EpisodeScene {
+  id: string;
+  imgId?: string;
+  caption: string;
+}
+
 export interface PlayRecord {
   id: string;
-  date?: string;             // Date (optional — 비우면 표 맨 아래)
-  scenario: string;          // Scenario (필수)
-  scenarioLink?: string;     // 시나리오 링크 — 표에서 이름 클릭 시 새 탭
+  date?: string;
+  scenario: string;          // 에피소드 제목
+  summary?: string;          // 에피소드 전체 한 줄 소개
+  scenes?: EpisodeScene[];   // 순서대로 보여 줄 장면
+  // 아래 필드는 구버전 기록을 잃지 않기 위한 호환 필드다. 새 폼에서는 사용하지 않는다.
+  scenarioLink?: string;
   writer: string;
-  withText: string;          // With
-  role: string;              // PL·GM·HO1 등 짧은 표기
-  playtime: string;          // 4h 30m 등 자유 표기
-  url?: string;              // Url (optional) — 클립 아이콘, 새 탭
-  logId?: string;            // 내 홈 로그 백업 연결 (모바일: Playtime 밑줄)
+  withText: string;
+  role: string;
+  playtime: string;
+  url?: string;
+  logId?: string;
 }
 
 export const PLAYLOG_SEED: PlayRecord[] = [];
