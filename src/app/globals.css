@@ -2093,22 +2093,22 @@ html.route-transitioning.route-ready .route-frame{animation:apple-page-enter .88
    가장자리 굴절을 명확히 만들어 실제 재질감이 보이게 한다.
    ========================================================== */
 :root{
-  --glass-panel:color-mix(in srgb,var(--panel-solid) 54%,transparent);
-  --glass-panel-strong:color-mix(in srgb,var(--panel-solid) 78%,transparent);
-  --glass-control:color-mix(in srgb,var(--panel-solid) 52%,transparent);
-  --glass-control-hover:color-mix(in srgb,var(--panel-solid) 72%,transparent);
-  --glass-edge:color-mix(in srgb,#fff 72%,var(--line) 28%);
-  --glass-edge-soft:color-mix(in srgb,#fff 46%,var(--line) 54%);
-  --glass-reflection:rgba(255,255,255,.28);
+  --glass-panel:color-mix(in srgb,var(--panel-solid) 40%,transparent);
+  --glass-panel-strong:color-mix(in srgb,var(--panel-solid) 66%,transparent);
+  --glass-control:color-mix(in srgb,var(--panel-solid) 38%,transparent);
+  --glass-control-hover:color-mix(in srgb,var(--panel-solid) 58%,transparent);
+  --glass-edge:color-mix(in srgb,#fff 84%,var(--line) 16%);
+  --glass-edge-soft:color-mix(in srgb,#fff 58%,var(--line) 42%);
+  --glass-reflection:rgba(255,255,255,.36);
   --glass-blur:30px;
   --glass-blur-float:38px;
 }
 
 #appMain{
   background:
-    radial-gradient(560px 430px at 5% 22%,color-mix(in srgb,var(--accent-soft) 28%,transparent),transparent 72%),
-    radial-gradient(620px 470px at 94% 30%,rgba(116,174,255,.24),transparent 74%),
-    radial-gradient(520px 360px at 48% 92%,rgba(190,150,255,.14),transparent 76%);
+    radial-gradient(560px 430px at 5% 22%,color-mix(in srgb,var(--accent-soft) 36%,transparent),transparent 72%),
+    radial-gradient(620px 470px at 94% 30%,rgba(116,174,255,.31),transparent 74%),
+    radial-gradient(520px 360px at 48% 92%,rgba(190,150,255,.2),transparent 76%);
   background-attachment:fixed;
 }
 
@@ -2126,8 +2126,8 @@ html.route-transitioning.route-ready .route-frame{animation:apple-page-enter .88
 .panel{
   border-radius:calc(var(--radius) + 3px);
   background:
-    linear-gradient(135deg,rgba(255,255,255,.34),transparent 31%),
-    linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.025) 52%),
+    linear-gradient(135deg,rgba(255,255,255,.3),transparent 31%),
+    linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.018) 52%),
     var(--glass-panel);
   border-color:color-mix(in srgb,var(--glass-edge) 88%,transparent);
   box-shadow:0 1px 0 rgba(255,255,255,.72) inset,
@@ -2145,12 +2145,12 @@ html.route-transitioning.route-ready .route-frame{animation:apple-page-enter .88
 
 .cal-layout>.panel.cal,.settings-layout>.panel:not(.set-nav),.board-list.panel{
   background:
-    linear-gradient(135deg,rgba(255,255,255,.38),transparent 26%),
-    color-mix(in srgb,var(--panel-solid) 66%,transparent);
+    linear-gradient(135deg,rgba(255,255,255,.3),transparent 26%),
+    color-mix(in srgb,var(--panel-solid) 48%,transparent);
 }
-.cal-cell{border-radius:11px;background:color-mix(in srgb,var(--panel-solid) 46%,transparent)}
+.cal-cell{border-radius:11px;background:color-mix(in srgb,var(--panel-solid) 34%,transparent)}
 .brow{font-size:max(13px,calc(13.5px*var(--fs,1)))}
-.set-nav{background:color-mix(in srgb,var(--panel-solid) 46%,transparent)}
+.set-nav{background:color-mix(in srgb,var(--panel-solid) 34%,transparent)}
 .set-nav button{padding:11px 14px;font-weight:500}
 
 @media (max-width:620px){
