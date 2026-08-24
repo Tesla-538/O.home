@@ -2063,3 +2063,76 @@ html.route-leaving #appMain{opacity:0;transform:translateY(-3px);filter:blur(1.5
   .cal-grid{gap:4px}
   .set-nav{position:static}
 }
+
+/* ==========================================================
+   LIQUID GLASS — 시각 대비 강화 (v2.2)
+   단색 배경에서는 blur가 회색 카드처럼 보이므로, 유리 뒤 광원과
+   가장자리 굴절을 명확히 만들어 실제 재질감이 보이게 한다.
+   ========================================================== */
+:root{
+  --glass-panel:color-mix(in srgb,var(--panel-solid) 54%,transparent);
+  --glass-panel-strong:color-mix(in srgb,var(--panel-solid) 78%,transparent);
+  --glass-control:color-mix(in srgb,var(--panel-solid) 52%,transparent);
+  --glass-control-hover:color-mix(in srgb,var(--panel-solid) 72%,transparent);
+  --glass-edge:color-mix(in srgb,#fff 72%,var(--line) 28%);
+  --glass-edge-soft:color-mix(in srgb,#fff 46%,var(--line) 54%);
+  --glass-reflection:rgba(255,255,255,.28);
+  --glass-blur:30px;
+  --glass-blur-float:38px;
+}
+
+#appMain{
+  background:
+    radial-gradient(560px 430px at 5% 22%,color-mix(in srgb,var(--accent-soft) 28%,transparent),transparent 72%),
+    radial-gradient(620px 470px at 94% 30%,rgba(116,174,255,.24),transparent 74%),
+    radial-gradient(520px 360px at 48% 92%,rgba(190,150,255,.14),transparent 76%);
+  background-attachment:fixed;
+}
+
+.topbar{
+  height:64px;padding-inline:28px;
+  background:color-mix(in srgb,var(--top-bg) 58%,transparent);
+  border-bottom-color:rgba(255,255,255,.18);
+  box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 14px 42px rgba(0,0,0,.18);
+  -webkit-backdrop-filter:blur(36px) saturate(175%);backdrop-filter:blur(36px) saturate(175%);
+}
+.brand{font-size:calc(22px*var(--fs,1));font-weight:650;letter-spacing:.16em}
+.brand small{font-size:calc(9.5px*var(--fs,1)*var(--fs-logosub,1));letter-spacing:.18em;margin-top:0}
+.gnb button,.gnb a.gnb-link{font-size:calc(13px*var(--fs,1));font-weight:max(var(--fw-menu,400),500);padding:8px 14px}
+
+.panel{
+  border-radius:calc(var(--radius) + 3px);
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.34),transparent 31%),
+    linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.025) 52%),
+    var(--glass-panel);
+  border-color:color-mix(in srgb,var(--glass-edge) 88%,transparent);
+  box-shadow:0 1px 0 rgba(255,255,255,.72) inset,
+    0 -1px 0 rgba(255,255,255,.12) inset,
+    0 22px 54px rgba(2,7,17,.21),0 5px 16px rgba(2,7,17,.1);
+}
+.widget{padding:18px}
+.widget h4{font-size:max(12px,calc(12.5px*var(--fs,1)));font-weight:700;letter-spacing:.085em;margin-bottom:13px;color:color-mix(in srgb,var(--ink) 55%,transparent)}
+.widget h4 .more{font-size:max(11px,calc(11px*var(--fs,1)));letter-spacing:-.01em;font-weight:500}
+.dday-row,.todo-row{font-size:max(13px,calc(13px*var(--fs,1)))}
+
+.btn,.login-link,.seg,.mini-seg,.pager button{border-radius:11px}
+.btn{min-height:36px;padding-inline:18px}
+.k-input,.k-textarea,.k-select .cur{border-radius:11px}
+
+.cal-layout>.panel.cal,.settings-layout>.panel:not(.set-nav),.board-list.panel{
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.38),transparent 26%),
+    color-mix(in srgb,var(--panel-solid) 66%,transparent);
+}
+.cal-cell{border-radius:11px;background:color-mix(in srgb,var(--panel-solid) 46%,transparent)}
+.brow{font-size:max(13px,calc(13.5px*var(--fs,1)))}
+.set-nav{background:color-mix(in srgb,var(--panel-solid) 46%,transparent)}
+.set-nav button{padding:11px 14px;font-weight:500}
+
+@media (max-width:620px){
+  .topbar{height:58px;padding-inline:16px}
+  .brand{font-size:calc(20px*var(--fs,1))}
+  #appMain{background-size:auto;background-attachment:scroll}
+  .widget{padding:16px}
+}
