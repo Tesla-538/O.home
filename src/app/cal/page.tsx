@@ -14,6 +14,7 @@ import { EditableDesc, PageTitle } from '@/components/ui/PageText';
 import { useToast } from '@/components/ui/Toast';
 import { useMenuSettings } from '@/lib/menuStore';
 import { eventsToIcs, googleCalendarUrl, parseIcs } from '@/lib/calendarInterop';
+import { backend } from '@/lib/backend';
 
 const MONTHS = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 const fmt = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -27,13 +28,8 @@ interface GoogleCalendarStatus {
 }
 
 async function googleAuthHeaders(): Promise<Record<string, string>> {
-  const { createBrowserClient } = await import('@supabase/ssr');
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
-  if (!url || !key) return {};
-  const sb = createBrowserClient(url, key);
-  const { data } = await sb.auth.getSession();
-  return data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {};
+  const token = await backend()?.accessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export default function CalPage() {

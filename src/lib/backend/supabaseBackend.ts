@@ -80,6 +80,11 @@ export async function createSupabaseBackend(
       return toUser(data.user);
     },
 
+    async accessToken() {
+      const { data } = await sb.auth.getSession();
+      return data.session?.access_token ?? null;
+    },
+
     onAuthChange(cb) {
       const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
         void toUser(session?.user).then(cb);

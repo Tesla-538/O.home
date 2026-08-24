@@ -142,6 +142,10 @@ export async function createFirebaseBackend(cfg: FirebaseCfg): Promise<Backend> 
   return {
     kind: 'firebase',
 
+    async accessToken() {
+      return auth.currentUser ? auth.currentUser.getIdToken() : null;
+    },
+
     async check(): Promise<BackendCheck> {
       const fail = (p: Partial<BackendCheck>): BackendCheck =>
         ({ ok: false, reachable: false, schema: false, hasAdmin: false, message: '', ...p });

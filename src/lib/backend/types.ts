@@ -46,6 +46,8 @@ export interface Backend {
 
   /* ---- 인증 ---- */
   currentUser(): Promise<BackendUser | null>;
+  /** 현재 로그인 세션의 서버 API 전달용 액세스 토큰 */
+  accessToken(): Promise<string | null>;
   onAuthChange(cb: (u: BackendUser | null) => void): () => void;
   signIn(id: string, password: string): Promise<{ ok: boolean; error?: string }>;
   signUp(id: string, password: string, nickname: string): Promise<{ ok: boolean; error?: string }>;
