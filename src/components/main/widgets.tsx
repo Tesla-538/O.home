@@ -199,7 +199,8 @@ export function LatestWidget() {
         <div className={`latest-grid count-${latest.length}`}>
           {latest.map((it, i) => (
             <article key={it.id} className="latest-card" onClick={() => router.push(it.href)}>
-              <div className="latest-thumb"><BlobImg fileRef={it.ref} ph={it.ph || phFallback[i]} /></div>
+              <div className="latest-thumb"><BlobImg fileRef={it.ref} ph={it.ph || phFallback[i]}
+                imgStyle={{ objectFit: 'contain' }} /></div>
               <div className="latest-copy">
                 <small>{it.source} · {it.date.slice(0, 10).replace(/-/g, '.')}</small>
                 <b>{it.title}</b>
