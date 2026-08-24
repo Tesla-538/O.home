@@ -203,7 +203,7 @@ export default function MainPage() {
       {/* 위젯 삭제 경고 (v1.9 — 모든 삭제는 경고 모달) */}
       <ConfirmModal open={delAsk !== null}
         title={`「${delAsk ? widgetLabel(state.widgets, delAsk) : ''}」 위젯을 삭제할까요?`}
-        body="위젯이 메인에서 삭제됩니다. 삭제는 편집 종료 시 「저장 후 종료」를 선택해야 확정되고, 「저장하지 않고 종료」를 선택하면 되돌아옵니다."
+        body="위젯이 메인에서 삭제됩니다. 삭제는 편집 종료 시 「저장 후 종료」를 선택해야 확정되고, 「변경 취소 후 종료」를 선택하면 되돌아옵니다."
         onClose={() => setDelAsk(null)}
         buttons={[
           { label: 'DELETE', kind: 'accent', onClick: () => { if (delAsk) removeWidget(delAsk.id); setDelAsk(null); toast('위젯이 삭제되었습니다 — 편집 종료 시 저장하면 확정됩니다'); } },
