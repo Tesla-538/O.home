@@ -16,7 +16,7 @@ export function ProfileAvatarImage({ src, compact = false }: { src: string; comp
         objectFit: 'cover',
         // 확대 없이 원본 비율을 유지하고, 작은 헤더 썸네일만 자르는 기준을 아래로 내려
         // 사진 내용이 원 안에서 더 위쪽에 보이게 한다.
-        objectPosition: compact ? '50% calc(70% + 2px)' : '50% 50%',
+        objectPosition: compact ? '50% calc(70% + 3px)' : '50% 50%',
       }}
     />
   );
