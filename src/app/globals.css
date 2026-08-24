@@ -866,16 +866,17 @@ body.edit-on .main-grid{grid-template-columns:260px 720px 280px}
   .diary-mini{justify-content:center}
   .widget .hint{display:none}
 }
-/* LATEST 축소 규칙 (v1.9): 레이아웃 전환으로 아래를 채움 */
-.latest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-@container (max-width:240px){
-  .latest-grid{grid-template-columns:1fr 1fr}
-  .latest-grid>*:first-child{grid-column:1/-1;aspect-ratio:16/10 !important}
-}
-@container (max-width:150px){
-  .latest-grid{grid-template-columns:1fr}
-  .latest-grid>*:first-child{grid-column:auto;aspect-ratio:1 !important}
-}
+/* LATEST — 실제 그림만 보여 주는 작은 아카이브 카드 */
+.latest-widget{display:flex;min-height:0;flex-direction:column}.latest-widget>h4{flex:0 0 auto}
+.latest-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1;min-height:0}
+.latest-card{position:relative;min-width:0;min-height:0;overflow:hidden;border-radius:10px;border:1px solid color-mix(in srgb,var(--line) 75%,transparent);background:color-mix(in srgb,var(--panel-solid) 52%,transparent);cursor:var(--cur-pointer,pointer);box-shadow:0 1px 0 rgba(255,255,255,.2) inset;transition:.2s var(--motion-spring)}
+.latest-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--ink) 30%,var(--line));box-shadow:0 7px 18px rgba(5,10,18,.14)}
+.latest-thumb{position:absolute;inset:0}.latest-thumb img{transition:transform .35s ease}.latest-card:hover .latest-thumb img{transform:scale(1.035)}
+.latest-copy{position:absolute;z-index:2;left:0;right:0;bottom:0;padding:24px 8px 7px;color:#fff;background:linear-gradient(transparent,rgba(7,10,16,.84));text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.latest-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:7.5px;letter-spacing:.06em;opacity:.78}.latest-copy b{display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;line-height:1.25}
+.latest-grid.count-1{grid-template-columns:1fr}.latest-grid.count-1 .latest-card{display:grid;grid-template-columns:minmax(90px,42%) minmax(0,1fr)}.latest-grid.count-1 .latest-thumb{position:relative;inset:auto}.latest-grid.count-1 .latest-copy{position:relative;inset:auto;display:flex;flex-direction:column;justify-content:center;padding:12px 14px;background:none;color:var(--ink);text-shadow:none}.latest-grid.count-1 .latest-copy small{color:var(--faint);font-size:8.5px}.latest-grid.count-1 .latest-copy b{margin-top:5px;font-size:12.5px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.latest-grid.count-2{grid-template-columns:repeat(2,minmax(0,1fr))}.latest-empty{display:grid;place-items:center;flex:1;min-height:60px;border:1px dashed var(--line);border-radius:10px;color:var(--faint);font-size:10.5px}
+@container (max-width:240px){.latest-grid.count-3{grid-template-columns:repeat(2,minmax(0,1fr))}.latest-grid.count-3 .latest-card:last-child{display:none}.latest-grid.count-1 .latest-card{grid-template-columns:1fr}.latest-grid.count-1 .latest-copy{position:absolute;inset:auto 0 0;padding:25px 9px 8px;background:linear-gradient(transparent,rgba(7,10,16,.84));color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7)}.latest-grid.count-1 .latest-copy small{color:#fff}}
 /* 편집모드 (4.0): 점선 아웃라인 + 드래그 + 우하단 리사이즈 핸들 */
 .wgt{position:relative}
 /* 위젯 간 간격은 시안의 16px로 통일 */

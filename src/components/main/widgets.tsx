@@ -183,29 +183,31 @@ export function LatestWidget() {
   const latest = [
     ...roads.map(it => ({
       id: `r-${it.id}`, date: it.date, ref: it.imgId ?? it.imgUrl, ph: it.ph,
-      href: '/roadview', tip: `로드비 · No.${String(it.no ?? 0).padStart(3, '0')}`,
+      href: '/roadview', title: it.title || `로드비 No.${String(it.no ?? 0).padStart(3, '0')}`, source: 'ROADVIEW',
     })),
     // 갤러리 — 전체공개 + 접기 없는 게시물의 대표(첫) 이미지
     ...backups.filter(p => p.visibility === 'public' && !p.fold).map(p => ({
       id: `b-${p.id}`, date: p.date, ref: p.images[0], ph: p.phList[0] ?? 'cool',
-      href: `/backup/${p.id}`, tip: `갤러리 · ${p.title}`,
+      href: `/backup/${p.id}`, title: p.title, source: 'GALLERY',
     })),
   ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
   const phFallback = ['cool', 'warm', 'red'];
   return (
-    <div className="panel widget" style={{ margin: 0 }}>
+    <div className="panel widget latest-widget" style={{ margin: 0 }}>
       <h4>LATEST <span className="more" onClick={() => router.push('/backup')}>더보기 ›</span></h4>
-      <div className="latest-grid">
-        {[0, 1, 2].map(i => {
-          const it = latest[i];
-          return (
-            <div key={it?.id ?? i} style={{ aspectRatio: '1', borderRadius: 9, overflow: 'hidden', position: 'relative', cursor: it ? 'pointer' : undefined }}
-              onClick={() => { if (it) router.push(it.href); }} data-tip={it?.tip}>
-              <BlobImg fileRef={it?.ref} ph={it?.ph || phFallback[i]} />
-            </div>
-          );
-        })}
-      </div>
+      {latest.length > 0 ? (
+        <div className={`latest-grid count-${latest.length}`}>
+          {latest.map((it, i) => (
+            <article key={it.id} className="latest-card" onClick={() => router.push(it.href)}>
+              <div className="latest-thumb"><BlobImg fileRef={it.ref} ph={it.ph || phFallback[i]} /></div>
+              <div className="latest-copy">
+                <small>{it.source} · {it.date.replace(/-/g, '.')}</small>
+                <b>{it.title}</b>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : <div className="latest-empty">아직 등록된 그림이 없습니다</div>}
     </div>
   );
 }
