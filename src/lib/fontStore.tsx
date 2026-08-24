@@ -23,8 +23,8 @@ export interface FontDef {
 }
 
 export const BUILTIN_FONTS: FontDef[] = [
-  { id: 'default', name: '기본 (프리텐다드)', family: 'var(--sans)', builtin: true, locked: true },
-  { id: 'serif', name: '기본 세리프 (Cormorant + Noto Serif KR)', family: 'var(--serif)', builtin: true, locked: true },
+  { id: 'default', name: '기본 (Apple 스타일 한글)', family: 'var(--sans)', builtin: true, locked: true },
+  { id: 'serif', name: '기본 타이틀 (Apple 스타일)', family: 'var(--serif)', builtin: true, locked: true },
   { id: 'notoserif', name: 'Noto Serif KR', family: "'Noto Serif KR', serif", builtin: true },
   { id: 'gowun', name: '고운바탕', family: "'Gowun Batang', serif", gfont: 'Gowun+Batang:wght@400;700', builtin: true },
   { id: 'nanummj', name: '나눔명조', family: "'Nanum Myeongjo', serif", gfont: 'Nanum+Myeongjo:wght@400;700', builtin: true },
