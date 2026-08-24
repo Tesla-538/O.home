@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const user = await requireAdmin(request);
     const { data, error } = await serviceSupabase().from('calendar_connections')
       .select('calendar_name,last_synced_at,channel_expiration').eq('user_id', user.id).maybeSingle();
-    if (error) throw new Error(`CALENDAR_STATUS_FAILED:${error.code}`);
+    if (error) throw new Error(`CALENDAR_STATUS_FAILED:${error.code || error.message}`);
     return Response.json({
       configured: googleConfig().ready,
       connected: !!data,
