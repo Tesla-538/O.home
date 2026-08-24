@@ -13,6 +13,7 @@ export function refreshPage() {
 
 type RouterLike = { push: (href: string) => void };
 let navTimer: ReturnType<typeof setTimeout> | null = null;
+let activeGhost: HTMLElement | null = null;
 
 /** 현재 페이지를 고정된 시각 복사본으로 남겨 새 페이지와 겹쳐 교차 전환한다. */
 function makeRouteGhost() {
@@ -43,13 +44,40 @@ export function navigatePage(router: RouterLike, href: string) {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduced) { router.push(href); return; }
   if (navTimer) return;
-  const ghost = makeRouteGhost();
-  // 먼저 기다리거나 화면을 지우지 않고 즉시 다음 경로 렌더를 시작한다.
+  const root = document.documentElement;
+  const from = window.location.href;
+  activeGhost = makeRouteGhost();
+  root.classList.remove('route-ready');
+  root.classList.add('route-transitioning');
+
+  let revealing = false;
+  const reveal = () => {
+    if (revealing) return;
+    revealing = true;
+    root.classList.add('route-ready');
+    if (navTimer) clearTimeout(navTimer);
+    navTimer = setTimeout(() => {
+      root.classList.remove('route-transitioning', 'route-ready');
+      activeGhost?.remove();
+      activeGhost = null;
+      navTimer = null;
+    }, 1380);
+  };
+
+  // 이동은 즉시 시작하지만 기존 화면은 새 DOM이 준비될 때까지 완전히 유지한다.
   router.push(href);
-  navTimer = setTimeout(() => {
-    navTimer = null;
-    ghost?.remove();
-  }, 760);
+  const started = performance.now();
+  const waitForCommit = () => {
+    if (window.location.href !== from) {
+      requestAnimationFrame(() => requestAnimationFrame(reveal));
+    } else if (performance.now() - started < 3000) {
+      requestAnimationFrame(waitForCommit);
+    } else {
+      reveal();
+    }
+  };
+  requestAnimationFrame(waitForCommit);
+  navTimer = setTimeout(reveal, 3100);
 }
 
 /** children에 key를 걸어 remount — layout에서 <main> 안을 감싼다 */
