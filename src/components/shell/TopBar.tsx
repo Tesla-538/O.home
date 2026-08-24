@@ -188,9 +188,14 @@ export function TopBar() {
         </div>
       </nav>
 
+      {/* 메인 편집용 빠른 배경화면 메뉴 — 환경설정으로 이동하지 않고 업로드·교체 */}
+      {editOn && pathname === '/' && (
+        <button className="btn btn-ghost edit-top-action"
+          onClick={() => window.dispatchEvent(new Event('ohome-background-edit'))}>▧ 배경화면</button>
+      )}
       {/* 위젯 추가 — 그리드 토글 왼쪽 (v1.9 사용자 확정: 본문 하단 버튼 대체) */}
       {editOn && pathname === '/' && (
-        <button className="btn btn-ghost" style={{ height: 27, padding: '0 11px', fontSize: 10.5, whiteSpace: 'nowrap' }}
+        <button className="btn btn-ghost edit-top-action"
           onClick={() => window.dispatchEvent(new Event('ohome-add-widget'))}>＋ 위젯</button>
       )}
       {/* 그리드 토글 — 메인에서 편집모드 켰을 때만 (v1.9) */}

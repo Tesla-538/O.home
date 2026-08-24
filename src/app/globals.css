@@ -134,6 +134,18 @@ a{color:inherit;text-decoration:none}
 .grid-chip:has(input:checked) .tr{box-shadow:0 0 8px color-mix(in srgb,var(--accent) 60%,transparent)}
 .edit-flag{display:none;font-size:calc(10px*var(--fs,1));color:var(--accent-soft);letter-spacing:.1em;border:1px solid rgba(201,106,115,.4);padding:3px 9px;border-radius:9px;white-space:nowrap;cursor:var(--cur-pointer,pointer)}
 .edit-flag.show{display:inline-block}
+.edit-top-action{height:27px;min-height:27px;padding:0 11px;font-size:calc(10.5px*var(--fs,1));white-space:nowrap}
+
+/* 편집모드 빠른 배경화면 메뉴 */
+.bg-quick-preview{
+  height:180px;margin:4px 0 14px;border:1px solid var(--line);border-radius:var(--radius-s);
+  overflow:hidden;display:grid;place-items:center;background:var(--crop-bg,#2c313a);color:var(--faint);
+  font-size:calc(11px*var(--fs,1));
+}
+.bg-quick-preview img{width:100%;height:100%;object-fit:cover}
+.bg-quick-actions{display:flex;gap:8px;flex-wrap:wrap}
+.bg-quick-actions .btn{min-height:34px;padding:0 12px;font-size:calc(10.5px*var(--fs,1))}
+.bg-quick-blur{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:calc(11.5px*var(--fs,1));color:var(--sub)}
 /* 알림 종 — 선 픽토그램, 상단메뉴 글씨색 연동 (v1.9) */
 /* 메뉴 알림 점 (4.13) — 안 읽은 알림이 가리키는 메뉴에 표시 */
 .gnb .nd{color:var(--accent);font-size:7px;vertical-align:top;margin-left:4px}
@@ -163,6 +175,7 @@ a{color:inherit;text-decoration:none}
 /* ---------- BGM 플레이어 (4.1 — 1차에서 유튜브 연동) ---------- */
 .bgm{
   position:fixed;right:20px;bottom:20px;z-index:70;display:flex;align-items:center;gap:11px;
+  width:360px;height:58px;box-sizing:border-box;
   background:var(--bgm-bg);backdrop-filter:blur(10px);color:var(--bgm-fg);
   border:1px solid var(--line-dark);border-radius:40px;padding:9px 17px 9px 10px;
   box-shadow:var(--sh-md);
@@ -170,10 +183,10 @@ a{color:inherit;text-decoration:none}
 .bgm .disc{width:34px;height:34px;border-radius:50%;background:conic-gradient(#565d68,#2b3038,#565d68,#2b3038,#565d68);display:grid;place-items:center;animation:spin 7s linear infinite}
 .bgm .disc::after{content:"";width:9px;height:9px;border-radius:50%;background:#14161a;border:2px solid #757c87}
 @keyframes spin{to{transform:rotate(360deg)}}
-.bgm .title{font-size:calc(11px*var(--fs,1));max-width:150px;color:var(--bgm-fg);opacity:.7;min-width:0}
+.bgm .title{font-size:calc(11px*var(--fs,1));max-width:96px;flex:1;color:var(--bgm-fg);opacity:.7;min-width:0}
 .bgm .title .tt{color:var(--bgm-fg);font-size:calc(11.5px*var(--fs,1));font-weight:600;opacity:1}
 /* 흐르는 글씨 — 재생 중 + 넘칠 때만 (Marquee) */
-.bgm .title .mq{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:150px}
+.bgm .title .mq{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:96px}
 .bgm .title .mq.run{text-overflow:clip}
 .bgm .mq-in{display:inline-flex;gap:28px;animation:mqScroll 9s linear infinite}
 @keyframes mqScroll{from{transform:translateX(0)}to{transform:translateX(calc(-50% - 14px))}}
@@ -787,22 +800,21 @@ a{color:inherit;text-decoration:none}
 .ph span{z-index:2;font-size:calc(12px*var(--fs,1))}
 
 /* ---------- 메인 (4.0 위젯 시스템) ---------- */
-/* 메인 갭 규격 = 10px 고정 (그리드 스냅 10px 단위와 일치 — 4.0)
-   캔버스 콘텐츠 폭도 10px 배수(1120)로 고정 — 열 원점 0/240/550/860 전부 격자 위 */
-.page-main-wrap{padding-left:30px;padding-right:30px}
-.main-grid{display:grid;grid-template-columns:230px 1fr 260px;gap:10px;align-items:start}
+/* 메인 시안 규격: 전체 1320px(좌우 여백 14px 포함) · 콘텐츠 1292px
+   좌 260 / 간격 16 / 중앙 720 / 간격 16 / 우 280 */
+.page-main-wrap{width:1320px;max-width:1320px;padding-left:14px;padding-right:14px}
+.main-grid{display:grid;grid-template-columns:260px 720px 280px;gap:16px;align-items:start}
 /* 절대배치 캔버스 (v1.9 사용자 확정) — PC에는 문서 흐름 없음: 위젯은 ax/ay 절대 좌표, 겹침 허용.
    흐름 스택은 모바일 전용 (아래 620px 미디어에서 static 복원) */
 .main-grid.abs{display:block;position:relative}
-.main-grid .g2{gap:10px}
+.main-grid .g2{gap:16px}
 .main-grid .widget{margin-bottom:0} /* 갭은 래퍼(.wgt)에서만 — 마진 겹침 방지 */
 /* 고정 캔버스 모드: 창을 줄여도 배치 유지 — 좁은 창은 가로 스크롤(왼쪽 기준), 모바일 전환 시 해제 (v1.9) */
-body.main-fixed .page-main-wrap{min-width:1180px;margin-left:max(0px, calc(50% - 590px));margin-right:0}
+body.main-fixed .page-main-wrap{min-width:1320px;margin-left:max(0px, calc(50% - 660px));margin-right:0}
 body.main-fixed #appMain,body.edit-on #appMain{overflow-x:auto}
-/* 편집모드: 반응형 모드·좁은 창에서도 캔버스를 콘텐츠 1120px로 고정 —
-   가운데 1fr 열이 항상 610px(10px 배수)이 되어 10px 격자가 정확히 맞음 */
-body.edit-on .page-main-wrap{width:1180px;min-width:1180px;margin-left:max(0px, calc(50% - 590px));margin-right:0}
-body.edit-on .main-grid{grid-template-columns:230px 1fr 260px}
+/* 편집모드에서도 같은 1320px 캔버스를 유지 — 좁은 창은 가로 스크롤 */
+body.edit-on .page-main-wrap{width:1320px;max-width:1320px;min-width:1320px;margin-left:max(0px, calc(50% - 660px));margin-right:0}
+body.edit-on .main-grid{grid-template-columns:260px 720px 280px}
 .menu-list{padding:14px;display:none} /* PC에서는 상단 메뉴로 충분 — 모바일 전용 (v1.8) */
 .wgt-hide-pc{display:none}
 @media (max-width:620px){.wgt-hide-pc{display:block}}
@@ -863,8 +875,8 @@ body.edit-on .main-grid{grid-template-columns:230px 1fr 260px}
 }
 /* 편집모드 (4.0): 점선 아웃라인 + 드래그 + 우하단 리사이즈 핸들 */
 .wgt{position:relative}
-/* 위젯 간 간격은 래퍼(.wgt) 단위로 통일 — login-box처럼 .widget 마진이 없는 위젯도 갭 유지 */
-.main-grid .wgt{margin-bottom:10px}
+/* 위젯 간 간격은 시안의 16px로 통일 */
+.main-grid .wgt{margin-bottom:16px}
 .main-grid .wgt:last-child{margin-bottom:0}
 /* 크기 지정(동결/리사이즈)된 프레임: 내부 블록이 프레임을 꽉 채움 — 핸들을 늘리면 위젯도 같이 늘어남 */
 .wgt.sized > *:first-child{width:100%;height:100%}
@@ -1658,6 +1670,7 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
   .page-head{grid-template-columns:1fr}
   .head-actions{position:static;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
   body.main-fixed .page-main-wrap{min-width:0;margin-left:0} /* 모바일 뷰에서는 고정 캔버스 해제 (v1.9) */
+  .page-main-wrap{width:auto;max-width:100%;min-width:0}
   body.main-fixed #appMain,body.edit-on #appMain{overflow-x:hidden} /* 모바일 전환 시 가로 스크롤 제거 */
   .main-grid{grid-template-columns:1fr}
   .main-grid:not(.abs) > *{display:contents} /* (구 열 구조) 컬럼 해체 → 위젯 세로 1열. abs 캔버스는 위젯 직속이라 해체 불필요 (v1.9) */
@@ -1667,7 +1680,7 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
   .main-grid.abs{display:grid !important;height:auto !important}
   .settings-layout{grid-template-columns:1fr}
   /* BGM — 화면 하단에 딱 붙는 슬림 풀폭 바 (8장·4.1 v1.9): 볼륨 생략, 재생 컨트롤 오른쪽 정렬 */
-  .bgm,.bgm.bgm-left{left:0;right:0;bottom:0;border-radius:0;border-left:none;border-right:none;border-bottom:none;padding:7px 14px;gap:10px}
+  .bgm,.bgm.bgm-left{left:0;right:0;bottom:0;width:auto;height:auto;border-radius:0;border-left:none;border-right:none;border-bottom:none;padding:7px 14px;gap:10px}
   .bgm .vol,.bgm .fold-btn{display:none}
   .bgm .title{flex:1;max-width:none}
   .bgm .title .mq{max-width:none}

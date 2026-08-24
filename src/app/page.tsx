@@ -6,8 +6,10 @@ import { WidgetFrame } from '@/components/main/WidgetFrame';
 import { renderWidget } from '@/components/main/widgets';
 import { MemberBox } from '@/components/main/MemberBox';
 import { Modal, ConfirmModal } from '@/components/ui/Modal';
-import { KRadio } from '@/components/ui/Kit';
+import { KRadio, KStep } from '@/components/ui/Kit';
 import { useToast } from '@/components/ui/Toast';
+import { useTheme } from '@/lib/ThemeProvider';
+import { putBlob, useBlobUrl } from '@/lib/blobStore';
 
 const ADDABLE: WidgetType[] = ['memo', 'dday', 'todo', 'upcoming', 'freetext', 'deco', 'diary', 'latest'];
 /** 내용 설정 모달이 있는 위젯 — 우클릭 「설정」 노출 대상 (v1.9) */
@@ -15,12 +17,16 @@ const EDITABLE: WidgetType[] = ['banner', 'memo', 'dday', 'todo', 'freetext', 'd
 
 export default function MainPage() {
   const { state, editOn, gridOn, updateWidget, addWidget, removeWidget } = useMainStore();
+  const theme = useTheme();
   const toast = useToast();
   const [ctx, setCtx] = useState<{ id: string; x: number; y: number } | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState<WidgetType>('freetext');
   const [addCol, setAddCol] = useState<'1' | '2' | '3'>('3');
   const [delAsk, setDelAsk] = useState<WidgetConf | null>(null);   // 우클릭 삭제 경고 (v1.9)
+  const [bgOpen, setBgOpen] = useState(false);
+  const bgFileRef = React.useRef<HTMLInputElement>(null);
+  const bgPreview = useBlobUrl(theme.state.vars.bgImageId);
 
   // 위젯 추가 — 상단바의 [＋ 위젯] 버튼(그리드 토글 왼쪽)이 이벤트로 연다 (v1.9 사용자 확정)
   useEffect(() => {
@@ -28,6 +34,18 @@ export default function MainPage() {
     window.addEventListener('ohome-add-widget', open);
     return () => window.removeEventListener('ohome-add-widget', open);
   }, []);
+
+  // 편집모드 상단바 [배경화면] — 환경설정까지 이동하지 않고 현재 화면에서 바로 교체
+  useEffect(() => {
+    const open = () => setBgOpen(true);
+    window.addEventListener('ohome-background-edit', open);
+    return () => window.removeEventListener('ohome-background-edit', open);
+  }, []);
+
+  const closeBackground = () => {
+    theme.discard();
+    setBgOpen(false);
+  };
 
   // 모달을 열 때 선택돼 있던 종류가 이미 추가된 것이면 항상 가능한 자유 텍스트로 (v1.9)
   useEffect(() => {
@@ -225,6 +243,52 @@ export default function MainPage() {
           <KRadio name="wgt-col" value="1" current={addCol} onChange={v => setAddCol(v as '1')} label="왼쪽 열" />
           <KRadio name="wgt-col" value="2" current={addCol} onChange={v => setAddCol(v as '2')} label="중앙" />
           <KRadio name="wgt-col" value="3" current={addCol} onChange={v => setAddCol(v as '3')} label="오른쪽 열" />
+        </div>
+      </Modal>
+
+      {/* 편집모드 빠른 배경화면 메뉴 — 테마 저장소를 사용해 다른 기기에도 동일하게 반영 */}
+      <Modal open={bgOpen} onClose={closeBackground} small dirty={theme.dirty}
+        title="배경화면" desc="이미지를 고르면 현재 화면에서 바로 미리보기됩니다. SAVE를 눌러야 저장됩니다."
+        actions={<>
+          <button className="btn btn-ghost" onClick={closeBackground}>CANCEL</button>
+          <button className="btn btn-dark" disabled={!theme.dirty}
+            style={{ opacity: theme.dirty ? 1 : .45 }}
+            onClick={() => { theme.save(); setBgOpen(false); toast('배경화면을 저장했습니다'); }}>SAVE</button>
+        </>}>
+        <input ref={bgFileRef} type="file" accept="image/*" style={{ display: 'none' }}
+          onChange={async e => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            try {
+              const id = await putBlob(f);
+              theme.setVar('bgImageId', id);
+              theme.setVar('bgType', 'image');
+            } catch {
+              toast('배경 이미지 업로드에 실패했습니다');
+            }
+            e.target.value = '';
+          }} />
+        <div className="bg-quick-preview">
+          {bgPreview
+            ? <img src={bgPreview} alt="선택한 배경화면 미리보기" />
+            : <span>선택된 배경 이미지가 없습니다</span>}
+        </div>
+        <div className="bg-quick-actions">
+          <button className="btn btn-ghost" onClick={() => bgFileRef.current?.click()}>
+            {theme.state.vars.bgImageId ? '이미지 교체' : '이미지 업로드'}
+          </button>
+          <button className="btn btn-ghost" onClick={() => theme.setVar('bgType', 'gradient')}>그라데이션 사용</button>
+          {theme.state.vars.bgImageId && (
+            <button className="btn btn-ghost" onClick={() => {
+              theme.setVar('bgImageId', undefined);
+              theme.setVar('bgType', 'gradient');
+            }}>이미지 제거</button>
+          )}
+        </div>
+        <div className="bg-quick-blur">
+          <span>배경 블러</span>
+          <KStep value={theme.state.vars.bgBlur ?? 0} min={0} max={30} step={2} suffix="px"
+            onChange={v => theme.setVar('bgBlur', v)} />
         </div>
       </Modal>
     </section>
