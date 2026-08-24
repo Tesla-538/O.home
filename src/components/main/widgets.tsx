@@ -201,7 +201,7 @@ export function LatestWidget() {
             <article key={it.id} className="latest-card" onClick={() => router.push(it.href)}>
               <div className="latest-thumb"><BlobImg fileRef={it.ref} ph={it.ph || phFallback[i]} /></div>
               <div className="latest-copy">
-                <small>{it.source} · {it.date.replace(/-/g, '.')}</small>
+                <small>{it.source} · {it.date.slice(0, 10).replace(/-/g, '.')}</small>
                 <b>{it.title}</b>
               </div>
             </article>
