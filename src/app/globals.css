@@ -2314,7 +2314,9 @@ html.route-transitioning.route-ready .route-frame{animation:apple-page-enter .88
   color:color-mix(in srgb,var(--page-desc) 72%,var(--ink) 28%);
   font-weight:max(var(--fw-subtitle,400),500);
 }
-.route-frame > .page:not(.page-main-wrap) > .page-head .head-actions{right:18px;bottom:18px}
+.route-frame > .page:not(.page-main-wrap) > .page-head .head-actions{
+  position:static;grid-column:2;grid-row:1 / span 2;align-self:end;
+}
 
 /* 목록·캘린더·설정 등 대부분의 본문 패널도 동일한 대비를 확보한다. */
 .route-frame > .page:not(.page-main-wrap) .panel{
@@ -2345,5 +2347,5 @@ html.route-transitioning.route-ready .route-frame{animation:apple-page-enter .88
 @media (max-width:620px){
   #appMain:has(> .route-frame > .page:not(.page-main-wrap))::before{inset:58px 0 0;backdrop-filter:blur(1px) brightness(90%)}
   .route-frame > .page:not(.page-main-wrap) > .page-head{min-height:0;padding:16px;margin-bottom:14px}
-  .route-frame > .page:not(.page-main-wrap) > .page-head .head-actions{position:static;margin-top:12px}
+  .route-frame > .page:not(.page-main-wrap) > .page-head .head-actions{grid-column:1;grid-row:auto;margin-top:12px}
 }
