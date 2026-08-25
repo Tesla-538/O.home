@@ -2280,3 +2280,70 @@ html.route-transitioning.route-ready .route-frame{animation:apple-page-enter .88
   #appMain{background-size:auto;background-attachment:scroll}
   .widget{padding:16px}
 }
+
+/* ==========================================================
+   CONTENT PAGES — 홈과 같은 라이트/다크 가독성 계층 (v2.3)
+   배경 일러스트는 보존하고, 읽는 영역만 유리 표면으로 분리한다.
+   테마별 고정색 대신 panel-solid/ink 토큰을 사용해 두 톤이 함께 전환된다.
+   ========================================================== */
+#appMain:has(> .route-frame > .page:not(.page-main-wrap))::before{
+  content:"";position:fixed;inset:64px 0 0;z-index:0;pointer-events:none;
+  background:color-mix(in srgb,#07101c 12%,transparent);
+  -webkit-backdrop-filter:blur(1.5px) saturate(92%) brightness(88%);
+  backdrop-filter:blur(1.5px) saturate(92%) brightness(88%);
+}
+#appMain > .route-frame{position:relative;z-index:1}
+
+/* 제목·설명·검색/추가 버튼을 하나의 읽기 표면으로 묶는다. */
+.route-frame > .page:not(.page-main-wrap) > .page-head{
+  min-height:78px;margin-bottom:18px;padding:18px 20px;
+  border:1px solid color-mix(in srgb,var(--glass-edge) 88%,transparent);
+  border-radius:calc(var(--radius) + 3px);
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.24),transparent 34%),
+    color-mix(in srgb,var(--panel-solid) 72%,transparent);
+  box-shadow:0 1px 0 rgba(255,255,255,.56) inset,0 16px 38px rgba(2,7,17,.15);
+  -webkit-backdrop-filter:blur(28px) saturate(145%);backdrop-filter:blur(28px) saturate(145%);
+}
+.route-frame > .page:not(.page-main-wrap) > .page-head h1{
+  color:color-mix(in srgb,var(--page-title) 88%,var(--ink) 12%);
+  text-shadow:0 1px 12px color-mix(in srgb,var(--panel-solid) 48%,transparent);
+}
+.route-frame > .page:not(.page-main-wrap) > .page-head p,
+.route-frame > .page:not(.page-main-wrap) > .page-head .desc-edit{
+  color:color-mix(in srgb,var(--page-desc) 72%,var(--ink) 28%);
+  font-weight:max(var(--fw-subtitle,400),500);
+}
+.route-frame > .page:not(.page-main-wrap) > .page-head .head-actions{right:18px;bottom:18px}
+
+/* 목록·캘린더·설정 등 대부분의 본문 패널도 동일한 대비를 확보한다. */
+.route-frame > .page:not(.page-main-wrap) .panel{
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.24),transparent 31%),
+    linear-gradient(180deg,rgba(255,255,255,.07),transparent 58%),
+    color-mix(in srgb,var(--panel-solid) 70%,transparent);
+  border-color:color-mix(in srgb,var(--glass-edge) 90%,transparent);
+  -webkit-backdrop-filter:blur(30px) saturate(145%);backdrop-filter:blur(30px) saturate(145%);
+}
+
+/* CHARACTER CODEX를 포함한 이미지 카드: 이미지는 그대로, 정보판만 또렷하게. */
+.route-frame > .page:not(.page-main-wrap) .tc-card .bd,
+.route-frame > .page:not(.page-main-wrap) .char-card .nm,
+.route-frame > .page:not(.page-main-wrap) .rel-card .nm,
+.route-frame > .page:not(.page-main-wrap) .ticket .stub,
+.route-frame > .page:not(.page-main-wrap) .bticket .bt-body{
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.16),transparent 44%),
+    color-mix(in srgb,var(--panel-solid) 86%,transparent);
+  -webkit-backdrop-filter:blur(18px) saturate(135%);backdrop-filter:blur(18px) saturate(135%);
+}
+.route-frame > .page:not(.page-main-wrap) .tc-card .bd .meta,
+.route-frame > .page:not(.page-main-wrap) .tc-card .bd .desc{
+  color:color-mix(in srgb,var(--ink) 78%,transparent);
+}
+
+@media (max-width:620px){
+  #appMain:has(> .route-frame > .page:not(.page-main-wrap))::before{inset:58px 0 0;backdrop-filter:blur(1px) brightness(90%)}
+  .route-frame > .page:not(.page-main-wrap) > .page-head{min-height:0;padding:16px;margin-bottom:14px}
+  .route-frame > .page:not(.page-main-wrap) > .page-head .head-actions{position:static;margin-top:12px}
+}
