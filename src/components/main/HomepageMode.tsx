@@ -11,8 +11,6 @@ type ToolTab = 'today' | 'memo' | 'recent';
 
 interface HomepageModeProps {
   widgets: WidgetConf[];
-  motionLocked: boolean;
-  onFocusMode: () => void;
 }
 
 function SearchIcon() {
@@ -20,15 +18,6 @@ function SearchIcon() {
     <svg viewBox="0 0 24 24" aria-hidden>
       <circle cx="10.8" cy="10.8" r="6.2" />
       <path d="m15.5 15.5 4 4" />
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M3.5 12s3.2-5.2 8.5-5.2S20.5 12 20.5 12 17.3 17.2 12 17.2 3.5 12 3.5 12Z" />
-      <circle cx="12" cy="12" r="2.4" />
     </svg>
   );
 }
@@ -42,7 +31,7 @@ function EmptyLinkedWidget({ label }: { label: string }) {
   );
 }
 
-export function HomepageMode({ widgets, motionLocked, onFocusMode }: HomepageModeProps) {
+export function HomepageMode({ widgets }: HomepageModeProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [now, setNow] = useState<Date | null>(null);
@@ -90,8 +79,6 @@ export function HomepageMode({ widgets, motionLocked, onFocusMode }: HomepageMod
 
   return (
     <div className={styles.shell} aria-label="관리자 홈페이지 모드">
-      <div className={styles.scrim} aria-hidden />
-
       <div className={styles.primary}>
         <section className={styles.hero}>
           <p className={styles.greeting}>{greeting}, {user?.nickname ?? '관리자'}</p>
@@ -107,12 +94,6 @@ export function HomepageMode({ widgets, motionLocked, onFocusMode }: HomepageMod
             <kbd>Enter</kbd>
           </form>
 
-          <div className={styles.modeSwitch} aria-label="홈 화면 모드">
-            <span className={styles.modeCurrent}>홈페이지 모드</span>
-            <button type="button" onClick={onFocusMode} disabled={motionLocked}>
-              <EyeIcon /> 감상 모드
-            </button>
-          </div>
         </section>
 
         <section className={styles.latest} aria-label="기존 최신 콘텐츠 위젯">

@@ -12,8 +12,9 @@ import { useTheme } from '@/lib/ThemeProvider';
 import { putBlob, useBlobUrl } from '@/lib/blobStore';
 import { useAuth } from '@/lib/auth';
 import { HomepageMode } from '@/components/main/HomepageMode';
+import { HomeViewSwitcher } from '@/components/main/HomeViewSwitcher';
 
-type HomeView = 'focus' | 'home';
+type HomeView = 'focus' | 'dashboard' | 'home';
 
 const DOCK_ICON: Partial<Record<WidgetType, React.ReactNode>> = {
   banner: <><path d="M5 7.5h14v9H5z"/><path d="m7 14 3.2-3 2.5 2 1.8-1.6L17 14"/></>,
@@ -82,15 +83,15 @@ export default function MainPage() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('ohome.homeView.v1');
-      // 예전 「전체 위젯」 저장값도 새 관리자 홈페이지 모드로 자연스럽게 이관한다.
-      if (isAdmin && (stored === 'home' || stored === 'dashboard')) setHomeView('home');
-      else if (!isAdmin) setHomeView('focus');
+      if (stored === 'dashboard') setHomeView('dashboard');
+      else if (stored === 'home' && isAdmin) setHomeView('home');
+      else setHomeView('focus');
     } catch { /* 기본 감상 모드 */ }
   }, [isAdmin]);
 
-  // 홈페이지 모드는 관리자 전용이다. 로그아웃·권한 변경 시 개인 패널을 즉시 걷는다.
+  // 새 홈페이지 오버레이만 관리자 전용이다. 기존 전체 위젯 모드는 모든 사용자에게 유지한다.
   useEffect(() => {
-    if (!isAdmin && homeView !== 'focus') setHomeView('focus');
+    if (!isAdmin && homeView === 'home') setHomeView('focus');
   }, [isAdmin, homeView]);
 
   useEffect(() => {
@@ -188,7 +189,7 @@ export default function MainPage() {
   const openDockWidget = dockable.find(w => w.id === dockOpen) ?? null;
   const focusActive = !editOn && homeView === 'focus' && !isMobile;
   const homepageActive = isAdmin && !editOn && homeView === 'home' && !isMobile;
-  const showDashboard = editOn || isMobile;
+  const showDashboard = editOn || homeView === 'dashboard' || isMobile;
   const byCol = (c: 1 | 2 | 3) => enabled.filter(w => w.col === c);
   const mOrder = (id: string) => {
     const i = state.mobileOrder.indexOf(id);
@@ -305,17 +306,12 @@ export default function MainPage() {
       )}
 
       {homepageActive && (
-        <HomepageMode widgets={enabled} motionLocked={viewMotion !== 'idle'}
-          onFocusMode={() => changeHomeView('focus')} />
+        <HomepageMode widgets={enabled} />
       )}
 
-      {isAdmin && focusActive && (
-        <button className="home-view-switch" disabled={viewMotion !== 'idle'} onClick={e => {
-          e.stopPropagation();
-          changeHomeView('home');
-        }}>
-          ⌂ 홈페이지 모드
-        </button>
+      {!editOn && !isMobile && (
+        <HomeViewSwitcher view={homeView} isAdmin={isAdmin} disabled={viewMotion !== 'idle'}
+          onChange={changeHomeView} />
       )}
 
       {showDashboard && <div ref={gridRef} className={`main-grid ${absMode ? 'abs' : ''} ${gridOn ? 'gridlines' : ''}`}
