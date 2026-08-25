@@ -189,7 +189,10 @@ export async function createSupabaseBackend(
     },
 
     subscribe(coll, onChange) {
-      const ch = sb.channel(`ohome:${coll}`)
+      // 같은 테이블을 두 위젯이 동시에 표시하거나 빠르게 다시 마운트해도
+      // 이미 subscribe 된 Supabase 채널에 콜백을 덧붙이지 않도록 구독마다 고유 topic을 쓴다.
+      const topic = `ohome:${coll}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 8)}`;
+      const ch = sb.channel(topic)
         .on('postgres_changes', { event: '*', schema: 'public', table: coll }, () => onChange())
         .subscribe();
       return () => { void sb.removeChannel(ch); };
