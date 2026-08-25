@@ -50,6 +50,78 @@
   border-radius: 4px;
 }
 
+.pagerButton {
+  position: relative;
+  overflow: hidden;
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease,
+    box-shadow 220ms ease, transform 180ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.pagerButton::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
+  opacity: 0;
+  transform: scale(.45);
+  transition: opacity 220ms ease, transform 320ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.pagerButton span {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.pagerButton:not(:disabled):hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 15%, transparent);
+  transform: translateY(-1px);
+}
+
+.pagerButton:not(:disabled):hover::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.pagerPrev:not(:disabled):hover span {
+  animation: pager-arrow-prev 520ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.pagerNext:not(:disabled):hover span {
+  animation: pager-arrow-next 520ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.pagerButton:not(:disabled):active {
+  transform: translateY(1px) scale(.9);
+  box-shadow: none;
+}
+
+.pageCounter {
+  min-width: 38px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  animation: pager-count-in 380ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes pager-arrow-prev {
+  0%, 100% { transform: translateX(0); }
+  42% { transform: translateX(-4px); }
+}
+
+@keyframes pager-arrow-next {
+  0%, 100% { transform: translateX(0); }
+  42% { transform: translateX(4px); }
+}
+
+@keyframes pager-count-in {
+  from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
 @keyframes detail-switch-out {
   to {
     opacity: 0;
@@ -76,11 +148,25 @@
   .detailLeaving,
   .detailEntering,
   .noxLink,
-  .noxLink b {
+  .noxLink b,
+  .pagerButton,
+  .pagerButton span,
+  .pageCounter {
     animation: none !important;
     transition: none !important;
     opacity: 1;
     transform: none;
     filter: none;
+  }
+
+  .pagerButton::before {
+    transition: none !important;
+    opacity: 0;
+  }
+
+  .pagerButton:not(:disabled):hover,
+  .pagerButton:not(:disabled):active,
+  .pagerButton:not(:disabled):hover span {
+    transform: none;
   }
 }

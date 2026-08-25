@@ -341,9 +341,15 @@ export default function UnleashedMiniWikiPage() {
             </div>
             {data && data.pages > 1 && (
               <div className="uw-pager">
-                <button disabled={page <= 1} onClick={() => setPage(value => Math.max(1, value - 1))}>‹</button>
-                <span>{data.page} / {data.pages}</span>
-                <button disabled={page >= data.pages} onClick={() => setPage(value => Math.min(data.pages, value + 1))}>›</button>
+                <button className={`${styles.pagerButton} ${styles.pagerPrev}`} disabled={page <= 1}
+                  onClick={() => setPage(value => Math.max(1, value - 1))} aria-label="이전 페이지">
+                  <span aria-hidden>‹</span>
+                </button>
+                <span key={`${category}-${data.page}`} className={styles.pageCounter}>{data.page} / {data.pages}</span>
+                <button className={`${styles.pagerButton} ${styles.pagerNext}`} disabled={page >= data.pages}
+                  onClick={() => setPage(value => Math.min(data.pages, value + 1))} aria-label="다음 페이지">
+                  <span aria-hidden>›</span>
+                </button>
               </div>
             )}
           </div>
