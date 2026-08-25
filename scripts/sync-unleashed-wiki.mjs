@@ -72,9 +72,92 @@ function firstTable(html, pattern) {
   return html.match(pattern)?.[0] ?? '';
 }
 
+function elementAt(html, tag, start) {
+  const token = new RegExp(`<\\/?${tag}\\b[^>]*>`, 'gi');
+  token.lastIndex = start;
+  let depth = 0;
+  let openEnd = -1;
+  for (let match = token.exec(html); match; match = token.exec(html)) {
+    const closing = /^<\//.test(match[0]);
+    if (!closing) {
+      if (depth === 0) openEnd = token.lastIndex;
+      depth += 1;
+    } else {
+      depth -= 1;
+      if (depth === 0) {
+        return {
+          start: match.index >= start ? start : match.index,
+          end: token.lastIndex,
+          inner: html.slice(openEnd, match.index),
+          full: html.slice(start, token.lastIndex),
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function directElements(html, tagPattern = 'tr') {
+  const open = new RegExp(`<(${tagPattern})\\b[^>]*>`, 'gi');
+  const elements = [];
+  let cursor = 0;
+  while (cursor < html.length) {
+    open.lastIndex = cursor;
+    const match = open.exec(html);
+    if (!match) break;
+    const element = elementAt(html, match[1], match.index);
+    if (!element) break;
+    elements.push({ ...element, tag: match[1].toLowerCase() });
+    cursor = element.end;
+  }
+  return elements;
+}
+
 function tableById(html, id) {
   const safeId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return firstTable(html, new RegExp(`<table\\b[^>]*id\\s*=\\s*['"]${safeId}['"][^>]*>[\\s\\S]*?<\\/table>`, 'i'));
+  const match = new RegExp(`<table\\b[^>]*id\\s*=\\s*['"]${safeId}['"][^>]*>`, 'i').exec(html);
+  return match ? (elementAt(html, 'table', match.index)?.full ?? '') : '';
+}
+
+function directRows(tableHtml) {
+  const tableStart = tableHtml.search(/<table\b/i);
+  const table = tableStart >= 0 ? elementAt(tableHtml, 'table', tableStart) : null;
+  return directElements(table?.inner ?? '', 'tr').map(row => ({
+    html: row.inner,
+    cells: directElements(row.inner, 'td|th').map(cell => ({
+      html: cell.inner,
+      text: visibleText(cell.inner).replace(/\n+/g, ' / ').trim(),
+    })),
+  }));
+}
+
+function nestedRows(cellHtml) {
+  const start = cellHtml.search(/<table\b/i);
+  if (start < 0) return [];
+  const nested = elementAt(cellHtml, 'table', start);
+  return nested ? directRows(nested.full).map(row => row.cells.map(cell => cell.text)) : [];
+}
+
+function linkedEntries(cellHtml) {
+  return [...cellHtml.matchAll(/<a\b[^>]*href\s*=\s*['"]([^'"]+)['"][^>]*>([\s\S]*?)<\/a>/gi)].map(match => {
+    const after = cellHtml.slice((match.index ?? 0) + match[0].length);
+    const cellEnd = after.search(/<\/td>/i);
+    const detail = visibleText(cellEnd >= 0 ? after.slice(0, cellEnd) : '').replace(/^[/\s]+/, '').trim();
+    return {
+      name: visibleText(match[2]),
+      detail,
+      sourceUrl: new URL(decodeHtml(match[1]), BASE).toString(),
+    };
+  }).filter(entry => entry.name);
+}
+
+function rowsSection(kind, title, headers, rows) {
+  const cleanRows = rows.filter(row => row.some(Boolean));
+  return cleanRows.length ? { kind, title, headers, rows: cleanRows } : null;
+}
+
+function genericStructured(kind, summary, sections = [], extras = {}) {
+  return { kind, summary: summary.filter(item => item.value), sections: sections.filter(Boolean), ...extras };
 }
 
 function acquisitionTable(html, id, title, kind, hasHeaders = true) {
@@ -143,6 +226,7 @@ function noxStructured(html) {
   ].filter(Boolean);
 
   return {
+    kind: 'nox',
     profile: {
       name: identityRows[0]?.[0] ?? '',
       rarity: identity[0] ?? '',
@@ -159,6 +243,108 @@ function noxStructured(html) {
     skills,
     acquisition,
   };
+}
+
+function effectStructured(entry) {
+  const values = entry.listValues;
+  const flags = (entry.listHeaders ?? []).slice(3, 8).map((label, offset) => ({
+    label,
+    active: values[offset + 3] === 'O',
+  })).filter(flag => flag.label);
+  return genericStructured('effect', [
+    { label: '이름', value: entry.title, tone: 'violet' },
+    { label: '종류', value: values[2] ?? '', tone: 'blue' },
+  ], [], { flags });
+}
+
+function questStructured(html, entry) {
+  const row = directRows(tableById(html, 'table_data'))[0];
+  const cells = row?.cells ?? [];
+  const mapRows = nestedRows(cells[4]?.html ?? '');
+  const rewardRows = nestedRows(cells[5]?.html ?? '');
+  const battleDrops = linkedEntries(cells[6]?.html ?? '');
+  const raidDrops = linkedEntries(cells[7]?.html ?? '');
+  const mapSection = mapRows.length >= 3
+    ? rowsSection('map', mapRows[0]?.[0] || '맵 정보', mapRows[1], [mapRows[2]])
+    : rowsSection('map', '맵 정보', [], mapRows);
+  return genericStructured('quest', [
+    { label: '종류', value: cells[1]?.text ?? '', tone: 'violet' },
+    { label: '등장조건', value: cells[2]?.text ?? '', tone: 'amber' },
+    { label: 'Map', value: cells[3]?.text ?? '', tone: 'blue' },
+  ], [
+    mapSection,
+    rowsSection('reward', '클리어 보상', ['종류', '내용'], rewardRows),
+    rowsSection('drop', '전투 드랍 녹스', ['이름', '확률 / 정보'], battleDrops.map(drop => [drop.name, drop.detail])),
+    rowsSection('raid', '등장 레이드 및 Drop 녹스', ['이름', '확률 / 정보'], raidDrops.map(drop => [drop.name, drop.detail])),
+  ], { sourceName: cells[0]?.text || entry.title });
+}
+
+function raidStructured(html, entry, detailBlocksForRaid = []) {
+  const row = directRows(tableById(html, 'table_data'))[0];
+  const cells = row?.cells ?? [];
+  let drops = linkedEntries(cells[3]?.html ?? '');
+  const questSources = linkedEntries(cells[4]?.html ?? '');
+  const itemSources = linkedEntries(cells[5]?.html ?? '');
+  const itemText = cells[5]?.text ?? '';
+  let discoveryRows = [
+    ...questSources.map(source => [source.name, '퀘스트 발판']),
+    ...itemSources.map(source => [source.name, '아이템 사용']),
+    ...(itemSources.length === 0 && itemText ? [[itemText, '아이템 사용']] : []),
+  ];
+  const fallbackMeta = detailBlocksForRaid[2]?.split('\n').map(value => value.trim()).filter(Boolean) ?? [];
+  const fallbackDropBlocks = detailBlocksForRaid.slice(3).filter(block => /^Nox\n/i.test(block));
+  if (drops.length === 0) {
+    drops = fallbackDropBlocks.flatMap(block => {
+      const mode = block.split('\n').slice(0, 2).join(' / ');
+      const body = block.split('\n').slice(2).join(' ');
+      return [...body.matchAll(/(.+?)\s*\(\s*([\d.]+%)\s*\)/g)].map(match => ({
+        name: match[1].trim(), detail: `${mode} · ${match[2]}`, sourceUrl: null,
+      }));
+    });
+  }
+  if (discoveryRows.length === 0) {
+    discoveryRows = detailBlocksForRaid.slice(3 + fallbackDropBlocks.length)
+      .flatMap(block => block.split('\n').map(value => value.trim()).filter(Boolean))
+      .map(value => [value]);
+  }
+  const fallbackRegion = fallbackMeta.length >= 4 ? fallbackMeta.slice(1, -1).join(' / ') : '';
+  const fallbackAp = fallbackMeta.length >= 2 ? fallbackMeta.at(-1) : '';
+  const dropMode = cells[3]?.text
+    ? (cells[3].text.match(/^Nox\s*\/\s*\([^)]*\)/)?.[0] ?? 'Nox')
+    : (fallbackDropBlocks[0]?.split('\n').slice(0, 2).join(' / ') ?? '');
+  return genericStructured('raid', [
+    { label: '지역', value: cells[1]?.text || fallbackRegion, tone: 'blue' },
+    { label: '소모 AP', value: cells[2]?.text || fallbackAp, tone: 'amber' },
+    { label: '드롭 방식', value: dropMode, tone: 'rose' },
+  ], [
+    rowsSection('drop', 'Drop Nox', ['녹스', '확률'], drops.map(drop => [drop.name, drop.detail])),
+    rowsSection('source', '발견방법', discoveryRows.some(values => values.length > 1) ? ['대상', '방법'] : ['발견 조건'], discoveryRows),
+  ], { sourceName: cells[0]?.text || entry.title });
+}
+
+function itemStructured(html, entry) {
+  const rows = directRows(tableById(html, 'table_data'));
+  const name = rows[0]?.cells.at(-1)?.text || entry.title;
+  const description = rows[1]?.cells.at(-1)?.text ?? '';
+  const acquisition = [
+    acquisitionTable(html, 'table_drop_quest', '획득 가능한 Quest', 'quest'),
+    acquisitionTable(html, 'table_drop_raid', 'Drop 되는 레이드', 'raid'),
+    acquisitionTable(html, 'table_get_compose', '조합식', 'compose', false),
+  ].filter(Boolean);
+  return genericStructured('item', [
+    { label: '이름', value: name, tone: 'violet' },
+  ], [], { description, acquisition });
+}
+
+function skinStructured(values) {
+  const available = values[4] === 'O';
+  return genericStructured('skin', [
+    { label: '캐릭터', value: values[1] ?? '', tone: 'blue' },
+    { label: '스킨 명칭', value: values[2] ?? '', tone: 'violet' },
+    { label: '가격', value: values[3] ?? '', tone: 'amber' },
+    { label: '판매', value: values[4] ?? '', tone: available ? 'green' : 'rose' },
+    { label: '비고', value: values[5] ?? '', tone: 'neutral' },
+  ]);
 }
 
 function canonicalDetailHref(rawHref) {
@@ -293,6 +479,7 @@ for (const list of listPages) {
           listHeaders: LIST_HEADERS[list.page],
           listValues: cells,
           detail: [],
+          structured: skinStructured(cells),
         });
       }
     }
@@ -336,7 +523,11 @@ const detailed = await mapConcurrent(entries, async entry => {
     if (done % 100 === 0 || done === entries.length) {
       console.log(`details ${done.toLocaleString()}/${entries.length.toLocaleString()}`);
     }
-    const structured = entry.category === '녹스' ? noxStructured(html) : undefined;
+    const structured = entry.category === '녹스' ? noxStructured(html)
+      : entry.category === '효과' ? effectStructured(entry)
+        : entry.category === '퀘스트' ? questStructured(html, entry)
+          : entry.category === '레이드' ? raidStructured(html, entry, detail)
+            : entry.category === '아이템' ? itemStructured(html, entry) : undefined;
     return { ...entry, detail, ...(structured ? { structured } : {}) };
   } catch (error) {
     console.error(`failed ${entry.sourceUrl}: ${error instanceof Error ? error.message : error}`);

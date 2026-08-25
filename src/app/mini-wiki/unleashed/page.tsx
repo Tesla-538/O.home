@@ -14,24 +14,34 @@ interface WikiRecordSummary {
   listSourceUrl: string;
   listHeaders: string[];
   listValues: string[];
+  preview?: string[];
+}
+
+interface AcquisitionSection {
+  kind: string; title: string; headers: string[];
+  rows: { cells: string[]; sourceUrl: string | null }[];
+}
+
+interface WikiStructured {
+  kind: 'nox' | 'effect' | 'quest' | 'raid' | 'item' | 'skin';
+  profile?: {
+    name: string; rarity: string; world: string; cost: string; maxLevel: string; town: string; gender: string;
+    roles: { name: string; active: boolean }[];
+    artist: string;
+    tags: string[];
+    stats: { label: string; value: string }[];
+  };
+  skills?: { type: string; name: string; description: string; effectSourceUrl: string | null }[];
+  acquisition?: AcquisitionSection[];
+  summary?: { label: string; value: string; tone?: string }[];
+  description?: string;
+  flags?: { label: string; active: boolean }[];
+  sections?: { kind: string; title: string; headers: string[]; rows: string[][] }[];
 }
 
 interface WikiRecord extends WikiRecordSummary {
   detail: string[];
-  structured?: {
-    profile: {
-      name: string; rarity: string; world: string; cost: string; maxLevel: string; town: string; gender: string;
-      roles: { name: string; active: boolean }[];
-      artist: string;
-      tags: string[];
-      stats: { label: string; value: string }[];
-    };
-    skills: { type: string; name: string; description: string; effectSourceUrl: string | null }[];
-    acquisition: {
-      kind: string; title: string; headers: string[];
-      rows: { cells: string[]; sourceUrl: string | null }[];
-    }[];
-  };
+  structured?: WikiStructured;
 }
 
 interface WikiListResponse {
@@ -49,6 +59,69 @@ interface WikiListResponse {
 const CATEGORY_ICON: Record<Category, string> = {
   녹스: '◇', 효과: '✦', 퀘스트: '⚑', 레이드: '⚔', 아이템: '□', 스킨: '○',
 };
+
+function AcquisitionTables({ sections }: { sections: AcquisitionSection[] }) {
+  return (
+    <section className="uw-acquisition">
+      <h3>획득처</h3>
+      {sections.length > 0 ? sections.map(section => (
+        <div className="uw-acq-block" key={section.kind}>
+          <h4>{section.title}</h4>
+          <div className="uw-table-wrap"><table>
+            {section.headers.length > 0 && <thead><tr>{section.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead>}
+            <tbody>{section.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.cells.map((cell, cellIndex) => (
+              <td key={cellIndex}>{cellIndex === 0 && row.sourceUrl
+                ? <a href={row.sourceUrl} target="_blank" rel="noreferrer">{cell || '원문 보기'} ↗</a>
+                : (cell || '—')}</td>
+            ))}</tr>)}</tbody>
+          </table></div>
+        </div>
+      )) : <p className="uw-no-acq">원본 데이터에 등록된 획득처가 없습니다.</p>}
+    </section>
+  );
+}
+
+function GenericDetails({ data }: { data: WikiStructured }) {
+  const summary = data.summary ?? [];
+  const sections = data.sections ?? [];
+  return (
+    <div className={`uw-generic uw-kind-${data.kind}`}>
+      {summary.length > 0 && <section className="uw-data-summary">
+        <h3>기본 정보</h3>
+        <div>{summary.map(item => (
+          <p key={item.label} className={`tone-${item.tone ?? 'neutral'}`}>
+            <small>{item.label}</small><b>{item.value}</b>
+          </p>
+        ))}</div>
+      </section>}
+
+      {(data.flags?.length ?? 0) > 0 && <section className="uw-flag-section">
+        <h3>속성 판정</h3>
+        <div>{data.flags?.map(flag => (
+          <span key={flag.label} className={flag.active ? 'on' : 'off'}><b>{flag.active ? 'O' : '—'}</b>{flag.label}</span>
+        ))}</div>
+      </section>}
+
+      {data.description && <section className="uw-description">
+        <h3>설명</h3><p>{data.description}</p>
+      </section>}
+
+      {sections.map(section => (
+        <section className={`uw-data-section kind-${section.kind}`} key={`${section.kind}-${section.title}`}>
+          <h3>{section.title}</h3>
+          <div className="uw-table-wrap"><table>
+            {section.headers.length > 0 && <thead><tr>{section.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead>}
+            <tbody>{section.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => (
+              <td key={cellIndex}>{cell || '—'}</td>
+            ))}</tr>)}</tbody>
+          </table></div>
+        </section>
+      ))}
+
+      {data.kind === 'item' && <AcquisitionTables sections={data.acquisition ?? []} />}
+    </div>
+  );
+}
 
 export default function UnleashedMiniWikiPage() {
   const router = useRouter();
@@ -194,7 +267,9 @@ export default function UnleashedMiniWikiPage() {
             <div className={`uw-list-scroll${loading ? ' loading' : ''}`}>
               {!loading && data?.records.length === 0 && <div className="uw-empty">일치하는 항목이 없습니다.</div>}
               {data?.records.map(record => {
-                const meta = record.listValues.filter(value => value && value !== record.title).slice(0, 3);
+                const meta = record.preview?.length
+                  ? record.preview.filter(value => value !== record.title)
+                  : record.listValues.filter(value => value && value !== record.title).slice(0, 3);
                 return (
                   <button key={record.id} className={selectedId === record.id ? 'on' : ''}
                     onClick={() => setSelectedId(record.id)}>
@@ -221,7 +296,7 @@ export default function UnleashedMiniWikiPage() {
                   <a href={selected.sourceUrl} target="_blank" rel="noreferrer">원문 보기 ↗</a>
                 </div>
 
-                {selected.structured ? (
+                {selected.structured?.kind === 'nox' && selected.structured.profile ? (
                   <>
                     <section className="uw-profile">
                       <h3>기본 정보</h3>
@@ -258,7 +333,7 @@ export default function UnleashedMiniWikiPage() {
 
                     <section className="uw-skills">
                       <h3>스킬</h3>
-                      {selected.structured.skills.length > 0 ? selected.structured.skills.map((skill, index) => (
+                      {(selected.structured.skills?.length ?? 0) > 0 ? selected.structured.skills?.map((skill, index) => (
                         <article key={`${skill.type}-${skill.name}-${index}`} className={`uw-skill ${skillClass(skill.type)}`}>
                           <header><span>{skill.type}</span><b>{skill.name}</b>
                             {skill.effectSourceUrl && <a href={skill.effectSourceUrl} target="_blank" rel="noreferrer">효과 상세 ↗</a>}
@@ -268,24 +343,9 @@ export default function UnleashedMiniWikiPage() {
                       )) : <p className="uw-empty">등록된 스킬 정보가 없습니다.</p>}
                     </section>
 
-                    <section className="uw-acquisition">
-                      <h3>획득처</h3>
-                      {selected.structured.acquisition.length > 0 ? selected.structured.acquisition.map(section => (
-                        <div className="uw-acq-block" key={section.kind}>
-                          <h4>{section.title}</h4>
-                          <div className="uw-table-wrap"><table>
-                            {section.headers.length > 0 && <thead><tr>{section.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead>}
-                            <tbody>{section.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.cells.map((cell, cellIndex) => (
-                              <td key={cellIndex}>{cellIndex === 0 && row.sourceUrl
-                                ? <a href={row.sourceUrl} target="_blank" rel="noreferrer">{cell || '원문 보기'} ↗</a>
-                                : (cell || '—')}</td>
-                            ))}</tr>)}</tbody>
-                          </table></div>
-                        </div>
-                      )) : <p className="uw-no-acq">원본 데이터에 등록된 획득처가 없습니다.</p>}
-                    </section>
+                    <AcquisitionTables sections={selected.structured.acquisition ?? []} />
                   </>
-                ) : summaryValues.length > 0 && (
+                ) : selected.structured ? <GenericDetails data={selected.structured} /> : summaryValues.length > 0 && (
                   <section className="uw-facts">
                     <h3>목록 정보</h3>
                     <div>

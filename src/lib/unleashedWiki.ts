@@ -14,7 +14,8 @@ export interface UnleashedRecord {
   listValues: string[];
   detail: string[];
   structured?: {
-    profile: {
+    kind: 'nox' | 'effect' | 'quest' | 'raid' | 'item' | 'skin';
+    profile?: {
       name: string;
       rarity: string;
       world: string;
@@ -27,13 +28,17 @@ export interface UnleashedRecord {
       tags: string[];
       stats: { label: string; value: string }[];
     };
-    skills: { type: string; name: string; description: string; effectSourceUrl: string | null }[];
-    acquisition: {
+    skills?: { type: string; name: string; description: string; effectSourceUrl: string | null }[];
+    acquisition?: {
       kind: string;
       title: string;
       headers: string[];
       rows: { cells: string[]; sourceUrl: string | null }[];
     }[];
+    summary?: { label: string; value: string; tone?: string }[];
+    description?: string;
+    flags?: { label: string; active: boolean }[];
+    sections?: { kind: string; title: string; headers: string[]; rows: string[][] }[];
   };
   searchText: string;
   fetchError?: boolean;

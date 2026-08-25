@@ -13,6 +13,7 @@ function publicRecord(record: UnleashedRecord, detail = false) {
     listSourceUrl: record.listSourceUrl,
     listHeaders: record.listHeaders,
     listValues: record.listValues,
+    preview: record.structured?.summary?.map(item => item.value).filter(Boolean).slice(0, 3) ?? [],
   };
   return detail ? { ...base, detail: record.detail, structured: record.structured } : base;
 }
