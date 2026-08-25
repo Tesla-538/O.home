@@ -2045,8 +2045,8 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .board-detail-page .post-body{color:color-mix(in srgb,var(--ink) 96%,transparent);font-size:calc(15px*var(--fs,1));font-weight:500;line-height:1.82;text-shadow:0 1px 9px color-mix(in srgb,var(--panel-solid) 70%,transparent)}
 .board-detail-page .post-body a{
   display:inline-block;max-width:100%;padding:3px 8px;border:1px solid color-mix(in srgb,var(--accent) 48%,var(--glass-edge));border-radius:7px;
-  background:color-mix(in srgb,var(--panel-solid) 72%,transparent);color:color-mix(in srgb,var(--accent) 76%,var(--ink));
-  font-weight:650;line-height:1.45;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere;
+  background:color-mix(in srgb,var(--panel-solid) 72%,transparent);color:var(--ink);
+  font-weight:650;line-height:1.45;text-decoration-color:var(--accent);text-decoration-thickness:1.5px;text-underline-offset:3px;overflow-wrap:anywhere;
   text-shadow:none;box-shadow:0 1px 0 color-mix(in srgb,#fff 50%,transparent) inset;
 }
 .board-detail-page .post-body blockquote{color:color-mix(in srgb,var(--ink) 80%,transparent)}
