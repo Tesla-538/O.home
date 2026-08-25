@@ -31,7 +31,7 @@ export interface ResetGroup { key: string; label: string; desc?: string; keys: s
 export const RESET_CONTENT: ResetGroup[] = [
   { key: 'board', label: '게시판 글', keys: ['ohome.board.v1'] },
   { key: 'guest', label: '방명록', keys: ['ohome.guest.v1'] },
-  { key: 'chars', label: '캐릭터', keys: ['ohome.chars.v1'] },
+  { key: 'chars', label: '오너 자캐', keys: ['ohome.chars.v1'] },
   { key: 'rels', label: '자관', keys: ['ohome.rels.v1'] },
   { key: 'backup', label: '갤러리(그림 백업)', keys: ['ohome.backup.v1'] },
   { key: 'road', label: '로드뷰', keys: ['ohome.road.v1', 'ohome.roadnext.v1'] },

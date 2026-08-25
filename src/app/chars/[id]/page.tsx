@@ -97,21 +97,21 @@ function CharDetailInner() {
   if (!ch || !eff) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>CHARACTERS</PageTitle><p>캐릭터를 찾을 수 없습니다</p></div>
+        <div className="page-head"><PageTitle>OWNER CHARACTERS</PageTitle><p>오너 자캐를 찾을 수 없습니다</p></div>
       </section>
     );
   }
   if (ch.visibility === 'private' && !isAdmin) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>CHARACTERS</PageTitle><p>비공개 캐릭터입니다</p></div>
+        <div className="page-head"><PageTitle>OWNER CHARACTERS</PageTitle><p>비공개 오너 자캐입니다</p></div>
       </section>
     );
   }
   if (ch.visibility === 'member' && !user) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>CHARACTERS</PageTitle><p>멤버공개 — 로그인 후 열람할 수 있습니다</p></div>
+        <div className="page-head"><PageTitle>OWNER CHARACTERS</PageTitle><p>멤버공개 — 로그인 후 열람할 수 있습니다</p></div>
       </section>
     );
   }
@@ -130,7 +130,7 @@ function CharDetailInner() {
     <section className="page page-char-detail">
       <div className="page-head">
         {/* 제목 자리는 메뉴 이름 — 클릭 시 목록 복귀. 캐릭터 이름은 우측 프로필 패널에 크게 표시 */}
-        <PageTitle>CHARACTERS</PageTitle>
+        <PageTitle>OWNER CHARACTERS</PageTitle>
         {/* 캐릭터별로 별도 저장 — 키에 캐릭터 id 포함 */}
         <EditableDesc k={`char-detail-desc:${ch.id}`} def="좌측 아이콘 탭 → 우측 정보 전환" />
         <div className="head-actions">

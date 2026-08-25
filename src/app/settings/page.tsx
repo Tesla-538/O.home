@@ -2101,7 +2101,7 @@ function MenuPane() {
       {del.element}
       {/* 기본 구성 리셋 확인 (v1.9) — 드래프트만 교체, SAVE로 확정 */}
       <ConfirmModal open={resetAsk} title="메뉴를 기본 구성으로 되돌리시겠습니까?"
-        body="기본 제공 메뉴 구성(자놀·게시판·세계관·커미션·기록·방명록)으로 편집 화면이 바뀝니다. SAVE를 눌러야 실제 메뉴에 반영됩니다."
+        body="기본 제공 메뉴 구성(오너 소개·게시판·세계관·커미션·기록·방명록)으로 편집 화면이 바뀝니다. SAVE를 눌러야 실제 메뉴에 반영됩니다."
         onClose={() => setResetAsk(false)}
         buttons={[
           { label: 'RESET', kind: 'dark', onClick: () => { setDraft(defaultTree()); setDraftRemoved([]); setResetAsk(false); } },

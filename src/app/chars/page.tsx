@@ -33,11 +33,11 @@ export default function CharsPage() {
   return (
     <section className="page">
       <div className="page-head">
-        <PageTitle>CHARACTERS</PageTitle>
-        <EditableDesc k="chars-desc" def="운영자의 자캐 목록 · 3:4 두상 썸네일 · 클릭 시 프로필로 이동" />
+        <PageTitle>OWNER CHARACTERS</PageTitle>
+        <EditableDesc k="chars-desc" def="나의 오너 자캐를 모아두고 일러스트와 소개를 자유롭게 기록하는 공간" />
         <div className="head-actions">
           <SearchBar onSearch={setQ} />
-          {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/chars/new')}>＋ ADD CHARACTER</button>}
+          {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/chars/new')}>＋ 오너 자캐 등록</button>}
         </div>
       </div>
       <div className="g5 chars-grid">
@@ -63,7 +63,7 @@ export default function CharsPage() {
         })}
         {visible.length === 0 && (
           <p style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--page-desc)', fontSize: 13, padding: 40 }}>
-            표시할 캐릭터가 없습니다
+            등록한 오너 자캐가 없습니다
           </p>
         )}
       </div>

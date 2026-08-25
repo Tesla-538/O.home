@@ -41,7 +41,7 @@ export const IMG_PROTECT_AREAS: { key: ImgProtectArea; label: string; paths: str
   { key: 'board', label: '게시판 (갤러리·로드비 포함)', paths: ['/board', '/backup', '/roadview'] },
   { key: 'comm', label: '커미션', paths: ['/comm', '/comm-apply'] },
   { key: 'tchar', label: '자캐도감', paths: ['/tchars'] },
-  { key: 'chars', label: '자캐 (캐릭터)', paths: ['/chars'] },
+  { key: 'chars', label: '오너 자캐', paths: ['/chars'] },
   { key: 'rels', label: '자관', paths: ['/rels'] },
 ];
 
@@ -87,6 +87,21 @@ function normalizeWorldTree(tree: MenuGroupNode[]): MenuGroupNode[] {
     : { ...g, items: g.items.filter(x => !legacyHrefs.has(x.href)) });
   return next;
 }
+
+/** 예전 기본 메뉴 「자놀 > 캐릭터」를 기존 데이터는 그대로 둔 채 「오너 소개 > 오너 자캐」로 바꾼다. */
+function normalizeOwnerTree(tree: MenuGroupNode[]): MenuGroupNode[] {
+  return tree.map(g => {
+    const legacyGroup = g.id === 'g-자놀' || g.label === '자놀';
+    const items = g.items.map(it => it.href === '/chars' && (!it.label || it.label === '캐릭터')
+      ? { ...it, label: '오너 자캐' }
+      : it);
+    return legacyGroup
+      ? { ...g, id: g.id === 'g-자놀' ? 'g-오너-소개' : g.id, label: '오너 소개', items }
+      : { ...g, items };
+  });
+}
+
+const normalizeMenuTree = (tree: MenuGroupNode[]) => normalizeOwnerTree(normalizeWorldTree(tree));
 
 /** v1 설정(groupOrder/hidden/labels) → 트리 마이그레이션 */
 function migrateTree(p: Partial<MenuSettings>): MenuGroupNode[] {
@@ -143,7 +158,7 @@ export function useMenuSettings(): [MenuSettings, (patch: Partial<MenuSettings>)
       const raw = getRawSetting(KEY);
       if (raw) {
         const p = JSON.parse(raw) as Partial<MenuSettings>;
-        const tree = normalizeWorldTree(p.tree ?? migrateTree(p));
+        const tree = normalizeMenuTree(p.tree ?? migrateTree(p));
         const next = {
           ...DEFAULT_MENU_SETTINGS,
           ...p,
@@ -159,7 +174,7 @@ export function useMenuSettings(): [MenuSettings, (patch: Partial<MenuSettings>)
         const raw = getRawSetting(KEY);
         if (raw) {
           const p = JSON.parse(raw) as Partial<MenuSettings>;
-          setSt(s => ({ ...s, ...p, tree: normalizeWorldTree(p.tree ?? migrateTree(p)) }));
+          setSt(s => ({ ...s, ...p, tree: normalizeMenuTree(p.tree ?? migrateTree(p)) }));
         }
       } catch { /* 무시 */ }
     };
