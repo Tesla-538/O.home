@@ -2525,13 +2525,30 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
 .route-frame > .page:not(.page-main-wrap) .ticket .stub,
 .route-frame > .page:not(.page-main-wrap) .bticket .bt-body{
   background:
-    linear-gradient(135deg,rgba(255,255,255,.16),transparent 44%),
-    color-mix(in srgb,var(--panel-solid) 86%,transparent);
-  -webkit-backdrop-filter:blur(18px) saturate(135%);backdrop-filter:blur(18px) saturate(135%);
+    linear-gradient(135deg,rgba(255,255,255,.18),transparent 44%),
+    color-mix(in srgb,var(--panel-solid) 94%,transparent);
+  -webkit-backdrop-filter:blur(22px) saturate(128%);backdrop-filter:blur(22px) saturate(128%);
+}
+.route-frame > .page:not(.page-main-wrap) .tc-card .bd{
+  color:var(--ink);
+  box-shadow:0 1px 0 color-mix(in srgb,#fff 22%,transparent) inset;
+}
+.route-frame > .page:not(.page-main-wrap) .tc-card .bd .nm{
+  color:var(--ink);text-shadow:0 1px 10px color-mix(in srgb,var(--panel-solid) 44%,transparent);
 }
 .route-frame > .page:not(.page-main-wrap) .tc-card .bd .meta,
 .route-frame > .page:not(.page-main-wrap) .tc-card .bd .desc{
-  color:color-mix(in srgb,var(--ink) 78%,transparent);
+  color:color-mix(in srgb,var(--ink) 94%,var(--panel-solid) 6%);
+  font-weight:max(var(--fw-body,400),500);
+}
+.route-frame > .page:not(.page-main-wrap) .tc-card .bd .desc{
+  font-size:max(12px,calc(12.25px*var(--fs,1)));
+  line-height:1.62;
+  border-top-color:color-mix(in srgb,var(--ink) 38%,transparent);
+}
+.route-frame > .page:not(.page-main-wrap) > .page-head p,
+.route-frame > .page:not(.page-main-wrap) > .page-head .desc-edit{
+  color:color-mix(in srgb,var(--ink) 88%,var(--panel-solid) 12%);
 }
 
 @media (max-width:620px){
