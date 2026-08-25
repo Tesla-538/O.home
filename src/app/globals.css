@@ -469,9 +469,9 @@ a{color:inherit;text-decoration:none}
 /* ================= TRPG 캐릭터 (v1.9 신규 — 1:1 인장 + 표정 전환) ================= */
 .tc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 @media(max-width:1080px){.tc-grid{grid-template-columns:repeat(3,1fr)}}
-.tc-card{padding:0;overflow:hidden;transition:.15s}
+.tc-card{position:relative;isolation:isolate;aspect-ratio:3/4;padding:0;overflow:hidden;transition:.15s}
 .tc-card:hover{transform:translateY(-3px)}
-.tc-card .main{aspect-ratio:1/1;position:relative;overflow:hidden;cursor:zoom-in}
+.tc-card .main{position:absolute;inset:0;overflow:hidden;cursor:zoom-in}
 /* 표정 썸네일 스트립 — 균등 그리드로 컨테이너 폭에 딱 맞게 (오른쪽 자투리 공백 없음) */
 .tc-faces{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:7px}
 .tc-faces .fc{width:auto;aspect-ratio:1/1;border-radius:10px;overflow:hidden;position:relative;cursor:var(--cur-pointer,pointer);border:2px solid transparent;opacity:.68;transition:.14s}
@@ -484,13 +484,21 @@ a{color:inherit;text-decoration:none}
 .tcd-img{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:1/1}
 .tcd-img .ph{position:absolute;inset:0}
 @media(max-width:960px){.tcd-layout{grid-template-columns:1fr}}
-.tc-card .bd{padding:9px 13px 13px}
+.tc-card .bd{
+  position:absolute;z-index:2;left:10px;right:10px;bottom:10px;padding:12px 13px 13px;
+  overflow:hidden;border:1px solid color-mix(in srgb,var(--glass-edge) 76%,transparent);border-radius:18px;
+  background:
+    linear-gradient(145deg,color-mix(in srgb,#fff 18%,transparent),transparent 40%),
+    color-mix(in srgb,var(--panel-solid) 46%,transparent);
+  box-shadow:0 1px 0 color-mix(in srgb,#fff 34%,transparent) inset,0 10px 30px rgba(2,7,17,.18);
+  -webkit-backdrop-filter:blur(20px) saturate(150%);backdrop-filter:blur(20px) saturate(150%);
+}
 /* 이름이 길면 말줄임 — 뱃지는 유지 (v1.9) */
 .tc-card .bd .nm{font-size:calc(14.5px*var(--fs,1));font-weight:700;display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tc-card .bd .nm .pill{flex-shrink:0}
 .tc-card .bd .meta{display:block;font-size:calc(11px*var(--fs,1));color:var(--sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 설명 — 두 줄까지만, 넘치면 말줄임 (전체는 상세에서) */
-.tc-card .bd .desc{font-size:calc(11.5px*var(--fs,1));color:var(--sub);line-height:1.65;margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;
+.tc-card .bd .desc{font-size:calc(11.5px*var(--fs,1));color:var(--sub);line-height:1.65;margin-top:8px;border-top:1px solid color-mix(in srgb,var(--glass-edge) 48%,transparent);padding-top:8px;
   overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .tc-card .th-actions{position:absolute;top:8px;right:8px;z-index:3;display:flex;gap:4px}
 .tc-card .th-actions button{font-size:10px;letter-spacing:.06em;padding:4px 9px;border-radius:7px;background:rgba(15,17,20,.55);color:#fff;transition:.13s}
@@ -2613,8 +2621,7 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
   -webkit-backdrop-filter:blur(30px) saturate(145%);backdrop-filter:blur(30px) saturate(145%);
 }
 
-/* CHARACTER CODEX를 포함한 이미지 카드: 이미지는 그대로, 정보판만 또렷하게. */
-.route-frame > .page:not(.page-main-wrap) .tc-card .bd,
+/* 이미지 카드 정보판: 카드 전체를 일러스트로 쓰고 작은 투명 유리판만 안쪽에 띄운다. */
 .route-frame > .page:not(.page-main-wrap) .char-card .nm,
 .route-frame > .page:not(.page-main-wrap) .rel-card .nm,
 .route-frame > .page:not(.page-main-wrap) .ticket .stub,
@@ -2626,10 +2633,21 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
 }
 .route-frame > .page:not(.page-main-wrap) .tc-card .bd{
   color:var(--ink);
-  box-shadow:0 1px 0 color-mix(in srgb,#fff 22%,transparent) inset;
+  background:
+    linear-gradient(145deg,color-mix(in srgb,#fff 19%,transparent),transparent 42%),
+    color-mix(in srgb,var(--panel-solid) 44%,transparent);
+  border-color:color-mix(in srgb,var(--glass-edge) 78%,transparent);
+  box-shadow:0 1px 0 color-mix(in srgb,#fff 36%,transparent) inset,0 12px 34px rgba(2,7,17,.2);
+  -webkit-backdrop-filter:blur(22px) saturate(155%);backdrop-filter:blur(22px) saturate(155%);
 }
 .route-frame > .page:not(.page-main-wrap) .tc-card .bd .nm{
-  color:var(--ink);text-shadow:0 1px 10px color-mix(in srgb,var(--panel-solid) 44%,transparent);
+  color:var(--ink);text-shadow:0 1px 12px color-mix(in srgb,var(--panel-solid) 54%,transparent);
+}
+.route-frame > .page:not(.page-main-wrap) .tc-card .bd .pill{
+  color:var(--ink);background:color-mix(in srgb,var(--glass-control) 86%,transparent);
+  border:1px solid color-mix(in srgb,var(--glass-edge) 72%,transparent);
+  box-shadow:0 1px 0 color-mix(in srgb,#fff 32%,transparent) inset;
+  -webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%);
 }
 .route-frame > .page:not(.page-main-wrap) .tc-card .bd .meta,
 .route-frame > .page:not(.page-main-wrap) .tc-card .bd .desc{
@@ -2639,7 +2657,7 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
 .route-frame > .page:not(.page-main-wrap) .tc-card .bd .desc{
   font-size:max(12px,calc(12.25px*var(--fs,1)));
   line-height:1.62;
-  border-top-color:color-mix(in srgb,var(--ink) 38%,transparent);
+  border-top-color:color-mix(in srgb,var(--glass-edge) 58%,transparent);
 }
 .route-frame > .page:not(.page-main-wrap) > .page-head p,
 .route-frame > .page:not(.page-main-wrap) > .page-head .desc-edit{
@@ -2650,4 +2668,7 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
   #appMain:has(> .route-frame > .page:not(.page-main-wrap))::before{inset:0;backdrop-filter:blur(1px) brightness(90%)}
   .route-frame > .page:not(.page-main-wrap) > .page-head{min-height:0;padding:16px;margin-bottom:14px}
   .route-frame > .page:not(.page-main-wrap) > .page-head .head-actions{grid-column:1;grid-row:auto;margin-top:12px}
+  .route-frame > .page:not(.page-main-wrap) .tc-card .bd{left:7px;right:7px;bottom:7px;padding:9px 10px 10px;border-radius:15px}
+  .route-frame > .page:not(.page-main-wrap) .tc-card .bd .meta{display:none}
+  .route-frame > .page:not(.page-main-wrap) .tc-card .bd .desc{margin-top:6px;padding-top:6px;-webkit-line-clamp:1}
 }
