@@ -202,7 +202,10 @@ a{color:inherit;text-decoration:none}
 /* 접기 (4.1): 디스크만 남는 미니 상태 · 접기 화살표 버튼 */
 .bgm .fold-btn{width:16px;height:26px;flex:0 0 16px;display:grid;place-items:center;color:var(--bgm-ic);font-size:calc(11px*var(--fs,1));border-radius:6px;transition:.15s}
 .bgm .fold-btn:hover{color:var(--bgm-fg)}
-.bgm.folded{padding:6px;gap:0;cursor:var(--cur-pointer,pointer)}
+.bgm.folded{
+  width:48px;height:48px;padding:6px;gap:0;
+  justify-content:center;cursor:var(--cur-pointer,pointer);overflow:hidden;
+}
 .bgm.folded .title,.bgm.folded .ctrl,.bgm.folded .vol,.bgm.folded .fold-btn,.bgm.folded .bgm-list{display:none}
 .bgm-list{position:absolute;bottom:calc(100% + 10px);right:0;width:min(280px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 100px));overflow:auto;background:var(--bgm-bg);border:1px solid var(--line-dark);border-radius:14px;padding:8px;display:none;box-shadow:var(--sh-dd)}
 /* 왼쪽 배치일 때 목록 팝업도 왼쪽 기준으로 — 화면 밖으로 밀리지 않게 */
@@ -1794,7 +1797,7 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
   .bgm .title .mq{max-width:none}
   .bgm .ctrl{margin-left:auto}
   /* 접힘 저장 상태(PC에서 접고 온 경우)여도 모바일에선 풀폭 바 유지 */
-  .bgm.folded{padding:7px 14px;gap:10px;cursor:default}
+  .bgm.folded{width:auto;height:auto;padding:7px 14px;gap:10px;cursor:default;overflow:visible}
   .bgm.folded .title{display:block}
   .bgm.folded .ctrl{display:flex}
   /* 모바일 BGM은 더 납작하게 — 레코드판(디스크) 없이 제목+컨트롤 한 줄 (v1.9 사용자 요청) */
