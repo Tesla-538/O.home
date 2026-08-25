@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 
@@ -136,6 +136,8 @@ export default function UnleashedMiniWikiPage() {
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState('');
+  const [motionPhase, setMotionPhase] = useState<'idle' | 'leaving' | 'entering'>('idle');
+  const motionTimers = useRef<{ swap?: ReturnType<typeof setTimeout>; done?: ReturnType<typeof setTimeout> }>({});
 
   const authHeaders = async () => {
     const headers: Record<string, string> = {};
@@ -146,6 +148,24 @@ export default function UnleashedMiniWikiPage() {
   };
 
   useEffect(() => { setPage(1); }, [category, deferredQuery]);
+
+  useEffect(() => () => {
+    if (motionTimers.current.swap) clearTimeout(motionTimers.current.swap);
+    if (motionTimers.current.done) clearTimeout(motionTimers.current.done);
+  }, []);
+
+  const changeCategory = (next: Category) => {
+    if (next === category || motionPhase !== 'idle') return;
+    setMotionPhase('leaving');
+    motionTimers.current.swap = setTimeout(() => {
+      setCategory(next);
+      setPage(1);
+      setSelectedId(null);
+      setSelected(null);
+      setMotionPhase('entering');
+      motionTimers.current.done = setTimeout(() => setMotionPhase('idle'), 680);
+    }, 230);
+  };
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -239,7 +259,7 @@ export default function UnleashedMiniWikiPage() {
         <div className="uw-category-tabs" role="tablist" aria-label="언리쉬드 분류">
           {(data?.categories ?? (Object.keys(CATEGORY_ICON) as Category[])).map(item => (
             <button key={item} type="button" role="tab" aria-selected={category === item}
-              className={category === item ? 'on' : ''} onClick={() => setCategory(item)}>
+              className={category === item ? 'on' : ''} onClick={() => changeCategory(item)}>
               <span>{CATEGORY_ICON[item]}</span>{item}
               {data?.categoryCounts[item] !== undefined && <small>{data.categoryCounts[item].toLocaleString()}</small>}
             </button>
@@ -248,11 +268,11 @@ export default function UnleashedMiniWikiPage() {
 
         {error && <div className="uw-error" role="alert">{error}</div>}
 
-        <div className="uw-body">
+        <div className={`uw-body uw-transition-${motionPhase}`} aria-busy={motionPhase !== 'idle'}>
           <aside className="uw-side panel" aria-label="미니위키 카테고리">
             <div className="uw-side-title"><small>카테고리</small><b>언리쉬드</b></div>
             {(data?.categories ?? (Object.keys(CATEGORY_ICON) as Category[])).map(item => (
-              <button key={item} className={category === item ? 'on' : ''} onClick={() => setCategory(item)}>
+              <button key={item} className={category === item ? 'on' : ''} onClick={() => changeCategory(item)}>
                 <span>{CATEGORY_ICON[item]}</span><b>{item}</b>
                 <small>{data?.categoryCounts[item]?.toLocaleString() ?? '—'}</small>
               </button>
@@ -302,23 +322,23 @@ export default function UnleashedMiniWikiPage() {
                       <h3>기본 정보</h3>
                       <div className="uw-profile-grid">
                         {[
-                          ['희귀도', selected.structured.profile.rarity],
-                          ['계열', selected.structured.profile.world],
-                          ['Cost', selected.structured.profile.cost],
-                          ['최대 레벨', selected.structured.profile.maxLevel],
-                          ['지역', selected.structured.profile.town],
-                          ['성별', selected.structured.profile.gender],
-                        ].map(([label, value]) => <p key={label}><small>{label}</small><b>{value || '—'}</b></p>)}
+                          { label: '희귀도', value: selected.structured.profile.rarity, tone: 'violet' },
+                          { label: '계열', value: selected.structured.profile.world, tone: 'blue' },
+                          { label: 'Cost', value: selected.structured.profile.cost, tone: 'amber' },
+                          { label: '최대 레벨', value: selected.structured.profile.maxLevel, tone: 'green' },
+                          { label: '지역', value: selected.structured.profile.town, tone: 'cyan' },
+                          { label: '성별', value: selected.structured.profile.gender, tone: 'rose' },
+                        ].map(item => <p key={item.label} className={`tone-${item.tone}`}><small>{item.label}</small><b>{item.value || '—'}</b></p>)}
                       </div>
                       <div className="uw-role-row">
                         <span>역할</span>
                         {selected.structured.profile.roles.map(role => (
-                          <b key={role.name} className={role.active ? 'on' : ''}>{role.name}</b>
+                          <b key={role.name} className={`${role.active ? 'on ' : ''}role-${role.name.toLowerCase()}`}>{role.name}</b>
                         ))}
                       </div>
                       <div className="uw-credit-row">
-                        <p><small>일러스트</small><span>{selected.structured.profile.artist || '—'}</span></p>
-                        <p><small>태그</small><span className="uw-tag-list">{selected.structured.profile.tags.map(tag => <b key={tag}>{tag}</b>)}</span></p>
+                        <p className="artist"><small>일러스트</small><span>{selected.structured.profile.artist || '—'}</span></p>
+                        <p className="tags"><small>태그</small><span className="uw-tag-list">{selected.structured.profile.tags.map(tag => <b key={tag}>{tag}</b>)}</span></p>
                       </div>
                     </section>
 
