@@ -249,7 +249,6 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
       originWidth: rect.width, originHeight: rect.height, element, handle,
     };
     resizeRef.current = draft;
-    try { handle.setPointerCapture(e.pointerId); } catch { /* 취소된 포인터는 다음 입력에서 정리 */ }
     setResizing(id);
     const move = (event: PointerEvent) => {
       if (resizeRef.current !== draft || event.pointerId !== draft.pointerId) return;
@@ -271,7 +270,6 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
       if (resizeRef.current !== draft || event.pointerId !== draft.pointerId) return;
       event.preventDefault();
       suppressClickUntil.current = Date.now() + 380;
-      try { draft.handle.releasePointerCapture(draft.pointerId); } catch { /* 이미 해제됨 */ }
       try { localStorage.setItem(layoutKeyRef.current, JSON.stringify(layoutRef.current)); } catch { /* 현재 세션만 유지 */ }
       draft.cleanup?.();
       resizeRef.current = null;
