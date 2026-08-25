@@ -1,6 +1,7 @@
 'use client';
 // 메인 페이지 (4.0 위젯 시스템) — 고정 요소(배너·회원정보창) + 자유 배치 위젯 + 편집모드
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMainStore, WidgetConf, WidgetType, WIDGET_META, MULTI_TYPES, widgetLabel } from '@/lib/mainStore';
 import { WidgetFrame } from '@/components/main/WidgetFrame';
 import { renderWidget } from '@/components/main/widgets';
@@ -55,6 +56,7 @@ export default function MainPage() {
   const [dockClosing, setDockClosing] = useState(false);
   const [viewMotion, setViewMotion] = useState<'idle' | 'leaving' | 'entering'>('idle');
   const [isMobile, setIsMobile] = useState(false);
+  const [topbarHost, setTopbarHost] = useState<HTMLElement | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
   const bgFileRef = React.useRef<HTMLInputElement>(null);
   const dockCloseTimer = React.useRef<number | null>(null);
@@ -97,6 +99,10 @@ export default function MainPage() {
   useEffect(() => {
     if (editOn) { setDockOpen(null); setDockClosing(false); }
   }, [editOn]);
+
+  useEffect(() => {
+    setTopbarHost(document.querySelector<HTMLElement>('.topbar'));
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia('(max-width:620px)');
@@ -309,9 +315,10 @@ export default function MainPage() {
         <HomepageMode widgets={enabled} />
       )}
 
-      {!editOn && !isMobile && (
+      {!editOn && !isMobile && topbarHost && createPortal(
         <HomeViewSwitcher view={homeView} isAdmin={isAdmin} disabled={viewMotion !== 'idle'}
-          onChange={changeHomeView} />
+          onChange={changeHomeView} />,
+        topbarHost,
       )}
 
       {showDashboard && <div ref={gridRef} className={`main-grid ${absMode ? 'abs' : ''} ${gridOn ? 'gridlines' : ''}`}

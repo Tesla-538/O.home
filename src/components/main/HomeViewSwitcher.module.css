@@ -1,5 +1,5 @@
 .switcher{
-  position:fixed;top:8px;right:182px;z-index:69;
+  position:absolute;top:8px;right:182px;z-index:2;
   display:flex;align-items:center;gap:3px;padding:4px;
   border:1px solid color-mix(in srgb,var(--glass-edge-soft) 74%,transparent);
   border-radius:999px;
