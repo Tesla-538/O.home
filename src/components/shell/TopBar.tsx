@@ -85,14 +85,15 @@ export function TopBar() {
   };
 
   // 상위 메뉴 개수 무제한 (v1.9) — 바 폭을 넘치는 항목은 「⋯」 드롭다운으로 자동 이동 (priority+)
-  const gnbRef = useRef<HTMLElement>(null);
+  const gnbRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const [visCount, setVisCount] = useState(menu.length);
   const menuKey = menu.map(m => m.label).join('|');
   useEffect(() => {
     const gnbEl = gnbRef.current, mEl = measureRef.current;
     if (!gnbEl || !mEl) return;
-    const GAP = 2;
+    const GAP = 0;
+    const CHROME = 8; // 유리 캡슐의 좌우 padding + border 여유
     const compute = () => {
       const avail = gnbEl.clientWidth;
       const kids = Array.from(mEl.children) as HTMLElement[];
@@ -102,10 +103,10 @@ export function TopBar() {
       }
       const moreW = kids[kids.length - 1]?.offsetWidth ?? 40;   // 마지막 = ⋯ 측정용
       const widths = kids.slice(0, -1).map(k => k.offsetWidth);
-      const total = widths.reduce((a, w) => a + w, 0) + GAP * Math.max(0, widths.length - 1);
+      const total = widths.reduce((a, w) => a + w, 0) + GAP * Math.max(0, widths.length - 1) + CHROME;
       let count = widths.length;
       if (total > avail) {
-        const limit = avail - moreW - GAP;
+        const limit = avail - moreW - GAP - CHROME;
         let used = 0; count = 0;
         for (const w of widths) {
           if (used + w > limit) break;
@@ -132,10 +133,11 @@ export function TopBar() {
         {siteLoaded && site.subtitle && <small className={`al-${site.align}`}>{site.subtitle}</small>}
       </div>
 
-      <nav className="gnb" ref={gnbRef}>
+      <div className="gnb-slot" ref={gnbRef}>
+      <nav className="gnb">
         {visMenu.map(item =>
           item.children ? (
-            <div className="grp" key={item.label}>
+            <div className={`grp ${item.children.some(c => pathname === c.href || pathname.startsWith(c.href + '/')) ? 'active' : ''}`} key={item.label}>
               {/* 상위 클릭 → 첫 하위 페이지 (v1.8) · 안 읽은 알림이 있는 메뉴에 점 (4.13) */}
               <button onClick={() => nav(item.children![0].href)}>
                 {item.label}{item.children.some(c => dotHrefs.has(c.href)) && <small className="nd">●</small>}
@@ -189,6 +191,7 @@ export function TopBar() {
           <button tabIndex={-1}>⋯</button>
         </div>
       </nav>
+      </div>
 
       {/* 메인 편집용 빠른 배경화면 메뉴 — 환경설정으로 이동하지 않고 업로드·교체 */}
       {editOn && pathname === '/' && (
