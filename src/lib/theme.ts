@@ -105,6 +105,7 @@ export interface ThemeState {
 
 /** 다크 모드 (기본 디폴트) — 프로토타입 "시크 모노톤" 기준 */
 export const DARK_THEME: ThemeVars = {
+  glassTone: 'dark',
   bgG1: '#2b3038', bgG2: '#121418',
   bgType: 'gradient', bgAngle: 180, bgBlur: 0,
   cardBg: '#fbfbfc', cardFg: '#1d2025',
@@ -124,6 +125,7 @@ export const DARK_THEME: ThemeVars = {
 
 /** 라이트 모드 — 호버 글씨색은 흰 배경에서도 보이는 색 (v1.9) */
 export const LIGHT_THEME: ThemeVars = {
+  glassTone: 'light',
   bgG1: '#f2f3f5', bgG2: '#dfe1e6',
   bgType: 'gradient', bgAngle: 180, bgBlur: 0,
   cardBg: '#fbfbfc', cardFg: '#1d2025',
@@ -152,6 +154,7 @@ export function derivePointTheme(accent: string, tone: PointTone): ThemeVars {
 
   if (tone === 'dark') {
     return {
+      glassTone: 'dark',
       bgG1: c(0.28, 0.2), bgG2: c(0.32, 0.07),
       bgType: 'gradient', bgAngle: 180, bgBlur: 0,
       cardBg: c(0.12, 0.985), cardFg: c(0.4, 0.14),
@@ -172,6 +175,7 @@ export function derivePointTheme(accent: string, tone: PointTone): ThemeVars {
   // 라이트 톤 — 호버 글씨색은 어두운 포인트색 파생 (흰 배경 위 흰 글씨 방지, v1.9)
   const deepAccent = adjust(accent, cc => ({ l: Math.min(cc.l, 0.38) }));
   return {
+    glassTone: 'light',
     bgG1: c(0.25, 0.95), bgG2: c(0.3, 0.86),
     bgType: 'gradient', bgAngle: 180, bgBlur: 0,
     cardBg: c(0.15, 0.99), cardFg: c(0.4, 0.14),
@@ -246,6 +250,12 @@ export function themeToCssVars(t: ThemeVars): Record<string, string> {
   const fgDark = hexToHsl(cardFg).l < 0.5;
   const cardSub = adjust(cardFg, cc => ({ l: fgDark ? Math.min(0.85, cc.l + 0.25) : Math.max(0.15, cc.l - 0.22) }));
   const cardFaint = adjust(cardFg, cc => ({ l: fgDark ? Math.min(0.92, cc.l + 0.45) : Math.max(0.3, cc.l - 0.38), s: cc.s * 0.6 }));
+  // 밝은 유리 위에서는 배경 일러스트가 글자에 비치므로, 보조 글자만 한 단계 또렷하게 만든다.
+  // 다크 유리의 기존 대비는 그대로 유지한다.
+  const lightGlass = t.glassTone === 'light';
+  const topFg = lightGlass
+    ? adjust(t.topFg, cc => ({ l: Math.max(0.18, cc.l - 0.07), s: cc.s * 1.04 }))
+    : t.topFg;
   // 입력 포커스 (v1.9) — 미지정이면 포인트색 기반 글로우 3px
   const focusC = t.focusColor ?? t.accent;
   const focusRing = t.focusRing ?? 'glow';
@@ -256,12 +266,14 @@ export function themeToCssVars(t: ThemeVars): Record<string, string> {
     '--panel-solid': t.cardBg ?? '#fbfbfc',
     '--panel': withAlpha(t.cardBg ?? '#fcfcfd', 0.94),
     '--ink': cardFg, '--sub': cardSub, '--faint': cardFaint,
+    '--glass-sub': `color-mix(in srgb,var(--ink) ${lightGlass ? 82 : 72}%,transparent)`,
+    '--glass-faint': `color-mix(in srgb,var(--ink) ${lightGlass ? 64 : 52}%,transparent)`,
     '--sh-sm': sh(8, 26, 0.22),   // 작은 카드
     '--sh-md': sh(10, 40, 0.25),  // 패널·배너
     '--sh-lg': sh(24, 70, 0.5),   // 모달
     '--sh-dd': kd === 0 ? 'none' : `0 14px 40px rgba(${rgb},${Math.min(1, 0.5 * kd).toFixed(3)})`,
     '--bg-g1': t.bgG1, '--bg-g2': t.bgG2,
-    '--top-bg': withAlpha(t.topBg, 0.84), '--top-fg': t.topFg, '--top-hv': t.topHv, '--top-brand': t.topBrand,
+    '--top-bg': withAlpha(t.topBg, 0.84), '--top-fg': topFg, '--top-hv': t.topHv, '--top-brand': t.topBrand,
     '--dd-bg': withAlpha(t.ddBg, 0.97), '--dd-fg': t.ddFg, '--dd-hv': withAlpha(t.ddHv, 0.09),
     '--page-title': t.pageTitle, '--page-desc': t.pageDesc,
     // 페이지 헤더 표시 옵션 (v1.9) — 모바일 생략은 CSS 미디어쿼리가 --ph-m을 보고 처리
@@ -299,7 +311,7 @@ export function themeToCssVars(t: ThemeVars): Record<string, string> {
     '--tab-on-fg': t.tabOnFg ?? '#1d2025',
     // 스위치 탭 — 안 고른 쪽 (v2.0) · 고른 쪽은 --btn-dark 3색을 그대로 쓴다
     '--seg-bg': t.segBg ?? '#f0f1f3',
-    '--seg-fg': t.segFg ?? '#8a8f98',
+    '--seg-fg': t.segFg ?? (lightGlass ? '#65717f' : '#8a8f98'),
     '--radius': `${t.radius}px`, '--radius-s': `${t.radiusS}px`,
   };
 }

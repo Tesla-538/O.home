@@ -1960,8 +1960,8 @@ body{
 
 /* 카드: 불투명 흰 상자를 없애고 배경이 은은히 비치는 공통 재질로 통일 */
 .panel{
-  --sub:color-mix(in srgb,var(--ink) 72%,transparent);
-  --faint:color-mix(in srgb,var(--ink) 52%,transparent);
+  --sub:var(--glass-sub,color-mix(in srgb,var(--ink) 72%,transparent));
+  --faint:var(--glass-faint,color-mix(in srgb,var(--ink) 52%,transparent));
   background:
     linear-gradient(145deg,var(--glass-reflection),transparent 36%),
     linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,0) 42%),
@@ -2131,8 +2131,8 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
 
 /* panel을 쓰지 않는 카드들도 동일한 표면 계층에 편입 */
 .char-card,.rel-card,.ticket,.bticket,.cm-total-slot,.cm-meta .mail{
-  --sub:color-mix(in srgb,var(--ink) 72%,transparent);
-  --faint:color-mix(in srgb,var(--ink) 52%,transparent);
+  --sub:var(--glass-sub,color-mix(in srgb,var(--ink) 72%,transparent));
+  --faint:var(--glass-faint,color-mix(in srgb,var(--ink) 52%,transparent));
   background:
     linear-gradient(145deg,var(--glass-reflection),transparent 34%),
     var(--glass-panel);
