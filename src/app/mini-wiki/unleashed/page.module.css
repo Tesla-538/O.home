@@ -7,7 +7,7 @@
   animation: detail-switch-in 500ms cubic-bezier(.16, 1, .3, 1) both;
 }
 
-.noxLink {
+.recordLink {
   width: 100%;
   display: flex;
   align-items: center;
@@ -20,11 +20,11 @@
   transition: color 180ms ease, transform 180ms cubic-bezier(.16, 1, .3, 1);
 }
 
-.noxLink span {
+.recordLink span {
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 44%, transparent);
 }
 
-.noxLink b {
+.recordLink b {
   color: var(--accent-soft);
   font-size: 15px;
   opacity: 0;
@@ -32,19 +32,19 @@
   transition: opacity 180ms ease, transform 180ms cubic-bezier(.16, 1, .3, 1);
 }
 
-.noxLink:hover,
-.noxLink:focus-visible {
+.recordLink:hover,
+.recordLink:focus-visible {
   color: var(--accent-soft);
   transform: translateX(2px);
 }
 
-.noxLink:hover b,
-.noxLink:focus-visible b {
+.recordLink:hover b,
+.recordLink:focus-visible b {
   opacity: 1;
   transform: none;
 }
 
-.noxLink:focus-visible {
+.recordLink:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 58%, transparent);
   outline-offset: 3px;
   border-radius: 4px;
@@ -151,8 +151,8 @@
 @media (prefers-reduced-motion: reduce) {
   .detailLeaving,
   .detailEntering,
-  .noxLink,
-  .noxLink b,
+  .recordLink,
+  .recordLink b,
   .pagerButton,
   .pagerButton span,
   .pageCounter {

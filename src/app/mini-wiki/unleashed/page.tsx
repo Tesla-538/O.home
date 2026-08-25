@@ -61,7 +61,7 @@ const CATEGORY_ICON: Record<Category, string> = {
   녹스: '◇', 효과: '✦', 퀘스트: '⚑', 레이드: '⚔', 아이템: '□', 스킨: '○',
 };
 
-function AcquisitionTables({ sections }: { sections: AcquisitionSection[] }) {
+function AcquisitionTables({ sections, onOpenQuest }: { sections: AcquisitionSection[]; onOpenQuest: (name: string) => void }) {
   return (
     <section className="uw-acquisition">
       <h3>획득처</h3>
@@ -71,8 +71,13 @@ function AcquisitionTables({ sections }: { sections: AcquisitionSection[] }) {
           <div className="uw-table-wrap"><table>
             {section.headers.length > 0 && <thead><tr>{section.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead>}
             <tbody>{section.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.cells.map((cell, cellIndex) => (
-              <td key={cellIndex}>{cellIndex === 0 && row.sourceUrl
-                ? <a href={row.sourceUrl} target="_blank" rel="noreferrer">{cell || '원문 보기'} ↗</a>
+              <td key={cellIndex}>{section.kind === 'quest' && cellIndex === 0 && cell
+                ? <button type="button" className={styles.recordLink} onClick={() => onOpenQuest(cell)}
+                    aria-label={`${cell} 퀘스트 정보 보기`} title="내부 퀘스트 상세 정보 보기">
+                    <span>{cell}</span><b aria-hidden>›</b>
+                  </button>
+                : cellIndex === 0 && row.sourceUrl
+                  ? <a href={row.sourceUrl} target="_blank" rel="noreferrer">{cell || '원문 보기'} ↗</a>
                 : (cell || '—')}</td>
             ))}</tr>)}</tbody>
           </table></div>
@@ -82,7 +87,7 @@ function AcquisitionTables({ sections }: { sections: AcquisitionSection[] }) {
   );
 }
 
-function GenericDetails({ data, onOpenNox }: { data: WikiStructured; onOpenNox: (name: string) => void }) {
+function GenericDetails({ data, onOpenNox, onOpenQuest }: { data: WikiStructured; onOpenNox: (name: string) => void; onOpenQuest: (name: string) => void }) {
   const summary = data.summary ?? [];
   const sections = data.sections ?? [];
   return (
@@ -114,7 +119,7 @@ function GenericDetails({ data, onOpenNox }: { data: WikiStructured; onOpenNox: 
             {section.headers.length > 0 && <thead><tr>{section.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead>}
             <tbody>{section.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => (
               <td key={cellIndex}>{section.kind === 'drop' && cellIndex === 0 && cell
-                ? <button type="button" className={styles.noxLink} onClick={() => onOpenNox(cell)}
+                ? <button type="button" className={styles.recordLink} onClick={() => onOpenNox(cell)}
                     aria-label={`${cell} 녹스 정보 보기`} title="녹스 상세 정보 보기">
                     <span>{cell}</span><b aria-hidden>›</b>
                   </button>
@@ -124,7 +129,7 @@ function GenericDetails({ data, onOpenNox }: { data: WikiStructured; onOpenNox: 
         </section>
       ))}
 
-      {data.kind === 'item' && <AcquisitionTables sections={data.acquisition ?? []} />}
+      {data.kind === 'item' && <AcquisitionTables sections={data.acquisition ?? []} onOpenQuest={onOpenQuest} />}
     </div>
   );
 }
@@ -146,7 +151,7 @@ export default function UnleashedMiniWikiPage() {
   const [detailMotionPhase, setDetailMotionPhase] = useState<'idle' | 'leaving' | 'entering'>('idle');
   const motionTimers = useRef<{ swap?: ReturnType<typeof setTimeout>; done?: ReturnType<typeof setTimeout> }>({});
   const detailMotionTimers = useRef<{ swap?: ReturnType<typeof setTimeout>; done?: ReturnType<typeof setTimeout> }>({});
-  const pendingNoxTitle = useRef<string | null>(null);
+  const pendingRecord = useRef<{ category: Category; title: string } | null>(null);
 
   const authHeaders = async () => {
     const headers: Record<string, string> = {};
@@ -183,12 +188,15 @@ export default function UnleashedMiniWikiPage() {
     }, 230);
   };
 
-  const openNox = (name: string) => {
+  const openRecord = (targetCategory: Category, name: string) => {
     const exactName = name.trim();
     if (!exactName || motionPhase !== 'idle') return;
-    pendingNoxTitle.current = exactName;
-    changeCategory('녹스', exactName);
+    pendingRecord.current = { category: targetCategory, title: exactName };
+    changeCategory(targetCategory, exactName);
   };
+
+  const openNox = (name: string) => openRecord('녹스', name);
+  const openQuest = (name: string) => openRecord('퀘스트', name);
 
   const changeRecord = (nextId: string) => {
     if (nextId === selectedId || motionPhase !== 'idle' || detailMotionPhase !== 'idle') return;
@@ -209,11 +217,12 @@ export default function UnleashedMiniWikiPage() {
         const next = await response.json() as WikiListResponse;
         if (!response.ok) throw new Error(next.error || '위키 데이터를 불러오지 못했습니다.');
         setData(next);
-        const requestedNox = category === '녹스' && pendingNoxTitle.current
-          ? next.records.find(record => record.title.trim() === pendingNoxTitle.current)
+        const pending = pendingRecord.current;
+        const requestedRecord = pending && category === pending.category
+          ? next.records.find(record => record.title.trim() === pending.title)
           : undefined;
-        if (requestedNox) pendingNoxTitle.current = null;
-        setSelectedId(current => requestedNox?.id
+        if (requestedRecord) pendingRecord.current = null;
+        setSelectedId(current => requestedRecord?.id
           ?? (next.records.some(record => record.id === current) ? current : (next.records[0]?.id ?? null)));
       } catch (loadError) {
         if ((loadError as Error).name !== 'AbortError') setError((loadError as Error).message);
@@ -410,9 +419,9 @@ export default function UnleashedMiniWikiPage() {
                       )) : <p className="uw-empty">등록된 스킬 정보가 없습니다.</p>}
                     </section>
 
-                    <AcquisitionTables sections={selected.structured.acquisition ?? []} />
+                    <AcquisitionTables sections={selected.structured.acquisition ?? []} onOpenQuest={openQuest} />
                   </>
-                ) : selected.structured ? <GenericDetails data={selected.structured} onOpenNox={openNox} /> : summaryValues.length > 0 && (
+                ) : selected.structured ? <GenericDetails data={selected.structured} onOpenNox={openNox} onOpenQuest={openQuest} /> : summaryValues.length > 0 && (
                   <section className="uw-facts">
                     <h3>목록 정보</h3>
                     <div>
