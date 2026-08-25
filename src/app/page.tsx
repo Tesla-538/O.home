@@ -43,6 +43,7 @@ export default function MainPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState<WidgetType>('freetext');
   const [addCol, setAddCol] = useState<'1' | '2' | '3'>('3');
+  const [addedWidgetId, setAddedWidgetId] = useState<string | null>(null);
   const [delAsk, setDelAsk] = useState<WidgetConf | null>(null);   // 우클릭 삭제 경고 (v1.9)
   const [bgOpen, setBgOpen] = useState(false);
   const [homeView, setHomeView] = useState<HomeView>('focus');
@@ -107,6 +108,21 @@ export default function MainPage() {
     if (!MULTI_TYPES.includes(addType) && state.widgets.some(w => w.type === addType)) setAddType('freetext');
   }, [addOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 새 위젯은 선택한 열의 기존 위젯 아래에 생겨 화면 밖일 수 있다.
+  // 고정 시간 뒤 DOM을 찾는 대신 실제 렌더 완료 후 이동하고 잠깐 강조한다.
+  useEffect(() => {
+    if (!addedWidgetId || !state.widgets.some(w => w.id === addedWidgetId)) return;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        document.querySelector(`[data-wid="${addedWidgetId}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      });
+    });
+    const done = window.setTimeout(() => setAddedWidgetId(null), 1600);
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2); clearTimeout(done); };
+  }, [addedWidgetId, state.widgets]);
+
   const enabled = state.widgets.filter(w => w.enabled);
   const dockable = enabled.filter(w => w.type !== 'menu');
   const leftDock = dockable.filter(w => w.col !== 3);
@@ -152,7 +168,8 @@ export default function MainPage() {
   };
 
   const frame = (w: WidgetConf, className?: string) => (
-    <WidgetFrame key={w.id} conf={w} mobileOrder={mOrder(w.id)} className={className}
+    <WidgetFrame key={w.id} conf={w} mobileOrder={mOrder(w.id)}
+      className={[className, addedWidgetId === w.id ? 'wgt-just-added' : ''].filter(Boolean).join(' ')}
       onCtx={(id, x, y) => {
         // 우클릭 시 z 기본값 부여 (겹침 조정 대상화)
         if (state.widgets.find(v => v.id === id)?.z == null) {
@@ -319,10 +336,9 @@ export default function MainPage() {
           <button className="btn btn-dark" onClick={() => {
             if (!MULTI_TYPES.includes(addType) && state.widgets.some(w => w.type === addType)) return;
             const id = addWidget(addType, Number(addCol) as 1 | 2 | 3);
+            setAddedWidgetId(id);
             setAddOpen(false);
             toast('위젯이 추가되었습니다 — 우클릭 메뉴에서 설정·삭제할 수 있습니다');
-            // 추가 위치가 화면 밖(열 하단)일 수 있어 새 위젯으로 스크롤 (v1.9 사용자 피드백)
-            setTimeout(() => document.querySelector(`[data-wid="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
           }}>ADD</button>
         </>}>
         <div style={{ display: 'grid', gap: 7, marginBottom: 14 }}>

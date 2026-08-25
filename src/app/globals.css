@@ -843,6 +843,15 @@ a{color:inherit;text-decoration:none}
 .main-grid.abs{display:block;position:relative}
 .main-grid .g2{gap:16px}
 .main-grid .widget{margin-bottom:0} /* 갭은 래퍼(.wgt)에서만 — 마진 겹침 방지 */
+/* 추가 직후 화면 밖에서 나타난 위젯의 위치를 사용자가 바로 찾을 수 있게 한다. */
+.wgt-just-added::after{
+  content:"";position:absolute;inset:-5px;z-index:20;pointer-events:none;
+  border:2px solid color-mix(in srgb,var(--accent-soft) 78%,#fff);
+  border-radius:calc(var(--radius) + 8px);
+  box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 16%,transparent),0 0 28px color-mix(in srgb,var(--accent-soft) 34%,transparent);
+  animation:wgt-added-ring 1.35s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes wgt-added-ring{0%{opacity:0;scale:.96}18%,68%{opacity:1;scale:1}100%{opacity:0;scale:1.025}}
 
 /* 감상 모드 — 배경 일러스트를 주인공으로 두고 위젯은 macOS식 좌우 도크에 접는다. */
 .focus-home{width:100%;max-width:none;min-width:0!important;margin:0!important;padding:0!important;height:100%}
