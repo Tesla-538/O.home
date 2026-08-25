@@ -58,9 +58,107 @@ function visibleText(html) {
 }
 
 function cellTexts(rowHtml) {
-  return [...rowHtml.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)]
+  return [...rowHtml.matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)]
     .map(match => visibleText(match[1]))
     .map(value => value.replace(/\n+/g, ' / ').trim());
+}
+
+function tableRows(tableHtml) {
+  return [...tableHtml.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)]
+    .map(match => cellTexts(match[1]));
+}
+
+function firstTable(html, pattern) {
+  return html.match(pattern)?.[0] ?? '';
+}
+
+function tableById(html, id) {
+  const safeId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return firstTable(html, new RegExp(`<table\\b[^>]*id\\s*=\\s*['"]${safeId}['"][^>]*>[\\s\\S]*?<\\/table>`, 'i'));
+}
+
+function acquisitionTable(html, id, title, kind, hasHeaders = true) {
+  const table = tableById(html, id);
+  const rows = tableRows(table).filter(row => row.some(Boolean));
+  if (rows.length < (hasHeaders ? 2 : 1)) return null;
+  const dataRows = [...table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].slice(hasHeaders ? 1 : 0)
+    .map(match => {
+      const cells = cellTexts(match[1]);
+      const rawHref = match[1].match(/href\s*=\s*['"]([^'"]+)['"]/i)?.[1];
+      return {
+        cells,
+        sourceUrl: rawHref ? new URL(decodeHtml(rawHref), BASE).toString() : null,
+      };
+    })
+    .filter(row => row.cells.some(Boolean));
+  return dataRows.length ? { kind, title, headers: hasHeaders ? rows[0] : [], rows: dataRows } : null;
+}
+
+function noxStructured(html) {
+  const infoTables = [...html.matchAll(/<table\b[^>]*border\s*=\s*['"]0['"][^>]*width\s*:\s*650px[^>]*>[\s\S]*?<\/table>/gi)]
+    .map(match => match[0]);
+  const identityRows = tableRows(infoTables[0] ?? '');
+  const identity = identityRows[1] ?? [];
+  const roleTable = infoTables[1] ?? '';
+  const roles = [...roleTable.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map(match => ({
+    name: visibleText(match[1]),
+    active: !/(?:color\s*:\s*#999999|color\s*=\s*['"]?#999999)/i.test(match[1]),
+  })).filter(role => role.name);
+  const credit = tableRows(infoTables[2] ?? '')[0] ?? [];
+  const statRows = tableRows(infoTables[3] ?? '');
+  const stats = statRows.flatMap(row => {
+    const pairs = [];
+    for (let index = 0; index + 1 < row.length; index += 2) {
+      if (row[index] || row[index + 1]) pairs.push({ label: row[index], value: row[index + 1] });
+    }
+    return pairs;
+  });
+
+  const skillTable = firstTable(html, /<table\b[^>]*border\s*=\s*['"]?1['"]?[^>]*>[\s\S]*?<\/table>/i);
+  const rawSkillRows = [...skillTable.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(match => ({
+    html: match[1], cells: cellTexts(match[1]),
+  }));
+  const skills = [];
+  for (let index = 0; index < rawSkillRows.length; index += 1) {
+    const row = rawSkillRows[index];
+    const type = row.cells[0] ?? '';
+    const name = row.cells[1] ?? '';
+    if (!type || !name) continue;
+    const next = rawSkillRows[index + 1];
+    const description = next?.cells.length === 1 ? next.cells[0] : '';
+    const rawHref = row.html.match(/href\s*=\s*['"]([^'"]+)['"]/i)?.[1];
+    skills.push({
+      type,
+      name,
+      description,
+      effectSourceUrl: rawHref ? new URL(decodeHtml(rawHref), BASE).toString() : null,
+    });
+    if (description) index += 1;
+  }
+
+  const acquisition = [
+    acquisitionTable(html, 'table_drop_quest', '획득 가능한 Quest', 'quest'),
+    acquisitionTable(html, 'table_drop_raid', 'Drop 되는 레이드', 'raid'),
+    acquisitionTable(html, 'table_get_compose', '조합식', 'compose', false),
+  ].filter(Boolean);
+
+  return {
+    profile: {
+      name: identityRows[0]?.[0] ?? '',
+      rarity: identity[0] ?? '',
+      world: identity[1] ?? '',
+      cost: identity[2] ?? '',
+      maxLevel: identity[3] ?? '',
+      town: identity[4] ?? '',
+      gender: identity[5] ?? '',
+      roles,
+      artist: credit[0] ?? '',
+      tags: (credit[1] ?? '').split(':').map(tag => tag.trim()).filter(Boolean),
+      stats,
+    },
+    skills,
+    acquisition,
+  };
 }
 
 function canonicalDetailHref(rawHref) {
@@ -238,7 +336,8 @@ const detailed = await mapConcurrent(entries, async entry => {
     if (done % 100 === 0 || done === entries.length) {
       console.log(`details ${done.toLocaleString()}/${entries.length.toLocaleString()}`);
     }
-    return { ...entry, detail };
+    const structured = entry.category === '녹스' ? noxStructured(html) : undefined;
+    return { ...entry, detail, ...(structured ? { structured } : {}) };
   } catch (error) {
     console.error(`failed ${entry.sourceUrl}: ${error instanceof Error ? error.message : error}`);
     return { ...entry, detail: [], fetchError: true };

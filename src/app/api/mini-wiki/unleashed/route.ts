@@ -14,7 +14,7 @@ function publicRecord(record: UnleashedRecord, detail = false) {
     listHeaders: record.listHeaders,
     listValues: record.listValues,
   };
-  return detail ? { ...base, detail: record.detail } : base;
+  return detail ? { ...base, detail: record.detail, structured: record.structured } : base;
 }
 
 async function assertAdmin(request: Request) {
@@ -52,6 +52,15 @@ export async function GET(request: Request) {
     const limit = Math.min(60, Math.max(12, Number(url.searchParams.get('limit')) || 36));
     const filtered = unleashedWiki.records.filter(record => record.category === category
       && (!query || record.searchText.includes(query)));
+    if (query) {
+      const titleScore = (title: string) => {
+        const normalized = title.toLocaleLowerCase('ko-KR');
+        if (normalized === query) return 0;
+        if (normalized.includes(query)) return 1;
+        return 2;
+      };
+      filtered.sort((left, right) => titleScore(left.title) - titleScore(right.title));
+    }
     const pages = Math.max(1, Math.ceil(filtered.length / limit));
     const safePage = Math.min(page, pages);
     const start = (safePage - 1) * limit;
@@ -77,4 +86,3 @@ export async function GET(request: Request) {
     });
   }
 }
-

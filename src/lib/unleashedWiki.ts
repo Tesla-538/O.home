@@ -13,6 +13,28 @@ export interface UnleashedRecord {
   listHeaders: string[];
   listValues: string[];
   detail: string[];
+  structured?: {
+    profile: {
+      name: string;
+      rarity: string;
+      world: string;
+      cost: string;
+      maxLevel: string;
+      town: string;
+      gender: string;
+      roles: { name: string; active: boolean }[];
+      artist: string;
+      tags: string[];
+      stats: { label: string; value: string }[];
+    };
+    skills: { type: string; name: string; description: string; effectSourceUrl: string | null }[];
+    acquisition: {
+      kind: string;
+      title: string;
+      headers: string[];
+      rows: { cells: string[]; sourceUrl: string | null }[];
+    }[];
+  };
   searchText: string;
   fetchError?: boolean;
 }
@@ -32,4 +54,3 @@ export interface UnleashedWikiData {
 }
 
 export const unleashedWiki = rawWiki as unknown as UnleashedWikiData;
-

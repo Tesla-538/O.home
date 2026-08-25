@@ -16,7 +16,23 @@ interface WikiRecordSummary {
   listValues: string[];
 }
 
-interface WikiRecord extends WikiRecordSummary { detail: string[] }
+interface WikiRecord extends WikiRecordSummary {
+  detail: string[];
+  structured?: {
+    profile: {
+      name: string; rarity: string; world: string; cost: string; maxLevel: string; town: string; gender: string;
+      roles: { name: string; active: boolean }[];
+      artist: string;
+      tags: string[];
+      stats: { label: string; value: string }[];
+    };
+    skills: { type: string; name: string; description: string; effectSourceUrl: string | null }[];
+    acquisition: {
+      kind: string; title: string; headers: string[];
+      rows: { cells: string[]; sourceUrl: string | null }[];
+    }[];
+  };
+}
 
 interface WikiListResponse {
   source: { name: string; baseUrl: string; collectedAt: string; imagePolicy: string };
@@ -107,6 +123,7 @@ export default function UnleashedMiniWikiPage() {
   }, [isAdmin, mock, selectedId, accessToken]);
 
   const summaryValues = useMemo(() => selected?.listValues.filter(value => value && value !== selected.title) ?? [], [selected]);
+  const skillClass = (type: string) => type === '액티브' ? 'active' : type === '패시브' ? 'passive' : type === '스탯' ? 'stat' : 'other';
 
   if (!user || !isAdmin) {
     return (
@@ -204,7 +221,71 @@ export default function UnleashedMiniWikiPage() {
                   <a href={selected.sourceUrl} target="_blank" rel="noreferrer">원문 보기 ↗</a>
                 </div>
 
-                {summaryValues.length > 0 && (
+                {selected.structured ? (
+                  <>
+                    <section className="uw-profile">
+                      <h3>기본 정보</h3>
+                      <div className="uw-profile-grid">
+                        {[
+                          ['희귀도', selected.structured.profile.rarity],
+                          ['계열', selected.structured.profile.world],
+                          ['Cost', selected.structured.profile.cost],
+                          ['최대 레벨', selected.structured.profile.maxLevel],
+                          ['지역', selected.structured.profile.town],
+                          ['성별', selected.structured.profile.gender],
+                        ].map(([label, value]) => <p key={label}><small>{label}</small><b>{value || '—'}</b></p>)}
+                      </div>
+                      <div className="uw-role-row">
+                        <span>역할</span>
+                        {selected.structured.profile.roles.map(role => (
+                          <b key={role.name} className={role.active ? 'on' : ''}>{role.name}</b>
+                        ))}
+                      </div>
+                      <div className="uw-credit-row">
+                        <p><small>일러스트</small><span>{selected.structured.profile.artist || '—'}</span></p>
+                        <p><small>태그</small><span className="uw-tag-list">{selected.structured.profile.tags.map(tag => <b key={tag}>{tag}</b>)}</span></p>
+                      </div>
+                    </section>
+
+                    {selected.structured.profile.stats.length > 0 && (
+                      <section className="uw-stat-table">
+                        <h3>스탯</h3>
+                        <div>{selected.structured.profile.stats.map(stat => (
+                          <p key={stat.label}><span>{stat.label}</span><b>{stat.value}</b></p>
+                        ))}</div>
+                      </section>
+                    )}
+
+                    <section className="uw-skills">
+                      <h3>스킬</h3>
+                      {selected.structured.skills.length > 0 ? selected.structured.skills.map((skill, index) => (
+                        <article key={`${skill.type}-${skill.name}-${index}`} className={`uw-skill ${skillClass(skill.type)}`}>
+                          <header><span>{skill.type}</span><b>{skill.name}</b>
+                            {skill.effectSourceUrl && <a href={skill.effectSourceUrl} target="_blank" rel="noreferrer">효과 상세 ↗</a>}
+                          </header>
+                          <p>{skill.description || '원본에 별도 설명이 없습니다.'}</p>
+                        </article>
+                      )) : <p className="uw-empty">등록된 스킬 정보가 없습니다.</p>}
+                    </section>
+
+                    <section className="uw-acquisition">
+                      <h3>획득처</h3>
+                      {selected.structured.acquisition.length > 0 ? selected.structured.acquisition.map(section => (
+                        <div className="uw-acq-block" key={section.kind}>
+                          <h4>{section.title}</h4>
+                          <div className="uw-table-wrap"><table>
+                            {section.headers.length > 0 && <thead><tr>{section.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead>}
+                            <tbody>{section.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.cells.map((cell, cellIndex) => (
+                              <td key={cellIndex}>{cellIndex === 0 && row.sourceUrl
+                                ? <a href={row.sourceUrl} target="_blank" rel="noreferrer">{cell || '원문 보기'} ↗</a>
+                                : (cell || '—')}</td>
+                            ))}</tr>)}</tbody>
+                          </table></div>
+                        </div>
+                      )) : <p className="uw-no-acq">원본 데이터에 등록된 획득처가 없습니다.</p>}
+                    </section>
+                  </>
+                ) : summaryValues.length > 0 && (
                   <section className="uw-facts">
                     <h3>목록 정보</h3>
                     <div>
@@ -217,12 +298,12 @@ export default function UnleashedMiniWikiPage() {
                   </section>
                 )}
 
-                <section className="uw-original">
+                {!selected.structured && <section className="uw-original">
                   <h3>상세 정보</h3>
                   {selected.detail.length > 0
                     ? selected.detail.map((block, index) => <pre key={index}>{block}</pre>)
                     : <p className="uw-empty">원본 목록에 별도 상세 내용이 없습니다.</p>}
-                </section>
+                </section>}
 
                 <footer className="uw-detail-foot">
                   <span>출처</span>
@@ -237,4 +318,3 @@ export default function UnleashedMiniWikiPage() {
     </section>
   );
 }
-
