@@ -279,11 +279,11 @@ export function themeToCssVars(t: ThemeVars): Record<string, string> {
     '--logo-fg': lightGlass ? '#1d1d1f' : t.topBrand,
     '--logo-weight': lightGlass ? '700' : '480',
     '--logo-size': lightGlass ? '24px' : '21.5px',
-    '--logo-track': '-0.014em',
+    '--logo-track': '-0.5px',
     '--logo-sub-fg': lightGlass ? '#556375' : 'rgba(245,245,247,.58)',
     '--logo-sub-weight': lightGlass ? '600' : '500',
     '--logo-sub-size': lightGlass ? '9.5px' : '8.25px',
-    '--logo-sub-track': '.368em',
+    '--logo-sub-track': '3.5px',
     '--dd-bg': withAlpha(t.ddBg, 0.97), '--dd-fg': t.ddFg, '--dd-hv': withAlpha(t.ddHv, 0.09),
     '--page-title': t.pageTitle, '--page-desc': t.pageDesc,
     // 페이지 헤더 표시 옵션 (v1.9) — 모바일 생략은 CSS 미디어쿼리가 --ph-m을 보고 처리
