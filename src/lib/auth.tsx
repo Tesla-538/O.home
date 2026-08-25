@@ -29,6 +29,8 @@ interface AuthCtx {
   completePasswordReset: (password: string) => Promise<Result>;
   logout: () => Promise<void>;
   updateProfile: (patch: { nickname?: string; avatarUrl?: string | null; avatarColor?: string | null; currentPassword?: string; newPassword?: string }) => Promise<Result>;
+  /** 관리자 전용 API 호출에 전달할 현재 서버 세션 토큰 */
+  accessToken: () => Promise<string | null>;
   /** 서버(DB) 연결 없이 브라우저 계정으로 도는 중인지 — 개발·오프라인 */
   mock: boolean;
 }
@@ -215,6 +217,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try { localStorage.removeItem(MOCK_KEY); } catch { /* 무시 */ }
   }, [server, be]);
 
+  const accessToken = useCallback(async () => {
+    if (!server || !be) return null;
+    return be.accessToken();
+  }, [server, be]);
+
   // 관리자면 body.admin — 페이지 설명 편집 연필 등
   // 저장 계층이 훅 밖에서 작성자 id를 알 수 있게 함께 기록
   useEffect(() => {
@@ -225,7 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <Ctx.Provider value={{
       user, isAdmin: user?.role === 'admin',
-      login, signup, findId, resetPassword, completePasswordReset, logout, updateProfile, mock: !server,
+      login, signup, findId, resetPassword, completePasswordReset, logout, updateProfile, accessToken, mock: !server,
     }}>
       {children}
     </Ctx.Provider>

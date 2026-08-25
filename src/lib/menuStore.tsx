@@ -56,7 +56,12 @@ export function imgProtectAreaFor(pathname: string): ImgProtectArea | null {
 /** 기본 트리 — DEFAULT_MENU 구조 그대로 */
 export function defaultTree(): MenuGroupNode[] {
   return DEFAULT_MENU.map(m => m.children
-    ? { id: `g-${m.label}`, label: m.label, items: m.children.map(c => ({ href: c.href })) }
+    ? {
+      id: `g-${m.label}`,
+      label: m.label,
+      items: m.children.map(c => ({ href: c.href, ...(c.href === '/mini-wiki/unleashed' ? { vis: 'admin' as const } : {}) })),
+      ...(m.label === '미니위키' ? { vis: 'admin' as const } : {}),
+    }
     : { id: `g-${m.label}`, label: m.label, href: m.href, items: [] });
 }
 
@@ -101,7 +106,27 @@ function normalizeOwnerTree(tree: MenuGroupNode[]): MenuGroupNode[] {
   });
 }
 
-const normalizeMenuTree = (tree: MenuGroupNode[]) => normalizeOwnerTree(normalizeWorldTree(tree));
+/** 기존 설치의 저장 메뉴에도 관리자 전용 미니위키를 한 번 추가한다. */
+function normalizeMiniWikiTree(tree: MenuGroupNode[]): MenuGroupNode[] {
+  const href = '/mini-wiki/unleashed';
+  if (tree.some(group => group.href === href || group.items.some(item => item.href === href))) {
+    return tree.map(group => group.label === '미니위키' || group.id === 'g-미니위키'
+      ? {
+        ...group,
+        vis: 'admin',
+        items: group.items.map(item => item.href === href ? { ...item, label: '언리쉬드', vis: 'admin' } : item),
+      }
+      : group);
+  }
+  return [...tree, {
+    id: 'g-미니위키',
+    label: '미니위키',
+    vis: 'admin',
+    items: [{ href, label: '언리쉬드', vis: 'admin' }],
+  }];
+}
+
+const normalizeMenuTree = (tree: MenuGroupNode[]) => normalizeMiniWikiTree(normalizeOwnerTree(normalizeWorldTree(tree)));
 
 /** v1 설정(groupOrder/hidden/labels) → 트리 마이그레이션 */
 function migrateTree(p: Partial<MenuSettings>): MenuGroupNode[] {

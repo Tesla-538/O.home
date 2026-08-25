@@ -27,6 +27,7 @@ export const FEATURES: { href: string; label: string }[] = [
   { href: '/threads', label: '감상타래' },
   { href: '/memo', label: '메모장' },
   { href: '/guest', label: '방명록' },
+  { href: '/mini-wiki/unleashed', label: '언리쉬드' },
 ];
 
 export const DEFAULT_MENU: MenuItem[] = [
@@ -72,4 +73,10 @@ export const DEFAULT_MENU: MenuItem[] = [
     ],
   },
   { label: '방명록', href: '/guest' },
+  {
+    label: '미니위키',
+    children: [
+      { label: '언리쉬드', href: '/mini-wiki/unleashed' },
+    ],
+  },
 ];
