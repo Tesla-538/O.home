@@ -31,6 +31,9 @@ function makeRouteGhost() {
   const copy = frame.cloneNode(true) as HTMLElement;
   copy.className = 'route-ghost-copy';
   copy.style.marginTop = `${-main.scrollTop}px`;
+  // 고정 1320px 홈 캔버스를 가로로 스크롤한 상태에서도 복제본이 같은 좌표에 남아야 한다.
+  // scrollLeft를 빼지 않으면 전환 순간 복제본만 오른쪽으로 밀려 위젯이 옆 칸으로 이동해 보인다.
+  copy.style.marginLeft = `${-main.scrollLeft}px`;
   copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
   // 외부 플레이어를 복제하면 새 스트림을 요청할 수 있어 시각 복사본에서는 제외한다.
   copy.querySelectorAll('iframe,video,audio').forEach(el => el.remove());
