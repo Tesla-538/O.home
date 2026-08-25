@@ -2871,7 +2871,7 @@ function SettingsInner() {
             <button key={c} className={tab === c ? 'on' : ''} onClick={() => setTab(c)}>{c}</button>
           ))}
         </div>
-        <div className="panel" style={{ padding: 26 }}>
+        <div className="panel settings-content" style={{ padding: 26 }}>
           {tab === '디자인' ? (
             <DesignPane />
           ) : tab === '메인 페이지' ? (

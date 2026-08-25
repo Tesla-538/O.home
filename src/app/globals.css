@@ -2785,6 +2785,30 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
 .set-nav{background:color-mix(in srgb,var(--panel-solid) 34%,transparent)}
 .set-nav button{padding:11px 14px;font-weight:500}
 
+/* 환경설정 가독성 — 왼쪽 목록과 같은 강도의 유리판·명도 계층을 오른쪽 편집 영역에도 적용 */
+.settings-layout>.settings-content{
+  --sub:color-mix(in srgb,var(--ink) 82%,transparent);
+  --faint:color-mix(in srgb,var(--ink) 68%,transparent);
+  background:
+    linear-gradient(135deg,color-mix(in srgb,#fff 18%,transparent),transparent 29%),
+    linear-gradient(180deg,color-mix(in srgb,#fff 6%,transparent),transparent 48%),
+    color-mix(in srgb,var(--panel-solid) 82%,transparent);
+  border-color:color-mix(in srgb,var(--glass-edge) 94%,transparent);
+  box-shadow:0 1px 0 color-mix(in srgb,#fff 58%,transparent) inset,0 20px 52px rgba(2,7,17,.24);
+  -webkit-backdrop-filter:blur(30px) saturate(140%);backdrop-filter:blur(30px) saturate(140%);
+}
+.settings-content .set-sec h3{color:var(--ink);font-size:max(14px,calc(14px*var(--fs,1)));font-weight:760;line-height:1.45}
+.settings-content .set-sec>.d{color:color-mix(in srgb,var(--ink) 72%,transparent);font-size:max(11.5px,calc(11.5px*var(--fs,1)));font-weight:540;line-height:1.65}
+.settings-content .set-sec{border-bottom-color:color-mix(in srgb,var(--glass-edge-soft) 52%,transparent)}
+.settings-content .set-row{border-bottom-color:color-mix(in srgb,var(--glass-edge-soft) 46%,transparent)}
+.settings-content .set-row:hover{background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--glass-control-hover) 58%,transparent),transparent)}
+.settings-content .set-row .l b{color:color-mix(in srgb,var(--ink) 96%,transparent);font-weight:720;line-height:1.45}
+.settings-content .set-row .l small{display:block;margin-top:3px;color:color-mix(in srgb,var(--ink) 70%,transparent);font-size:max(11px,calc(11px*var(--fs,1)));font-weight:520;line-height:1.55}
+.settings-content .cp-lb{color:color-mix(in srgb,var(--ink) 72%,transparent);font-weight:650}
+.settings-content .mini-seg button:not(.on){color:color-mix(in srgb,var(--ink) 68%,transparent);font-weight:600}
+.settings-content .k-input::placeholder,.settings-content .k-textarea::placeholder{color:color-mix(in srgb,var(--ink) 56%,transparent);opacity:1}
+.settings-content .hint{color:color-mix(in srgb,var(--ink) 66%,transparent)}
+
 @media (max-width:620px){
   .topbar{height:58px;padding-inline:16px}
   .gnb-slot,.gnb-slot>.gnb{display:none}
