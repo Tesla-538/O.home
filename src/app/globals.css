@@ -807,7 +807,9 @@ a{color:inherit;text-decoration:none}
 /* 메인 시안 규격: 전체 1320px(좌우 여백 14px 포함) · 콘텐츠 1292px
    좌 260 / 간격 16 / 중앙 720 / 간격 16 / 우 280 */
 .page-main-wrap{width:1320px;max-width:1320px;padding-left:14px;padding-right:14px}
-.page-main-wrap::before{
+/* 가독성 오버레이는 route-frame 안에 두지 않는다. 진입 애니메이션의 transform이
+   fixed 기준점을 바꾸면 상단 64px이 두 번 더해져 본문 중간에 경계선이 생긴다. */
+#appMain:has(> .route-frame > .page-main-wrap)::before{
   content:"";position:fixed;inset:64px 0 0;z-index:0;pointer-events:none;
   background:rgba(7,10,16,0);
   -webkit-backdrop-filter:blur(0) saturate(100%) brightness(100%);
@@ -816,7 +818,7 @@ a{color:inherit;text-decoration:none}
     -webkit-backdrop-filter .52s cubic-bezier(.16,1,.3,1),
     backdrop-filter .52s cubic-bezier(.16,1,.3,1);
 }
-.dashboard-home::before{
+#appMain:has(> .route-frame > .dashboard-home)::before{
   background:rgba(7,10,16,.24);
   -webkit-backdrop-filter:blur(4px) saturate(82%) brightness(72%);
   backdrop-filter:blur(4px) saturate(82%) brightness(72%);
@@ -880,7 +882,7 @@ body.edit-on .main-grid{grid-template-columns:260px 720px 280px}
 .wgt-hide-pc{display:none}
 @media (max-width:620px){.wgt-hide-pc{display:block}}
 @media (max-width:620px){
-  .page-main-wrap::before{display:none}
+  #appMain:has(> .route-frame > .page-main-wrap)::before{display:none}
   .focus-home{width:auto;max-width:100%;padding:0 16px!important;height:auto}
   .focus-home .main-grid{display:grid}
   .focus-stage,.home-view-switch{display:none!important}
