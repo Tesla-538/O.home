@@ -48,10 +48,33 @@ export default function MainPage() {
   const [bgOpen, setBgOpen] = useState(false);
   const [homeView, setHomeView] = useState<HomeView>('focus');
   const [dockOpen, setDockOpen] = useState<string | null>(null);
+  const [dockClosing, setDockClosing] = useState(false);
+  const [viewMotion, setViewMotion] = useState<'idle' | 'leaving' | 'entering'>('idle');
   const [isMobile, setIsMobile] = useState(false);
   const [canvasScale, setCanvasScale] = useState(1);
   const bgFileRef = React.useRef<HTMLInputElement>(null);
+  const dockCloseTimer = React.useRef<number | null>(null);
+  const viewTimers = React.useRef<number[]>([]);
   const bgPreview = useBlobUrl(theme.state.vars.bgImageId);
+
+  const closeDock = () => {
+    if (!dockOpen || dockClosing) return;
+    setDockClosing(true);
+    if (dockCloseTimer.current) window.clearTimeout(dockCloseTimer.current);
+    dockCloseTimer.current = window.setTimeout(() => {
+      setDockOpen(null);
+      setDockClosing(false);
+      dockCloseTimer.current = null;
+    }, 230);
+  };
+
+  const toggleDock = (id: string) => {
+    if (dockOpen === id) { closeDock(); return; }
+    if (dockCloseTimer.current) window.clearTimeout(dockCloseTimer.current);
+    dockCloseTimer.current = null;
+    setDockClosing(false);
+    setDockOpen(id);
+  };
 
   useEffect(() => {
     try {
@@ -61,7 +84,7 @@ export default function MainPage() {
   }, []);
 
   useEffect(() => {
-    if (editOn) setDockOpen(null);
+    if (editOn) { setDockOpen(null); setDockClosing(false); }
   }, [editOn]);
 
   useEffect(() => {
@@ -81,14 +104,30 @@ export default function MainPage() {
   }, []);
 
   useEffect(() => {
-    const close = (e: KeyboardEvent) => { if (e.key === 'Escape') setDockOpen(null); };
+    const close = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDock(); };
     window.addEventListener('keydown', close);
     return () => window.removeEventListener('keydown', close);
+  }, [dockOpen, dockClosing]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => () => {
+    if (dockCloseTimer.current) window.clearTimeout(dockCloseTimer.current);
+    viewTimers.current.forEach(t => window.clearTimeout(t));
   }, []);
 
   const changeHomeView = (view: HomeView) => {
-    setHomeView(view);
-    setDockOpen(null);
+    if (view === homeView || viewMotion !== 'idle') return;
+    closeDock();
+    viewTimers.current.forEach(t => window.clearTimeout(t));
+    setViewMotion('leaving');
+    viewTimers.current = [
+      window.setTimeout(() => {
+        setHomeView(view);
+        setDockOpen(null);
+        setDockClosing(false);
+        setViewMotion('entering');
+      }, 230),
+      window.setTimeout(() => setViewMotion('idle'), 940),
+    ];
     try { localStorage.setItem('ohome.homeView.v1', view); } catch { /* 무시 */ }
   };
 
@@ -199,7 +238,7 @@ export default function MainPage() {
         <button key={w.id} className={dockOpen === w.id ? 'on' : ''}
           aria-label={`${widgetLabel(state.widgets, w)} 위젯 ${dockOpen === w.id ? '닫기' : '열기'}`}
           aria-expanded={dockOpen === w.id}
-          onClick={e => { e.stopPropagation(); setDockOpen(v => v === w.id ? null : w.id); }}>
+          onClick={e => { e.stopPropagation(); toggleDock(w.id); }}>
           <DockGlyph type={w.type} />
           <span>{widgetLabel(state.widgets, w)}</span>
         </button>
@@ -236,17 +275,17 @@ export default function MainPage() {
     : undefined;
 
   return (
-    <section className={`page page-main-wrap ${focusActive ? 'focus-home' : 'dashboard-home'}`}
+    <section className={`page page-main-wrap ${focusActive ? 'focus-home' : 'dashboard-home'} home-motion-${viewMotion}`}
       style={{ '--home-canvas-scale': canvasScale } as React.CSSProperties}
-      onClick={() => { setCtx(null); setDockOpen(null); }}>
+      onClick={() => { setCtx(null); closeDock(); }}>
       {focusActive && (
         <div className="focus-stage" aria-label="일러스트 감상 화면">
           {dock('left', leftDock)}
           {dock('right', rightDock)}
           {openDockWidget && (
-            <aside className={`dock-popover dock-popover-${openDockWidget.col === 3 ? 'right' : 'left'} dock-panel-${openDockWidget.type}`}
+            <aside key={openDockWidget.id} className={`dock-popover dock-popover-${openDockWidget.col === 3 ? 'right' : 'left'} dock-panel-${openDockWidget.type}${dockClosing ? ' dock-closing' : ''}`}
               onClick={e => e.stopPropagation()} aria-label={`${widgetLabel(state.widgets, openDockWidget)} 위젯`}>
-              <button className="dock-popover-close" aria-label="위젯 닫기" onClick={() => setDockOpen(null)}>×</button>
+              <button className="dock-popover-close" aria-label="위젯 닫기" onClick={closeDock}>×</button>
               {widgetBody(openDockWidget)}
             </aside>
           )}
@@ -255,7 +294,7 @@ export default function MainPage() {
       )}
 
       {!editOn && !isMobile && (
-        <button className="home-view-switch" onClick={e => {
+        <button className="home-view-switch" disabled={viewMotion !== 'idle'} onClick={e => {
           e.stopPropagation();
           changeHomeView(homeView === 'focus' ? 'dashboard' : 'focus');
         }}>

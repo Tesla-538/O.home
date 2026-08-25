@@ -906,18 +906,46 @@ body.main-fixed:not(.edit-on) #appMain{overflow-x:hidden}
 .focus-dock button span{position:absolute;top:50%;padding:6px 9px;border-radius:8px;background:var(--dd-bg);color:var(--dd-fg);font-size:10px;line-height:1;white-space:nowrap;box-shadow:var(--sh-dd);opacity:0;pointer-events:none;transform:translateY(-50%) scale(.94);transition:.16s}
 .focus-dock-left button span{left:calc(100% + 12px)}.focus-dock-right button span{right:calc(100% + 12px)}
 .focus-dock button:hover span{opacity:1;transform:translateY(-50%) scale(1)}
-.dock-popover{position:fixed;top:50%;z-index:42;width:min(420px,calc(100vw - 210px));max-height:calc(100vh - 150px);overflow:auto;border-radius:calc(var(--radius) + 4px);pointer-events:auto;transform:translateY(-50%);filter:drop-shadow(0 24px 55px rgba(2,7,17,.28));animation:dockReveal .32s var(--motion-spring)}
-.dock-popover-left{left:87px;transform-origin:left center}.dock-popover-right{right:87px;transform-origin:right center}
+.dock-popover{--dock-shift:-22px;position:fixed;top:50%;z-index:42;width:min(420px,calc(100vw - 210px));max-height:calc(100vh - 150px);overflow:auto;border-radius:calc(var(--radius) + 4px);pointer-events:auto;transform:translateY(-50%);filter:drop-shadow(0 24px 55px rgba(2,7,17,.28));animation:dockPopoverIn .62s cubic-bezier(.16,1,.3,1) both;will-change:transform,opacity,filter}
+.dock-popover-left{left:87px;transform-origin:left center}.dock-popover-right{--dock-shift:22px;right:87px;transform-origin:right center}
 .dock-popover .panel,.dock-popover .banner,.dock-popover .deco-wgt{width:100%;margin:0;min-height:150px}
 .dock-popover .widget{max-height:calc(100vh - 160px);overflow:auto}
+.dock-popover>.panel,.dock-popover>.banner,.dock-popover>.deco-wgt{animation:dockContentIn .48s cubic-bezier(.16,1,.3,1) .1s both}
+.dock-popover.dock-closing{pointer-events:none;animation:dockPopoverOut .23s cubic-bezier(.4,0,1,1) both}
+.dock-popover.dock-closing>.panel,.dock-popover.dock-closing>.banner,.dock-popover.dock-closing>.deco-wgt{animation:dockContentOut .18s ease both}
 .dock-panel-banner{width:min(720px,calc(100vw - 210px))}.dock-panel-banner .banner{height:min(380px,calc(100vh - 190px))}
 .dock-panel-latest{width:min(520px,calc(100vw - 210px))}.dock-panel-latest .latest-widget{height:240px}
 .dock-popover-close{position:absolute;right:10px;top:10px;z-index:12;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:color-mix(in srgb,var(--dd-bg) 72%,transparent);border:1px solid color-mix(in srgb,var(--glass-edge-soft) 68%,transparent);color:var(--dd-fg);font-size:19px;line-height:1;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:.18s}
 .dock-popover-close:hover{background:var(--glass-control-hover);transform:scale(1.06)}
 .home-view-switch{position:fixed;left:50%;bottom:22px;z-index:69;min-height:38px;padding:0 17px;border-radius:999px;color:var(--dd-fg);background:color-mix(in srgb,var(--dd-bg) 68%,transparent);border:1px solid color-mix(in srgb,var(--glass-edge-soft) 72%,transparent);box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 12px 32px rgba(2,7,17,.2);-webkit-backdrop-filter:blur(24px) saturate(155%);backdrop-filter:blur(24px) saturate(155%);font-size:11px;font-weight:600;letter-spacing:.04em;transform:translateX(-50%);transition:.22s var(--motion-spring)}
 .home-view-switch:hover{background:var(--glass-control-hover);transform:translateX(-50%) translateY(-2px)}
+.home-view-switch:disabled{pointer-events:none;cursor:default}
 .focus-hint{position:fixed;left:50%;bottom:68px;padding:5px 10px;border-radius:999px;color:rgba(255,255,255,.72);background:rgba(8,12,18,.22);font-size:9px;letter-spacing:.08em;pointer-events:none;transform:translateX(-50%);text-shadow:0 1px 4px rgba(0,0,0,.6);animation:focusHint 5s both}
-@keyframes dockReveal{from{opacity:0;scale:.94}to{opacity:1;scale:1}}
+/* Apple 제품 소개 페이지처럼: 눌린 도크 방향에서 유리판이 먼저 펼쳐지고 내용은 뒤늦게 맺힌다. */
+@keyframes dockPopoverIn{
+  0%{opacity:0;transform:translate3d(var(--dock-shift),-50%,0) scale(.82,.72);filter:blur(10px) drop-shadow(0 8px 18px rgba(2,7,17,.08))}
+  48%{opacity:1;filter:blur(1px) drop-shadow(0 18px 38px rgba(2,7,17,.2))}
+  100%{opacity:1;transform:translate3d(0,-50%,0) scale(1);filter:blur(0) drop-shadow(0 24px 55px rgba(2,7,17,.28))}
+}
+@keyframes dockPopoverOut{
+  from{opacity:1;transform:translate3d(0,-50%,0) scale(1);filter:blur(0) drop-shadow(0 24px 55px rgba(2,7,17,.28))}
+  to{opacity:0;transform:translate3d(var(--dock-shift),-50%,0) scale(.94,.86);filter:blur(7px) drop-shadow(0 8px 18px rgba(2,7,17,.08))}
+}
+@keyframes dockContentIn{from{opacity:0;transform:translateY(10px) scale(.985);filter:blur(7px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes dockContentOut{from{opacity:1;filter:blur(0)}to{opacity:0;filter:blur(5px)}}
+/* 전체 위젯/감상 모드는 동시에 겹치지 않는다. 기존 화면이 빠진 뒤 새 화면만 부드럽게 등장한다. */
+.home-motion-leaving .main-grid{pointer-events:none;animation:dashboardViewOut .23s cubic-bezier(.4,0,1,1) both}
+.home-motion-entering .main-grid{animation:dashboardViewIn .7s cubic-bezier(.16,1,.3,1) both}
+.home-motion-leaving .focus-dock-left{pointer-events:none;animation:focusDockOutLeft .23s cubic-bezier(.4,0,1,1) both}
+.home-motion-leaving .focus-dock-right{pointer-events:none;animation:focusDockOutRight .23s cubic-bezier(.4,0,1,1) both}
+.home-motion-entering .focus-dock-left{animation:focusDockInLeft .62s cubic-bezier(.16,1,.3,1) both}
+.home-motion-entering .focus-dock-right{animation:focusDockInRight .62s cubic-bezier(.16,1,.3,1) both}
+@keyframes dashboardViewIn{0%{opacity:0;transform:translateY(24px) scale(.965);filter:blur(11px)}42%{opacity:1;filter:blur(2px)}100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes dashboardViewOut{from{opacity:1;transform:none;filter:blur(0)}to{opacity:0;transform:translateY(14px) scale(.985);filter:blur(7px)}}
+@keyframes focusDockInLeft{from{opacity:0;transform:translate3d(-24px,-50%,0) scale(.94);filter:blur(7px)}to{opacity:1;transform:translate3d(0,-50%,0) scale(1);filter:blur(0)}}
+@keyframes focusDockInRight{from{opacity:0;transform:translate3d(24px,-50%,0) scale(.94);filter:blur(7px)}to{opacity:1;transform:translate3d(0,-50%,0) scale(1);filter:blur(0)}}
+@keyframes focusDockOutLeft{from{opacity:1;transform:translate3d(0,-50%,0)}to{opacity:0;transform:translate3d(-18px,-50%,0);filter:blur(5px)}}
+@keyframes focusDockOutRight{from{opacity:1;transform:translate3d(0,-50%,0)}to{opacity:0;transform:translate3d(18px,-50%,0);filter:blur(5px)}}
 @keyframes focusHint{0%,65%{opacity:.86}100%{opacity:0}}
 /* 고정 캔버스 모드: 창을 줄여도 배치 유지 — 좁은 창은 가로 스크롤(왼쪽 기준), 모바일 전환 시 해제 (v1.9) */
 body.main-fixed .page-main-wrap{min-width:1320px;margin-left:max(0px, calc(50% - 660px));margin-right:0}
@@ -2046,7 +2074,7 @@ body{
   }
   ::view-transition-old(page-content),::view-transition-new(page-content){animation:none !important}
   .route-frame,.route-ghost{animation:none !important}
-  .dock-popover,.focus-hint{animation:none !important}
+  .dock-popover,.dock-popover>*,.focus-hint,.home-motion-leaving .main-grid,.home-motion-entering .main-grid,.home-motion-leaving .focus-dock,.home-motion-entering .focus-dock{animation:none !important}
   .focus-dock button,.home-view-switch{transition:none !important}
   .panel,.btn,.login-link,.pager button,.gnb button,.gnb a.gnb-link,.user-chip,.badge-dot,#appMain{transition:none !important}
   .btn:hover,.login-link:hover,.pager button:hover{transform:none}
