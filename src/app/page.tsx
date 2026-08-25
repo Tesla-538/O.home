@@ -49,6 +49,7 @@ export default function MainPage() {
   const [homeView, setHomeView] = useState<HomeView>('focus');
   const [dockOpen, setDockOpen] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [canvasScale, setCanvasScale] = useState(1);
   const bgFileRef = React.useRef<HTMLInputElement>(null);
   const bgPreview = useBlobUrl(theme.state.vars.bgImageId);
 
@@ -65,10 +66,18 @@ export default function MainPage() {
 
   useEffect(() => {
     const media = window.matchMedia('(max-width:620px)');
-    const sync = () => setIsMobile(media.matches);
+    const sync = () => {
+      const mobile = media.matches;
+      setIsMobile(mobile);
+      // 1320px 고정 캔버스는 보기 모드에서만 화면 폭에 맞춰 통째로 축소한다.
+      // 위젯별 좌표를 다시 계산하지 않아 원래 배열과 간격이 그대로 유지된다.
+      const appWidth = document.getElementById('appMain')?.clientWidth ?? window.innerWidth;
+      setCanvasScale(mobile ? 1 : Math.min(1, Math.max(0.1, appWidth / 1320)));
+    };
     sync();
     media.addEventListener('change', sync);
-    return () => media.removeEventListener('change', sync);
+    window.addEventListener('resize', sync);
+    return () => { media.removeEventListener('change', sync); window.removeEventListener('resize', sync); };
   }, []);
 
   useEffect(() => {
@@ -228,6 +237,7 @@ export default function MainPage() {
 
   return (
     <section className={`page page-main-wrap ${focusActive ? 'focus-home' : 'dashboard-home'}`}
+      style={{ '--home-canvas-scale': canvasScale } as React.CSSProperties}
       onClick={() => { setCtx(null); setDockOpen(null); }}>
       {focusActive && (
         <div className="focus-stage" aria-label="일러스트 감상 화면">

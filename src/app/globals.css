@@ -810,6 +810,10 @@ a{color:inherit;text-decoration:none}
 /* 메인 시안 규격: 전체 1320px(좌우 여백 14px 포함) · 콘텐츠 1292px
    좌 260 / 간격 16 / 중앙 720 / 간격 16 / 우 280 */
 .page-main-wrap{width:1320px;max-width:1320px;padding-left:14px;padding-right:14px}
+/* 좁은 PC 창에서는 1320px 배치를 재배열하지 않고 한 덩어리로 축소한다.
+   편집 중에는 포인터 이동량과 위젯 좌표가 1:1이어야 하므로 원본 배율을 유지한다. */
+body.main-fixed:not(.edit-on) .dashboard-home{zoom:var(--home-canvas-scale,1)}
+body.main-fixed:not(.edit-on) #appMain{overflow-x:hidden}
 /* 가독성 오버레이는 route-frame 안에 두지 않는다. 진입 애니메이션의 transform이
    fixed 기준점을 바꾸면 상단 64px이 두 번 더해져 본문 중간에 경계선이 생긴다. */
 #appMain:has(> .route-frame > .page-main-wrap)::before{
