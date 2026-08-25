@@ -85,15 +85,17 @@ export default function MainPage() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('ohome.homeView.v1');
-      if (stored === 'dashboard') setHomeView('dashboard');
-      else if (stored === 'home' && isAdmin) setHomeView('home');
+      if (!isAdmin) setHomeView('focus');
+      else if (stored === 'dashboard') setHomeView('dashboard');
+      else if (stored === 'home') setHomeView('home');
       else setHomeView('focus');
     } catch { /* 기본 감상 모드 */ }
   }, [isAdmin]);
 
-  // 새 홈페이지 오버레이만 관리자 전용이다. 기존 전체 위젯 모드는 모든 사용자에게 유지한다.
+  // 홈페이지/전체 위젯 모드와 전환 UI는 관리자 전용이다.
+  // 같은 브라우저에서 로그아웃하거나 일반 회원으로 바뀌어도 저장된 관리자 모드를 노출하지 않는다.
   useEffect(() => {
-    if (!isAdmin && homeView === 'home') setHomeView('focus');
+    if (!isAdmin && homeView !== 'focus') setHomeView('focus');
   }, [isAdmin, homeView]);
 
   useEffect(() => {
@@ -132,7 +134,7 @@ export default function MainPage() {
   }, []);
 
   const changeHomeView = (view: HomeView) => {
-    if (view === homeView || viewMotion !== 'idle') return;
+    if (!isAdmin || view === homeView || viewMotion !== 'idle') return;
     closeDock();
     viewTimers.current.forEach(t => window.clearTimeout(t));
     setViewMotion('leaving');
@@ -193,9 +195,10 @@ export default function MainPage() {
   const leftDock = dockable.filter(w => w.col !== 3);
   const rightDock = dockable.filter(w => w.col === 3);
   const openDockWidget = dockable.find(w => w.id === dockOpen) ?? null;
-  const focusActive = !editOn && homeView === 'focus' && !isMobile;
+  const authorizedHomeView: HomeView = isAdmin ? homeView : 'focus';
+  const focusActive = !editOn && authorizedHomeView === 'focus' && !isMobile;
   const homepageActive = isAdmin && !editOn && homeView === 'home';
-  const showDashboard = editOn || homeView === 'dashboard' || (isMobile && homeView !== 'home');
+  const showDashboard = editOn || authorizedHomeView === 'dashboard' || (isMobile && authorizedHomeView !== 'home');
   const byCol = (c: 1 | 2 | 3) => enabled.filter(w => w.col === c);
   const mOrder = (id: string) => {
     const i = state.mobileOrder.indexOf(id);
@@ -347,7 +350,7 @@ export default function MainPage() {
         topbarHost,
       )}
 
-      {!editOn && !isMobile && topbarHost && createPortal(
+      {!editOn && isAdmin && !isMobile && topbarHost && createPortal(
         <button className="home-view-switch" disabled={viewMotion !== 'idle'} onClick={e => {
           e.stopPropagation();
           changeHomeView(homeView === 'dashboard' ? 'focus' : 'dashboard');
