@@ -3,6 +3,7 @@
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import styles from './page.module.css';
 
 type Category = '녹스' | '효과' | '퀘스트' | '레이드' | '아이템' | '스킨';
 
@@ -137,7 +138,9 @@ export default function UnleashedMiniWikiPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState('');
   const [motionPhase, setMotionPhase] = useState<'idle' | 'leaving' | 'entering'>('idle');
+  const [detailMotionPhase, setDetailMotionPhase] = useState<'idle' | 'leaving' | 'entering'>('idle');
   const motionTimers = useRef<{ swap?: ReturnType<typeof setTimeout>; done?: ReturnType<typeof setTimeout> }>({});
+  const detailMotionTimers = useRef<{ swap?: ReturnType<typeof setTimeout>; done?: ReturnType<typeof setTimeout> }>({});
 
   const authHeaders = async () => {
     const headers: Record<string, string> = {};
@@ -152,19 +155,31 @@ export default function UnleashedMiniWikiPage() {
   useEffect(() => () => {
     if (motionTimers.current.swap) clearTimeout(motionTimers.current.swap);
     if (motionTimers.current.done) clearTimeout(motionTimers.current.done);
+    if (detailMotionTimers.current.swap) clearTimeout(detailMotionTimers.current.swap);
+    if (detailMotionTimers.current.done) clearTimeout(detailMotionTimers.current.done);
   }, []);
 
   const changeCategory = (next: Category) => {
     if (next === category || motionPhase !== 'idle') return;
+    if (detailMotionTimers.current.swap) clearTimeout(detailMotionTimers.current.swap);
+    if (detailMotionTimers.current.done) clearTimeout(detailMotionTimers.current.done);
+    setDetailMotionPhase('idle');
     setMotionPhase('leaving');
     motionTimers.current.swap = setTimeout(() => {
       setCategory(next);
       setPage(1);
       setSelectedId(null);
       setSelected(null);
+      setDetailMotionPhase('idle');
       setMotionPhase('entering');
       motionTimers.current.done = setTimeout(() => setMotionPhase('idle'), 680);
     }, 230);
+  };
+
+  const changeRecord = (nextId: string) => {
+    if (nextId === selectedId || motionPhase !== 'idle' || detailMotionPhase !== 'idle') return;
+    setDetailMotionPhase('leaving');
+    detailMotionTimers.current.swap = setTimeout(() => setSelectedId(nextId), 180);
   };
 
   useEffect(() => {
@@ -193,7 +208,7 @@ export default function UnleashedMiniWikiPage() {
   }, [isAdmin, mock, category, deferredQuery, page, accessToken]);
 
   useEffect(() => {
-    if (!isAdmin || !selectedId) { setSelected(null); return; }
+    if (!isAdmin || !selectedId) { setSelected(null); setDetailMotionPhase('idle'); return; }
     const controller = new AbortController();
     setDetailLoading(true);
     void (async () => {
@@ -205,8 +220,14 @@ export default function UnleashedMiniWikiPage() {
         const body = await response.json() as { record?: WikiRecord; error?: string };
         if (!response.ok || !body.record) throw new Error(body.error || '상세 정보를 불러오지 못했습니다.');
         setSelected(body.record);
+        setDetailMotionPhase('entering');
+        if (detailMotionTimers.current.done) clearTimeout(detailMotionTimers.current.done);
+        detailMotionTimers.current.done = setTimeout(() => setDetailMotionPhase('idle'), 500);
       } catch (loadError) {
-        if ((loadError as Error).name !== 'AbortError') setError((loadError as Error).message);
+        if ((loadError as Error).name !== 'AbortError') {
+          setError((loadError as Error).message);
+          setDetailMotionPhase('idle');
+        }
       } finally {
         if (!controller.signal.aborted) setDetailLoading(false);
       }
@@ -292,7 +313,7 @@ export default function UnleashedMiniWikiPage() {
                   : record.listValues.filter(value => value && value !== record.title).slice(0, 3);
                 return (
                   <button key={record.id} className={selectedId === record.id ? 'on' : ''}
-                    onClick={() => setSelectedId(record.id)}>
+                    onClick={() => changeRecord(record.id)}>
                     <div><b>{record.title}</b><small>{meta.join(' · ')}</small></div>
                     <span>›</span>
                   </button>
@@ -308,7 +329,8 @@ export default function UnleashedMiniWikiPage() {
             )}
           </div>
 
-          <article className="uw-detail panel">
+          <article className={`uw-detail panel ${detailMotionPhase === 'leaving' ? styles.detailLeaving : detailMotionPhase === 'entering' ? styles.detailEntering : ''}`}
+            aria-busy={detailLoading || detailMotionPhase !== 'idle'}>
             {detailLoading && !selected ? <div className="uw-empty">상세 정보를 불러오는 중…</div> : selected ? (
               <>
                 <div className="uw-detail-head">
