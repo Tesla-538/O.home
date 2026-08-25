@@ -316,11 +316,13 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
 
   return (
     <div className={styles.shell} aria-label="관리자 홈페이지 모드">
-      <div className={styles.mobileHint}>
-        <span>{layoutEditing ? '배치·크기 조정 중' : '길게 눌러 배치·크기'}</span>
-        <button type="button" onClick={resetLayout}>초기화</button>
-        {layoutEditing && <button type="button" onClick={() => setLayoutEditing(false)}>완료</button>}
-      </div>
+      {layoutEditing && (
+        <div className={styles.mobileHint}>
+          <span>배치·크기 조정 중</span>
+          <button type="button" onClick={resetLayout}>초기화</button>
+          <button type="button" onClick={() => setLayoutEditing(false)}>완료</button>
+        </div>
+      )}
 
       <div className={styles.primary}>
         <section className={styles.hero}>
