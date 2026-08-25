@@ -711,6 +711,10 @@ a{color:inherit;text-decoration:none}
 .re-btn{min-width:28px;height:28px;padding:0 7px;border-radius:6px;font-size:calc(13px*var(--fs,1));color:var(--sub);display:grid;place-items:center;transition:.13s}
 .re-btn:hover{background:#eef0f2;color:var(--ink)}
 .re-btn.on{background:var(--ink);color:#fff}
+.re-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.re-btn:disabled{opacity:.58;pointer-events:none}
+.re-upload-btn{display:inline-flex;align-items:center;gap:5px;width:auto;padding-inline:9px;white-space:nowrap;font-weight:650}
+.re-file-input{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .re-sep{width:1px;height:16px;background:var(--line);margin:0 5px}
 .re-content{min-height:260px;padding:14px 16px;outline:none;font-size:calc(14.5px*var(--fs,1));line-height:1.85}
 /* TipTap이 .prose를 함께 붙임 — .prose(뒤 정의)가 이기지 않도록 상위 셀렉터로 고정 */
@@ -2061,6 +2065,15 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 .mini-seg button.on{background:var(--btn-dark,var(--ink));color:var(--btn-dark-fg,#fff)}
 .mini-seg.icon-seg button{padding:4px 7px}
 .mini-seg.icon-seg svg{width:12px;height:12px;display:block;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+/* 게시판 글쓰기 — 일러스트 위 유리 패널에서도 입력 라벨·모드 상태가 묻히지 않게 한다. */
+.board-write-page .k-label{color:color-mix(in srgb,var(--ink) 88%,transparent);font-weight:680;text-shadow:0 1px 10px color-mix(in srgb,var(--panel-solid) 45%,transparent)}
+.board-write-page .mini-seg button{color:color-mix(in srgb,var(--ink) 72%,transparent);font-weight:620}
+.board-write-page .mini-seg button.on{color:var(--btn-dark-fg,#fff)}
+.board-write-page .re-btn{color:color-mix(in srgb,var(--ink) 78%,transparent)}
+.board-write-page .re-btn:hover{color:var(--ink)}
+.board-write-page .re-btn.on{color:var(--btn-dark-fg,#fff);background:var(--btn-dark,var(--ink))}
+.board-write-page .re-ph{color:color-mix(in srgb,var(--ink) 58%,transparent)}
 
 /* ---------- 환경설정 (5장) ---------- */
 .settings-layout{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start;min-width:1060px}

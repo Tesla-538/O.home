@@ -114,21 +114,21 @@ function WriteInner() {
   };
 
   return (
-    <section className="page">
+    <section className="page board-write-page">
       <div className="page-head"><PageTitle>{editing ? 'EDIT' : 'WRITE'}</PageTitle><EditableDesc k="board-write-desc" def="에디터 / Markdown / HTML — 스크립트는 저장 시 자동 제거" /></div>
       <div className="write-grid">
         {/* 좌: 본문 */}
         <div className="panel" style={{ padding: 24 }}>
           <div className="form-row">
-            <label className="k-label" style={{ width: 60 }}>제목</label>
-            <KInput value={title} onChange={e => setTitle(e.target.value)} style={{ flex: 1 }} />
+            <label className="k-label" htmlFor="board-post-title" style={{ width: 60 }}>제목</label>
+            <KInput id="board-post-title" value={title} onChange={e => setTitle(e.target.value)} style={{ flex: 1 }} />
           </div>
           <div className="form-row">
             <label className="k-label" style={{ width: 60 }}>모드</label>
-            <div className="mini-seg">
-              <button className={writeMode === 'editor' ? 'on' : ''} onClick={() => setWriteMode('editor')}>에디터</button>
-              <button className={writeMode === 'md' ? 'on' : ''} onClick={() => setWriteMode('md')}>Markdown</button>
-              <button className={writeMode === 'html' ? 'on' : ''} onClick={() => setWriteMode('html')}>HTML</button>
+            <div className="mini-seg" role="group" aria-label="본문 작성 모드">
+              <button type="button" className={writeMode === 'editor' ? 'on' : ''} onClick={() => setWriteMode('editor')}>에디터</button>
+              <button type="button" className={writeMode === 'md' ? 'on' : ''} onClick={() => setWriteMode('md')}>Markdown</button>
+              <button type="button" className={writeMode === 'html' ? 'on' : ''} onClick={() => setWriteMode('html')}>HTML</button>
             </div>
           </div>
           {writeMode === 'editor' ? (

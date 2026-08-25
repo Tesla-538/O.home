@@ -1,14 +1,20 @@
 'use client';
 // 리치 텍스트 에디터 (TipTap) — 프로필 탭 등 HTML 콘텐츠 작성용
 // 자체 스타일 툴바 (7장 — 기본 UI 금지) · 출력은 HTML, 저장 시 새니타이즈는 렌더 쪽에서 (6.3)
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
+import { putBlob } from '@/lib/blobStore';
+import { useToast } from '@/components/ui/Toast';
 
-function TBtn({ on, label, title, onClick }: { on?: boolean; label: React.ReactNode; title: string; onClick: () => void }) {
+function TBtn({ on, label, title, onClick, disabled, className = '' }: {
+  on?: boolean; label: React.ReactNode; title: string; onClick: () => void;
+  disabled?: boolean; className?: string;
+}) {
   return (
-    <button type="button" data-tip={title} className={`re-btn ${on ? 'on' : ''}`}
+    <button type="button" data-tip={title} aria-label={title} disabled={disabled}
+      className={`re-btn ${on ? 'on' : ''} ${className}`.trim()}
       onMouseDown={e => e.preventDefault()} onClick={onClick}>
       {label}
     </button>
@@ -20,6 +26,9 @@ export function RichEditor({ value, onChange, placeholder }: {
   onChange: (html: string) => void;
   placeholder?: string;
 }) {
+  const toast = useToast();
+  const imageFileRef = useRef<HTMLInputElement>(null);
+  const [imageUploading, setImageUploading] = useState(false);
   const editor = useEditor({
     extensions: [StarterKit, Image],
     content: value || '<p></p>',
@@ -45,6 +54,29 @@ export function RichEditor({ value, onChange, placeholder }: {
     if (url) editor.chain().focus().setImage({ src: url }).run();
   };
 
+  const uploadImages = async (files: FileList | null) => {
+    const selected = Array.from(files ?? []);
+    const images = selected.filter(file => file.type.startsWith('image/'));
+    if (!images.length) {
+      if (selected.length) toast('이미지 파일만 첨부할 수 있습니다');
+      return;
+    }
+    setImageUploading(true);
+    try {
+      for (const file of images) {
+        const src = await putBlob(file);
+        editor.chain().focus().setImage({ src, alt: file.name }).run();
+      }
+      toast(images.length > 1 ? `이미지 ${images.length}장을 본문에 삽입했습니다` : '이미지를 본문에 삽입했습니다');
+    } catch (error) {
+      console.error('RichEditor image upload failed', error);
+      toast('이미지 업로드에 실패했습니다 — 잠시 후 다시 시도해 주세요');
+    } finally {
+      setImageUploading(false);
+      if (imageFileRef.current) imageFileRef.current.value = '';
+    }
+  };
+
   return (
     <div className="re-wrap">
       <div className="re-toolbar">
@@ -68,7 +100,14 @@ export function RichEditor({ value, onChange, placeholder }: {
           onClick={() => editor.chain().focus().toggleBlockquote().run()} />
         <TBtn title="구분선" label="—" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
         <span className="re-sep" />
-        <TBtn title="이미지 삽입 (URL)" label="🖼" onClick={addImage} />
+        <TBtn title="이미지 URL로 삽입" label="🔗" onClick={addImage} />
+        <TBtn title="내 기기에서 이미지 파일 첨부" className="re-upload-btn"
+          disabled={imageUploading}
+          label={<><span aria-hidden>▧</span><span>{imageUploading ? '업로드 중' : '이미지 파일'}</span></>}
+          onClick={() => imageFileRef.current?.click()} />
+        <input ref={imageFileRef} className="re-file-input" type="file" accept="image/*" multiple
+          aria-label="본문에 첨부할 이미지 파일 선택"
+          onChange={e => void uploadImages(e.target.files)} />
         {/* 실행 취소·다시 실행은 모바일에서 숨김 — 툴바가 두 줄로 넘어가 본문 영역을 침범 (v1.9 사용자 확정)
             (단축키 Ctrl+Z / Ctrl+Shift+Z는 그대로 동작) */}
         <span className="re-sep re-hide-m" />
