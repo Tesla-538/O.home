@@ -48,7 +48,7 @@ function EmptyLinkedWidget({ label }: { label: string }) {
   );
 }
 
-function MovablePiece({ id, className = '', children, layout, dragging, resizing, editing, onPointerDown, onPointerMove, onPointerEnd, onResizeStart, onResizeMove, onResizeEnd, onLongPress, onClickCapture }: {
+function MovablePiece({ id, className = '', children, layout, dragging, resizing, editing, onPointerDown, onPointerMove, onPointerEnd, onResizeStart, onLongPress, onClickCapture }: {
   id: PieceId;
   className?: string;
   children: ReactNode;
@@ -60,8 +60,6 @@ function MovablePiece({ id, className = '', children, layout, dragging, resizing
   onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerEnd: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onResizeStart: (id: PieceId, e: ReactPointerEvent<HTMLButtonElement>) => void;
-  onResizeMove: (e: ReactPointerEvent<HTMLButtonElement>) => void;
-  onResizeEnd: (e: ReactPointerEvent<HTMLButtonElement>) => void;
   onLongPress: (id: PieceId, e: React.MouseEvent<HTMLDivElement>) => void;
   onClickCapture: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
@@ -80,8 +78,7 @@ function MovablePiece({ id, className = '', children, layout, dragging, resizing
       {children}
       {editing && (
         <button type="button" className={styles.resizeHandle} aria-label="가로·세로 크기 조절"
-          onPointerDown={e => onResizeStart(id, e)} onPointerMove={onResizeMove}
-          onPointerUp={onResizeEnd} onPointerCancel={onResizeEnd}
+          onPointerDown={e => onResizeStart(id, e)}
           onClick={e => { e.preventDefault(); e.stopPropagation(); }} />
       )}
     </div>
@@ -109,6 +106,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
   const resizeRef = useRef<{
     id: PieceId; pointerId: number; startX: number; startY: number;
     originWidth: number; originHeight: number; element: HTMLDivElement; handle: HTMLButtonElement;
+    cleanup?: () => void;
   } | null>(null);
   layoutRef.current = layout;
 
@@ -136,6 +134,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
       setLayoutEditing(false);
       setDragging(null);
       setResizing(null);
+      resizeRef.current?.cleanup?.();
       resizeRef.current = null;
     };
     loadLayout();
@@ -143,6 +142,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     return () => {
       media.removeEventListener('change', loadLayout);
       if (dragRef.current) window.clearTimeout(dragRef.current.timer);
+      resizeRef.current?.cleanup?.();
       resizeRef.current = null;
     };
   }, []);
@@ -176,7 +176,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     if (dragRef.current) window.clearTimeout(dragRef.current.timer);
     const element = e.currentTarget;
     const current = layoutRef.current[id];
-    const draft = {
+    const draft: NonNullable<typeof dragRef.current> = {
       id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY,
       originX: current.x, originY: current.y, active: false,
       rect: element.getBoundingClientRect(), element, timer: 0,
@@ -244,43 +244,47 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     const element = handle.parentElement as HTMLDivElement | null;
     if (!element) return;
     const rect = element.getBoundingClientRect();
-    resizeRef.current = {
+    const draft: NonNullable<typeof resizeRef.current> = {
       id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY,
       originWidth: rect.width, originHeight: rect.height, element, handle,
     };
+    resizeRef.current = draft;
     try { handle.setPointerCapture(e.pointerId); } catch { /* 취소된 포인터는 다음 입력에서 정리 */ }
     setResizing(id);
-  };
-
-  const resizePiece = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    const resize = resizeRef.current;
-    if (!resize || resize.pointerId !== e.pointerId) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = resize.element.getBoundingClientRect();
-    const min = minSize(resize.id);
-    const maxWidth = Math.max(min.width, window.innerWidth - 12 - rect.left);
-    const maxHeight = Math.max(min.height, window.innerHeight - 12 - rect.top);
-    const width = Math.round(Math.min(maxWidth, Math.max(min.width, resize.originWidth + e.clientX - resize.startX)));
-    const height = Math.round(Math.min(maxHeight, Math.max(min.height, resize.originHeight + e.clientY - resize.startY)));
-    const next = {
-      ...layoutRef.current,
-      [resize.id]: { ...layoutRef.current[resize.id], width, height },
+    const move = (event: PointerEvent) => {
+      if (resizeRef.current !== draft || event.pointerId !== draft.pointerId) return;
+      event.preventDefault();
+      const currentRect = draft.element.getBoundingClientRect();
+      const min = minSize(draft.id);
+      const maxWidth = Math.max(min.width, window.innerWidth - 12 - currentRect.left);
+      const maxHeight = Math.max(min.height, window.innerHeight - 12 - currentRect.top);
+      const width = Math.round(Math.min(maxWidth, Math.max(min.width, draft.originWidth + event.clientX - draft.startX)));
+      const height = Math.round(Math.min(maxHeight, Math.max(min.height, draft.originHeight + event.clientY - draft.startY)));
+      const next = {
+        ...layoutRef.current,
+        [draft.id]: { ...layoutRef.current[draft.id], width, height },
+      };
+      layoutRef.current = next;
+      setLayout(next);
     };
-    layoutRef.current = next;
-    setLayout(next);
-  };
-
-  const endResize = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    const resize = resizeRef.current;
-    if (!resize || resize.pointerId !== e.pointerId) return;
-    e.preventDefault();
-    e.stopPropagation();
-    suppressClickUntil.current = Date.now() + 380;
-    try { resize.handle.releasePointerCapture(resize.pointerId); } catch { /* 이미 해제됨 */ }
-    try { localStorage.setItem(layoutKeyRef.current, JSON.stringify(layoutRef.current)); } catch { /* 현재 세션만 유지 */ }
-    resizeRef.current = null;
-    setResizing(null);
+    const finish = (event: PointerEvent) => {
+      if (resizeRef.current !== draft || event.pointerId !== draft.pointerId) return;
+      event.preventDefault();
+      suppressClickUntil.current = Date.now() + 380;
+      try { draft.handle.releasePointerCapture(draft.pointerId); } catch { /* 이미 해제됨 */ }
+      try { localStorage.setItem(layoutKeyRef.current, JSON.stringify(layoutRef.current)); } catch { /* 현재 세션만 유지 */ }
+      draft.cleanup?.();
+      resizeRef.current = null;
+      setResizing(null);
+    };
+    draft.cleanup = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+    };
+    window.addEventListener('pointermove', move, { passive: false });
+    window.addEventListener('pointerup', finish, { passive: false });
+    window.addEventListener('pointercancel', finish, { passive: false });
   };
 
   const blockDraggedClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -300,6 +304,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     layoutRef.current = DEFAULT_LAYOUT;
     setLayout(DEFAULT_LAYOUT);
     setResizing(null);
+    resizeRef.current?.cleanup?.();
     resizeRef.current = null;
     try { localStorage.removeItem(layoutKeyRef.current); } catch { /* 무시 */ }
   };
@@ -307,7 +312,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
   const movableProps = (id: PieceId) => ({
     id, layout: layout[id], dragging: dragging === id, resizing: resizing === id, editing: layoutEditing,
     onPointerDown: beginMove, onPointerMove: movePiece, onPointerEnd: endMove,
-    onResizeStart: beginResize, onResizeMove: resizePiece, onResizeEnd: endResize,
+    onResizeStart: beginResize,
     onLongPress: enterLayoutEditing, onClickCapture: blockDraggedClick,
   });
 
