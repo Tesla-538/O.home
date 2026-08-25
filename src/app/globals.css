@@ -813,6 +813,35 @@ a{color:inherit;text-decoration:none}
 .main-grid.abs{display:block;position:relative}
 .main-grid .g2{gap:16px}
 .main-grid .widget{margin-bottom:0} /* 갭은 래퍼(.wgt)에서만 — 마진 겹침 방지 */
+
+/* 감상 모드 — 배경 일러스트를 주인공으로 두고 위젯은 macOS식 좌우 도크에 접는다. */
+.focus-home{width:100%;max-width:none;min-width:0!important;margin:0!important;padding:0!important;height:100%}
+.focus-home .main-grid{display:none}
+.focus-stage{position:fixed;inset:64px 0 0;z-index:38;pointer-events:none}
+.focus-dock{position:fixed;top:50%;z-index:43;display:flex;flex-direction:column;gap:7px;max-height:calc(100vh - 150px);overflow:auto;padding:8px;border:1px solid color-mix(in srgb,var(--glass-edge-soft) 72%,transparent);border-radius:19px;background:color-mix(in srgb,var(--dd-bg) 58%,transparent);box-shadow:0 1px 0 rgba(255,255,255,.34) inset,0 14px 42px rgba(2,7,17,.22);-webkit-backdrop-filter:blur(26px) saturate(165%);backdrop-filter:blur(26px) saturate(165%);pointer-events:auto;transform:translateY(-50%);scrollbar-width:none}
+.focus-dock::-webkit-scrollbar{display:none}
+.focus-dock-left{left:18px}.focus-dock-right{right:18px}
+.focus-dock button{position:relative;width:45px;height:45px;display:grid;place-items:center;border-radius:13px;color:var(--dd-fg);background:color-mix(in srgb,var(--glass-control) 72%,transparent);border:1px solid color-mix(in srgb,var(--glass-edge-soft) 55%,transparent);box-shadow:0 1px 0 rgba(255,255,255,.24) inset;transition:transform .22s var(--motion-spring),background .2s,border-color .2s,color .2s}
+.focus-dock button svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.focus-dock button:hover{transform:scale(1.16);z-index:2;color:var(--top-hv);background:var(--glass-control-hover);border-color:var(--glass-edge)}
+.focus-dock button:has(+button:hover),.focus-dock button:hover+button{transform:scale(1.07)}
+.focus-dock button.on{color:var(--btn-dark-fg);background:var(--btn-dark);border-color:color-mix(in srgb,var(--accent-soft) 55%,var(--glass-edge));box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 6px 18px rgba(2,7,17,.22)}
+.focus-dock button span{position:absolute;top:50%;padding:6px 9px;border-radius:8px;background:var(--dd-bg);color:var(--dd-fg);font-size:10px;line-height:1;white-space:nowrap;box-shadow:var(--sh-dd);opacity:0;pointer-events:none;transform:translateY(-50%) scale(.94);transition:.16s}
+.focus-dock-left button span{left:calc(100% + 12px)}.focus-dock-right button span{right:calc(100% + 12px)}
+.focus-dock button:hover span{opacity:1;transform:translateY(-50%) scale(1)}
+.dock-popover{position:fixed;top:50%;z-index:42;width:min(420px,calc(100vw - 210px));max-height:calc(100vh - 150px);overflow:auto;border-radius:calc(var(--radius) + 4px);pointer-events:auto;transform:translateY(-50%);filter:drop-shadow(0 24px 55px rgba(2,7,17,.28));animation:dockReveal .32s var(--motion-spring)}
+.dock-popover-left{left:87px;transform-origin:left center}.dock-popover-right{right:87px;transform-origin:right center}
+.dock-popover .panel,.dock-popover .banner,.dock-popover .deco-wgt{width:100%;margin:0;min-height:150px}
+.dock-popover .widget{max-height:calc(100vh - 160px);overflow:auto}
+.dock-panel-banner{width:min(720px,calc(100vw - 210px))}.dock-panel-banner .banner{height:min(380px,calc(100vh - 190px))}
+.dock-panel-latest{width:min(520px,calc(100vw - 210px))}.dock-panel-latest .latest-widget{height:240px}
+.dock-popover-close{position:absolute;right:10px;top:10px;z-index:12;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:color-mix(in srgb,var(--dd-bg) 72%,transparent);border:1px solid color-mix(in srgb,var(--glass-edge-soft) 68%,transparent);color:var(--dd-fg);font-size:19px;line-height:1;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:.18s}
+.dock-popover-close:hover{background:var(--glass-control-hover);transform:scale(1.06)}
+.home-view-switch{position:fixed;left:50%;bottom:22px;z-index:69;min-height:38px;padding:0 17px;border-radius:999px;color:var(--dd-fg);background:color-mix(in srgb,var(--dd-bg) 68%,transparent);border:1px solid color-mix(in srgb,var(--glass-edge-soft) 72%,transparent);box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 12px 32px rgba(2,7,17,.2);-webkit-backdrop-filter:blur(24px) saturate(155%);backdrop-filter:blur(24px) saturate(155%);font-size:11px;font-weight:600;letter-spacing:.04em;transform:translateX(-50%);transition:.22s var(--motion-spring)}
+.home-view-switch:hover{background:var(--glass-control-hover);transform:translateX(-50%) translateY(-2px)}
+.focus-hint{position:fixed;left:50%;bottom:68px;padding:5px 10px;border-radius:999px;color:rgba(255,255,255,.72);background:rgba(8,12,18,.22);font-size:9px;letter-spacing:.08em;pointer-events:none;transform:translateX(-50%);text-shadow:0 1px 4px rgba(0,0,0,.6);animation:focusHint 5s both}
+@keyframes dockReveal{from{opacity:0;scale:.94}to{opacity:1;scale:1}}
+@keyframes focusHint{0%,65%{opacity:.86}100%{opacity:0}}
 /* 고정 캔버스 모드: 창을 줄여도 배치 유지 — 좁은 창은 가로 스크롤(왼쪽 기준), 모바일 전환 시 해제 (v1.9) */
 body.main-fixed .page-main-wrap{min-width:1320px;margin-left:max(0px, calc(50% - 660px));margin-right:0}
 body.main-fixed #appMain,body.edit-on #appMain{overflow-x:auto}
@@ -822,6 +851,11 @@ body.edit-on .main-grid{grid-template-columns:260px 720px 280px}
 .menu-list{padding:14px;display:none} /* PC에서는 상단 메뉴로 충분 — 모바일 전용 (v1.8) */
 .wgt-hide-pc{display:none}
 @media (max-width:620px){.wgt-hide-pc{display:block}}
+@media (max-width:620px){
+  .focus-home{width:auto;max-width:100%;padding:0 16px!important;height:auto}
+  .focus-home .main-grid{display:grid}
+  .focus-stage,.home-view-switch{display:none!important}
+}
 /* 모바일 제외 위젯 (v1.9 — 환경설정 토글은 모바일 표시만 제어, PC에는 그대로) */
 @media (max-width:620px){.wgt.wgt-hide-m{display:none !important}}
 .menu-list a{display:block;padding:10px 12px;font-size:calc(13px*var(--fs,1));color:var(--ink);border-radius:8px;cursor:var(--cur-pointer,pointer);transition:.15s}
@@ -1934,6 +1968,8 @@ body{
   }
   ::view-transition-old(page-content),::view-transition-new(page-content){animation:none !important}
   .route-frame,.route-ghost{animation:none !important}
+  .dock-popover,.focus-hint{animation:none !important}
+  .focus-dock button,.home-view-switch{transition:none !important}
   .panel,.btn,.login-link,.pager button,.gnb button,.gnb a.gnb-link,.user-chip,.badge-dot,#appMain{transition:none !important}
   .btn:hover,.login-link:hover,.pager button:hover{transform:none}
 }

@@ -11,6 +11,26 @@ import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/lib/ThemeProvider';
 import { putBlob, useBlobUrl } from '@/lib/blobStore';
 
+type HomeView = 'focus' | 'dashboard';
+
+const DOCK_ICON: Partial<Record<WidgetType, React.ReactNode>> = {
+  banner: <><path d="M5 7.5h14v9H5z"/><path d="m7 14 3.2-3 2.5 2 1.8-1.6L17 14"/></>,
+  member: <><circle cx="12" cy="9" r="3"/><path d="M6.5 18c.8-3 2.6-4.5 5.5-4.5s4.7 1.5 5.5 4.5"/></>,
+  memo: <><path d="M6 5h12v14H6z"/><path d="M9 9h6M9 12h6M9 15h4"/></>,
+  diary: <><path d="M7 4.5h10v15H7zM10 4.5v15"/><path d="M12.5 9h2.5M12.5 12h2.5"/></>,
+  latest: <><rect x="5" y="6" width="14" height="12" rx="2"/><circle cx="10" cy="10" r="1.5"/><path d="m7 16 3.5-3 2.5 2 2-2 2 3"/></>,
+  dday: <><rect x="5" y="6" width="14" height="13" rx="2"/><path d="M8 4v4M16 4v4M5 10h14"/><path d="M9 14h6"/></>,
+  todo: <><rect x="5" y="5" width="14" height="14" rx="2"/><path d="m8 12 2 2 5-5"/></>,
+  upcoming: <><circle cx="12" cy="12" r="7"/><path d="M12 8v4l3 2"/></>,
+  freetext: <><path d="M5 7h14M8 7v11M16 7v11M8 12h8"/></>,
+  deco: <><path d="M12 4.5 14 10l5.5 2-5.5 2-2 5.5-2-5.5-5.5-2 5.5-2z"/></>,
+  memoboard: <><path d="M5 5h14v14H5z"/><path d="M8 8h3v3H8zM13 8h3v3h-3zM8 13h3v3H8z"/></>,
+};
+
+function DockGlyph({ type }: { type: WidgetType }) {
+  return <svg viewBox="0 0 24 24" aria-hidden>{DOCK_ICON[type] ?? DOCK_ICON.deco}</svg>;
+}
+
 const ADDABLE: WidgetType[] = ['memo', 'dday', 'todo', 'upcoming', 'freetext', 'deco', 'diary', 'latest'];
 /** 내용 설정 모달이 있는 위젯 — 우클릭 「설정」 노출 대상 (v1.9) */
 const EDITABLE: WidgetType[] = ['banner', 'memo', 'dday', 'todo', 'freetext', 'deco'];
@@ -25,8 +45,33 @@ export default function MainPage() {
   const [addCol, setAddCol] = useState<'1' | '2' | '3'>('3');
   const [delAsk, setDelAsk] = useState<WidgetConf | null>(null);   // 우클릭 삭제 경고 (v1.9)
   const [bgOpen, setBgOpen] = useState(false);
+  const [homeView, setHomeView] = useState<HomeView>('focus');
+  const [dockOpen, setDockOpen] = useState<string | null>(null);
   const bgFileRef = React.useRef<HTMLInputElement>(null);
   const bgPreview = useBlobUrl(theme.state.vars.bgImageId);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('ohome.homeView.v1');
+      if (stored === 'dashboard') setHomeView('dashboard');
+    } catch { /* 기본 감상 모드 */ }
+  }, []);
+
+  useEffect(() => {
+    if (editOn) setDockOpen(null);
+  }, [editOn]);
+
+  useEffect(() => {
+    const close = (e: KeyboardEvent) => { if (e.key === 'Escape') setDockOpen(null); };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, []);
+
+  const changeHomeView = (view: HomeView) => {
+    setHomeView(view);
+    setDockOpen(null);
+    try { localStorage.setItem('ohome.homeView.v1', view); } catch { /* 무시 */ }
+  };
 
   // 위젯 추가 — 상단바의 [＋ 위젯] 버튼(그리드 토글 왼쪽)이 이벤트로 연다 (v1.9 사용자 확정)
   useEffect(() => {
@@ -54,6 +99,10 @@ export default function MainPage() {
   }, [addOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const enabled = state.widgets.filter(w => w.enabled);
+  const dockable = enabled.filter(w => w.type !== 'menu');
+  const leftDock = dockable.filter(w => w.col !== 3);
+  const rightDock = dockable.filter(w => w.col === 3);
+  const openDockWidget = dockable.find(w => w.id === dockOpen) ?? null;
   const byCol = (c: 1 | 2 | 3) => enabled.filter(w => w.col === c);
   const mOrder = (id: string) => {
     const i = state.mobileOrder.indexOf(id);
@@ -105,6 +154,22 @@ export default function MainPage() {
     </WidgetFrame>
   );
 
+  const widgetBody = (w: WidgetConf) => w.type === 'member' ? <MemberBox /> : renderWidget(w);
+
+  const dock = (side: 'left' | 'right', widgets: WidgetConf[]) => (
+    <nav className={`focus-dock focus-dock-${side}`} aria-label={`${side === 'left' ? '왼쪽' : '오른쪽'} 위젯 도크`}>
+      {widgets.map(w => (
+        <button key={w.id} className={dockOpen === w.id ? 'on' : ''}
+          aria-label={`${widgetLabel(state.widgets, w)} 위젯 ${dockOpen === w.id ? '닫기' : '열기'}`}
+          aria-expanded={dockOpen === w.id}
+          onClick={e => { e.stopPropagation(); setDockOpen(v => v === w.id ? null : w.id); }}>
+          <DockGlyph type={w.type} />
+          <span>{widgetLabel(state.widgets, w)}</span>
+        </button>
+      ))}
+    </nav>
+  );
+
   // PC 절대배치 (v1.9 사용자 확정) — 모든 위젯에 절대 좌표가 있으면 캔버스 모드:
   // 문서 흐름 없음(겹침 허용·서로 밀지 않음). 좌표가 없는 저장분은 아래 effect가
   // 기존 열 흐름 렌더 위치를 1회 스냅샷해 마이그레이션. 모바일은 CSS가 흐름 스택으로 복원.
@@ -134,7 +199,32 @@ export default function MainPage() {
     : undefined;
 
   return (
-    <section className="page page-main-wrap" onClick={() => setCtx(null)}>
+    <section className={`page page-main-wrap ${!editOn && homeView === 'focus' ? 'focus-home' : 'dashboard-home'}`}
+      onClick={() => { setCtx(null); setDockOpen(null); }}>
+      {!editOn && homeView === 'focus' && (
+        <div className="focus-stage" aria-label="일러스트 감상 화면">
+          {dock('left', leftDock)}
+          {dock('right', rightDock)}
+          {openDockWidget && (
+            <aside className={`dock-popover dock-popover-${openDockWidget.col === 3 ? 'right' : 'left'} dock-panel-${openDockWidget.type}`}
+              onClick={e => e.stopPropagation()} aria-label={`${widgetLabel(state.widgets, openDockWidget)} 위젯`}>
+              <button className="dock-popover-close" aria-label="위젯 닫기" onClick={() => setDockOpen(null)}>×</button>
+              {widgetBody(openDockWidget)}
+            </aside>
+          )}
+          <div className="focus-hint">아이콘을 눌러 위젯 열기</div>
+        </div>
+      )}
+
+      {!editOn && (
+        <button className="home-view-switch" onClick={e => {
+          e.stopPropagation();
+          changeHomeView(homeView === 'focus' ? 'dashboard' : 'focus');
+        }}>
+          {homeView === 'focus' ? '▦ 전체 위젯' : '✦ 감상 모드'}
+        </button>
+      )}
+
       <div ref={gridRef} className={`main-grid ${absMode ? 'abs' : ''} ${gridOn ? 'gridlines' : ''}`}
         style={{ marginTop: 12, ...(canvasH ? { height: canvasH } : {}) }}>
         {absMode ? (
