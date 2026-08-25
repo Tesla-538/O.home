@@ -194,8 +194,8 @@ export default function MainPage() {
   const rightDock = dockable.filter(w => w.col === 3);
   const openDockWidget = dockable.find(w => w.id === dockOpen) ?? null;
   const focusActive = !editOn && homeView === 'focus' && !isMobile;
-  const homepageActive = isAdmin && !editOn && homeView === 'home' && !isMobile;
-  const showDashboard = editOn || homeView === 'dashboard' || isMobile;
+  const homepageActive = isAdmin && !editOn && homeView === 'home';
+  const showDashboard = editOn || homeView === 'dashboard' || (isMobile && homeView !== 'home');
   const byCol = (c: 1 | 2 | 3) => enabled.filter(w => w.col === c);
   const mOrder = (id: string) => {
     const i = state.mobileOrder.indexOf(id);
@@ -315,10 +315,19 @@ export default function MainPage() {
         <HomepageMode widgets={enabled} />
       )}
 
-      {!editOn && !isMobile && topbarHost && createPortal(
-        <HomeViewSwitcher view={homeView} isAdmin={isAdmin} disabled={viewMotion !== 'idle'}
+      {!editOn && isAdmin && homeView !== 'dashboard' && topbarHost && createPortal(
+        <HomeViewSwitcher view={homeView} isAdmin disabled={viewMotion !== 'idle'}
           onChange={changeHomeView} />,
         topbarHost,
+      )}
+
+      {!editOn && !isMobile && (
+        <button className="home-view-switch" disabled={viewMotion !== 'idle'} onClick={e => {
+          e.stopPropagation();
+          changeHomeView(homeView === 'dashboard' ? 'focus' : 'dashboard');
+        }}>
+          {homeView === 'dashboard' ? '✦ 감상 모드' : '▦ 전체 위젯'}
+        </button>
       )}
 
       {showDashboard && <div ref={gridRef} className={`main-grid ${absMode ? 'abs' : ''} ${gridOn ? 'gridlines' : ''}`}

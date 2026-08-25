@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import styles from './HomeViewSwitcher.module.css';
 
-type HomeView = 'focus' | 'dashboard' | 'home';
+type HomeView = 'focus' | 'home';
 
 interface HomeViewSwitcherProps {
   view: HomeView;
@@ -20,10 +20,6 @@ const OPTIONS: Array<{ id: HomeView; label: string; adminOnly?: boolean; icon: R
   {
     id: 'focus', label: '감상',
     icon: <><path d="M3.5 12s3.2-5.2 8.5-5.2S20.5 12 20.5 12 17.3 17.2 12 17.2 3.5 12 3.5 12Z" /><circle cx="12" cy="12" r="2.4" /></>,
-  },
-  {
-    id: 'dashboard', label: '전체 위젯',
-    icon: <><rect x="4.5" y="4.5" width="6" height="6" rx="1.3" /><rect x="13.5" y="4.5" width="6" height="6" rx="1.3" /><rect x="4.5" y="13.5" width="6" height="6" rx="1.3" /><rect x="13.5" y="13.5" width="6" height="6" rx="1.3" /></>,
   },
 ];
 

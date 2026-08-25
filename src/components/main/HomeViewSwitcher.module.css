@@ -27,5 +27,5 @@
   box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 6px 18px rgba(2,7,17,.18);
 }
 @media(max-width:1120px){.switcher{right:164px}.switcher button{padding:0 9px}.switcher button span{display:none}}
-@media(max-width:620px){.switcher{display:none}}
+@media(max-width:620px){.switcher{top:8px;right:82px;padding:3px}.switcher button{width:32px;height:32px;justify-content:center;padding:0}}
 @media(prefers-reduced-motion:reduce){.switcher button{transition:none}}
