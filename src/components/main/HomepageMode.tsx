@@ -9,11 +9,12 @@ import styles from './HomepageMode.module.css';
 
 type ToolTab = 'today' | 'memo' | 'recent';
 type PieceId = 'clock' | 'search' | 'banner' | 'latest' | 'tools';
-type LayoutOffsets = Record<PieceId, { x: number; y: number }>;
+type PieceLayout = { x: number; y: number; width?: number; height?: number };
+type LayoutState = Record<PieceId, PieceLayout>;
 
 const MOBILE_LAYOUT_KEY = 'ohome.homeLayout.mobile.v1';
 const DESKTOP_LAYOUT_KEY = 'ohome.homeLayout.desktop.v1';
-const DEFAULT_LAYOUT: LayoutOffsets = {
+const DEFAULT_LAYOUT: LayoutState = {
   clock: { x: 0, y: 0 }, search: { x: 0, y: 0 }, banner: { x: 0, y: 0 },
   latest: { x: 0, y: 0 }, tools: { x: 0, y: 0 },
 };
@@ -47,27 +48,42 @@ function EmptyLinkedWidget({ label }: { label: string }) {
   );
 }
 
-function MovablePiece({ id, className = '', children, offset, dragging, editing, onPointerDown, onPointerMove, onPointerEnd, onLongPress, onClickCapture }: {
+function MovablePiece({ id, className = '', children, layout, dragging, resizing, editing, onPointerDown, onPointerMove, onPointerEnd, onResizeStart, onResizeMove, onResizeEnd, onLongPress, onClickCapture }: {
   id: PieceId;
   className?: string;
   children: ReactNode;
-  offset: { x: number; y: number };
+  layout: PieceLayout;
   dragging: boolean;
+  resizing: boolean;
   editing: boolean;
   onPointerDown: (id: PieceId, e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerEnd: (e: ReactPointerEvent<HTMLDivElement>) => void;
+  onResizeStart: (id: PieceId, e: ReactPointerEvent<HTMLButtonElement>) => void;
+  onResizeMove: (e: ReactPointerEvent<HTMLButtonElement>) => void;
+  onResizeEnd: (e: ReactPointerEvent<HTMLButtonElement>) => void;
   onLongPress: (id: PieceId, e: React.MouseEvent<HTMLDivElement>) => void;
   onClickCapture: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
-  const style = { '--piece-x': `${offset.x}px`, '--piece-y': `${offset.y}px` } as CSSProperties;
+  const sized = layout.width != null || layout.height != null;
+  const style = {
+    '--piece-x': `${layout.x}px`, '--piece-y': `${layout.y}px`,
+    ...(layout.width != null ? { width: `${layout.width}px` } : {}),
+    ...(layout.height != null ? { height: `${layout.height}px` } : {}),
+  } as CSSProperties;
   return (
-    <div className={`${styles.piece} ${className} ${editing ? styles.editing : ''} ${dragging ? styles.dragging : ''}`}
+    <div className={`${styles.piece} ${className} ${sized ? styles.sized : ''} ${editing ? styles.editing : ''} ${dragging ? styles.dragging : ''} ${resizing ? styles.resizing : ''}`}
       style={style} data-home-piece={id}
       onPointerDown={e => onPointerDown(id, e)} onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd}
       onContextMenu={e => onLongPress(id, e)} onClickCapture={onClickCapture}>
       {children}
+      {editing && (
+        <button type="button" className={styles.resizeHandle} aria-label="가로·세로 크기 조절"
+          onPointerDown={e => onResizeStart(id, e)} onPointerMove={onResizeMove}
+          onPointerUp={onResizeEnd} onPointerCancel={onResizeEnd}
+          onClick={e => { e.preventDefault(); e.stopPropagation(); }} />
+      )}
     </div>
   );
 }
@@ -78,8 +94,9 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
   const [now, setNow] = useState<Date | null>(null);
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<ToolTab>('today');
-  const [layout, setLayout] = useState<LayoutOffsets>(DEFAULT_LAYOUT);
+  const [layout, setLayout] = useState<LayoutState>(DEFAULT_LAYOUT);
   const [dragging, setDragging] = useState<PieceId | null>(null);
+  const [resizing, setResizing] = useState<PieceId | null>(null);
   const [layoutEditing, setLayoutEditing] = useState(false);
   const layoutRef = useRef(layout);
   const layoutKeyRef = useRef(DESKTOP_LAYOUT_KEY);
@@ -88,6 +105,10 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     id: PieceId; pointerId: number; startX: number; startY: number;
     originX: number; originY: number; timer: number; active: boolean;
     rect: DOMRect; element: HTMLDivElement;
+  } | null>(null);
+  const resizeRef = useRef<{
+    id: PieceId; pointerId: number; startX: number; startY: number;
+    originWidth: number; originHeight: number; element: HTMLDivElement; handle: HTMLButtonElement;
   } | null>(null);
   layoutRef.current = layout;
 
@@ -114,12 +135,15 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
       }
       setLayoutEditing(false);
       setDragging(null);
+      setResizing(null);
+      resizeRef.current = null;
     };
     loadLayout();
     media.addEventListener('change', loadLayout);
     return () => {
       media.removeEventListener('change', loadLayout);
       if (dragRef.current) window.clearTimeout(dragRef.current.timer);
+      resizeRef.current = null;
     };
   }, []);
 
@@ -181,7 +205,10 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     const dy = Math.min(window.innerHeight - 12 - drag.rect.bottom, Math.max(64 - drag.rect.top, rawDy));
     const next = {
       ...layoutRef.current,
-      [drag.id]: { x: Math.round(drag.originX + dx), y: Math.round(drag.originY + dy) },
+      [drag.id]: {
+        ...layoutRef.current[drag.id],
+        x: Math.round(drag.originX + dx), y: Math.round(drag.originY + dy),
+      },
     };
     layoutRef.current = next;
     setLayout(next);
@@ -201,6 +228,61 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     setDragging(null);
   };
 
+  const minSize = (id: PieceId) => {
+    if (id === 'clock') return { width: 240, height: 112 };
+    if (id === 'search') return { width: 240, height: 48 };
+    if (id === 'banner') return { width: 220, height: 120 };
+    if (id === 'latest') return { width: 260, height: 118 };
+    return { width: 260, height: 220 };
+  };
+
+  const beginResize = (id: PieceId, e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const handle = e.currentTarget;
+    const element = handle.parentElement as HTMLDivElement | null;
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
+    resizeRef.current = {
+      id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY,
+      originWidth: rect.width, originHeight: rect.height, element, handle,
+    };
+    try { handle.setPointerCapture(e.pointerId); } catch { /* 취소된 포인터는 다음 입력에서 정리 */ }
+    setResizing(id);
+  };
+
+  const resizePiece = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const resize = resizeRef.current;
+    if (!resize || resize.pointerId !== e.pointerId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = resize.element.getBoundingClientRect();
+    const min = minSize(resize.id);
+    const maxWidth = Math.max(min.width, window.innerWidth - 12 - rect.left);
+    const maxHeight = Math.max(min.height, window.innerHeight - 12 - rect.top);
+    const width = Math.round(Math.min(maxWidth, Math.max(min.width, resize.originWidth + e.clientX - resize.startX)));
+    const height = Math.round(Math.min(maxHeight, Math.max(min.height, resize.originHeight + e.clientY - resize.startY)));
+    const next = {
+      ...layoutRef.current,
+      [resize.id]: { ...layoutRef.current[resize.id], width, height },
+    };
+    layoutRef.current = next;
+    setLayout(next);
+  };
+
+  const endResize = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const resize = resizeRef.current;
+    if (!resize || resize.pointerId !== e.pointerId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    suppressClickUntil.current = Date.now() + 380;
+    try { resize.handle.releasePointerCapture(resize.pointerId); } catch { /* 이미 해제됨 */ }
+    try { localStorage.setItem(layoutKeyRef.current, JSON.stringify(layoutRef.current)); } catch { /* 현재 세션만 유지 */ }
+    resizeRef.current = null;
+    setResizing(null);
+  };
+
   const blockDraggedClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (Date.now() >= suppressClickUntil.current) return;
     e.preventDefault();
@@ -217,19 +299,22 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
   const resetLayout = () => {
     layoutRef.current = DEFAULT_LAYOUT;
     setLayout(DEFAULT_LAYOUT);
+    setResizing(null);
+    resizeRef.current = null;
     try { localStorage.removeItem(layoutKeyRef.current); } catch { /* 무시 */ }
   };
 
   const movableProps = (id: PieceId) => ({
-    id, offset: layout[id], dragging: dragging === id, editing: layoutEditing,
+    id, layout: layout[id], dragging: dragging === id, resizing: resizing === id, editing: layoutEditing,
     onPointerDown: beginMove, onPointerMove: movePiece, onPointerEnd: endMove,
+    onResizeStart: beginResize, onResizeMove: resizePiece, onResizeEnd: endResize,
     onLongPress: enterLayoutEditing, onClickCapture: blockDraggedClick,
   });
 
   return (
     <div className={styles.shell} aria-label="관리자 홈페이지 모드">
       <div className={styles.mobileHint}>
-        <span>{layoutEditing ? '배치 조정 중' : '길게 눌러 배치'}</span>
+        <span>{layoutEditing ? '배치·크기 조정 중' : '길게 눌러 배치·크기'}</span>
         <button type="button" onClick={resetLayout}>초기화</button>
         {layoutEditing && <button type="button" onClick={() => setLayoutEditing(false)}>완료</button>}
       </div>
