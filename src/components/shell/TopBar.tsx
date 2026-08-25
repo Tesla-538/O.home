@@ -228,17 +228,23 @@ export function TopBar() {
       {/* 사용자 영역 — 비로그인: 로그인 버튼 / 로그인: 프로필 드롭다운 (3장 주석, 4.0) */}
       {user ? (
         <div className="user-wrap" ref={userRef}>
-          <div className="user-chip" onClick={() => setMenuOpen(o => !o)}>
+          <div className={`user-chip${menuOpen || notifOpen ? ' open' : ''}`}>
             {/* 알림 종 (4.13) — 클릭 시 알림 드롭다운 (프로필 메뉴와 별개) */}
-            <span className="badge-dot" data-n={String(Math.min(9, unread.length))}
-              onClick={e => { e.stopPropagation(); setMenuOpen(false); setNotifOpen(o => !o); }}>
+            <button type="button" aria-label="알림" aria-expanded={notifOpen}
+              className={`badge-dot${notifOpen ? ' on' : ''}`} data-n={String(Math.min(9, unread.length))}
+              onClick={() => { setMenuOpen(false); setNotifOpen(o => !o); }}>
               <BellIcon />
-            </span>
-            {/* 기본 아바타는 이니셜 없이 단색/그라데이션 (v1.9) */}
-            <div className="avatar" style={!avatarSrc && user.avatarColor ? { background: user.avatarColor } : undefined}>
-              {avatarSrc && <ProfileAvatarImage src={avatarSrc} compact />}
-            </div>
-            {user.nickname} <span style={{ fontSize: 9, color: '#8d939d' }}>▾</span>
+            </button>
+            <button type="button" aria-label={`${user.nickname} 사용자 메뉴`} aria-expanded={menuOpen}
+              className={`user-identity${menuOpen ? ' on' : ''}`}
+              onClick={() => { setNotifOpen(false); setMenuOpen(o => !o); }}>
+              {/* 기본 아바타는 이니셜 없이 단색/그라데이션 (v1.9) */}
+              <span className="avatar" style={!avatarSrc && user.avatarColor ? { background: user.avatarColor } : undefined}>
+                {avatarSrc && <ProfileAvatarImage src={avatarSrc} compact />}
+              </span>
+              <span className="user-name">{user.nickname}</span>
+              <span className="user-caret">▾</span>
+            </button>
           </div>
           {/* 알림 드롭다운 — 목록 + 모두 읽음 + 항목별 on/off (4.13) */}
           <div className={`user-menu notif-menu ${notifOpen ? 'open' : ''}`}>
