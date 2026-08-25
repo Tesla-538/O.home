@@ -141,7 +141,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
       if (dragRef.current !== draft) return;
       draft.active = true;
       draft.rect = element.getBoundingClientRect();
-      element.setPointerCapture(draft.pointerId);
+      try { element.setPointerCapture(draft.pointerId); } catch { /* 합성 입력·취소된 포인터도 배치는 계속 허용 */ }
       setDragging(id);
       navigator.vibrate?.(18);
     }, 460);
