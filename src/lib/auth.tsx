@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const server = isServerMode();
   const be = backend();
   const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(!server || !be);
 
   useEffect(() => {
     if (!server || !be) {
@@ -107,11 +108,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const raw = localStorage.getItem(MOCK_KEY);
         if (raw) setUser(JSON.parse(raw));
       } catch { /* 무시 */ }
+      setAuthReady(true);
       return;
     }
     let alive = true;
-    void be.currentUser().then(u => { if (alive) setUser(u as User | null); });
-    const off = be.onAuthChange(u => { if (alive) setUser(u as User | null); });
+    void be.currentUser()
+      .then(u => { if (alive) setUser(u as User | null); })
+      .finally(() => { if (alive) setAuthReady(true); });
+    const off = be.onAuthChange(u => {
+      if (!alive) return;
+      setUser(u as User | null);
+      setAuthReady(true);
+    });
     return () => { alive = false; off(); };
   }, [server, be]);
 
@@ -232,9 +240,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 앱 부팅과 Supabase 세션 복원 순서가 엇갈려 방문자용 일정이 먼저 캐시돼도,
   // 확정된 현재 권한으로 일정 원본/공개 투영본을 다시 받아 모든 위젯을 즉시 맞춘다.
   useEffect(() => {
-    if (!server || !be) return;
+    if (!server || !be || !authReady) return;
     void refreshScheduleSetting();
-  }, [server, be, user?.id, user?.role]);
+  }, [server, be, authReady, user?.id, user?.role]);
 
   return (
     <Ctx.Provider value={{

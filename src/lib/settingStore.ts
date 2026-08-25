@@ -16,6 +16,7 @@ const EVT = 'ohome-settings';
 // 같은 설정 키의 서버 저장은 호출 순서대로 보낸다. 빠르게 연속 편집하거나 되돌릴 때
 // 이전 요청이 나중 요청보다 늦게 끝나 최종값을 다시 덮는 경쟁 상태를 막는다.
 const writeQueues = new Map<string, Promise<void>>();
+let scheduleRefreshGeneration = 0;
 /** 서버 저장 실패 알림 — SettingSync가 받아 화면에 띄운다 */
 export const ERR_EVT = 'ohome-setting-error';
 
@@ -104,6 +105,7 @@ export async function primeSettings(): Promise<void> {
  * 요청하고, 원본을 읽을 수 없는 세션이면 공개 API 투영본으로 교체한 뒤 구독자에게 알린다.
  */
 export async function refreshScheduleSetting(): Promise<void> {
+  const generation = ++scheduleRefreshGeneration;
   const key = 'ohome.sched.v1';
   const empty = { events: [], cats: [], allowMember: false, todoMigrated: true };
   const be = backend();
@@ -127,6 +129,8 @@ export async function refreshScheduleSetting(): Promise<void> {
     }
   }
 
+  // 로그인·로그아웃이 빠르게 이어져 요청이 겹치면 마지막 권한으로 시작한 결과만 쓴다.
+  if (generation !== scheduleRefreshGeneration) return;
   cache.set(key, next);
   try { localStorage.setItem(key, JSON.stringify(next)); } catch { /* 무시 */ }
   try { window.dispatchEvent(new CustomEvent(EVT, { detail: key })); } catch { /* 무시 */ }
