@@ -7,6 +7,49 @@
   animation: detail-switch-in 500ms cubic-bezier(.16, 1, .3, 1) both;
 }
 
+.noxLink {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  transition: color 180ms ease, transform 180ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.noxLink span {
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 44%, transparent);
+}
+
+.noxLink b {
+  color: var(--accent-soft);
+  font-size: 15px;
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: opacity 180ms ease, transform 180ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.noxLink:hover,
+.noxLink:focus-visible {
+  color: var(--accent-soft);
+  transform: translateX(2px);
+}
+
+.noxLink:hover b,
+.noxLink:focus-visible b {
+  opacity: 1;
+  transform: none;
+}
+
+.noxLink:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 58%, transparent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 @keyframes detail-switch-out {
   to {
     opacity: 0;
@@ -31,8 +74,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .detailLeaving,
-  .detailEntering {
+  .detailEntering,
+  .noxLink,
+  .noxLink b {
     animation: none !important;
+    transition: none !important;
     opacity: 1;
     transform: none;
     filter: none;

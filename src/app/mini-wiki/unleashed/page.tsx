@@ -82,7 +82,7 @@ function AcquisitionTables({ sections }: { sections: AcquisitionSection[] }) {
   );
 }
 
-function GenericDetails({ data }: { data: WikiStructured }) {
+function GenericDetails({ data, onOpenNox }: { data: WikiStructured; onOpenNox: (name: string) => void }) {
   const summary = data.summary ?? [];
   const sections = data.sections ?? [];
   return (
@@ -113,7 +113,12 @@ function GenericDetails({ data }: { data: WikiStructured }) {
           <div className="uw-table-wrap"><table>
             {section.headers.length > 0 && <thead><tr>{section.headers.map((header, index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead>}
             <tbody>{section.rows.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => (
-              <td key={cellIndex}>{cell || '—'}</td>
+              <td key={cellIndex}>{section.kind === 'drop' && cellIndex === 0 && cell
+                ? <button type="button" className={styles.noxLink} onClick={() => onOpenNox(cell)}
+                    aria-label={`${cell} 녹스 정보 보기`} title="녹스 상세 정보 보기">
+                    <span>{cell}</span><b aria-hidden>›</b>
+                  </button>
+                : (cell || '—')}</td>
             ))}</tr>)}</tbody>
           </table></div>
         </section>
@@ -141,6 +146,7 @@ export default function UnleashedMiniWikiPage() {
   const [detailMotionPhase, setDetailMotionPhase] = useState<'idle' | 'leaving' | 'entering'>('idle');
   const motionTimers = useRef<{ swap?: ReturnType<typeof setTimeout>; done?: ReturnType<typeof setTimeout> }>({});
   const detailMotionTimers = useRef<{ swap?: ReturnType<typeof setTimeout>; done?: ReturnType<typeof setTimeout> }>({});
+  const pendingNoxTitle = useRef<string | null>(null);
 
   const authHeaders = async () => {
     const headers: Record<string, string> = {};
@@ -159,7 +165,7 @@ export default function UnleashedMiniWikiPage() {
     if (detailMotionTimers.current.done) clearTimeout(detailMotionTimers.current.done);
   }, []);
 
-  const changeCategory = (next: Category) => {
+  const changeCategory = (next: Category, nextQuery?: string) => {
     if (next === category || motionPhase !== 'idle') return;
     if (detailMotionTimers.current.swap) clearTimeout(detailMotionTimers.current.swap);
     if (detailMotionTimers.current.done) clearTimeout(detailMotionTimers.current.done);
@@ -167,6 +173,7 @@ export default function UnleashedMiniWikiPage() {
     setMotionPhase('leaving');
     motionTimers.current.swap = setTimeout(() => {
       setCategory(next);
+      if (nextQuery !== undefined) setQuery(nextQuery);
       setPage(1);
       setSelectedId(null);
       setSelected(null);
@@ -174,6 +181,13 @@ export default function UnleashedMiniWikiPage() {
       setMotionPhase('entering');
       motionTimers.current.done = setTimeout(() => setMotionPhase('idle'), 680);
     }, 230);
+  };
+
+  const openNox = (name: string) => {
+    const exactName = name.trim();
+    if (!exactName || motionPhase !== 'idle') return;
+    pendingNoxTitle.current = exactName;
+    changeCategory('녹스', exactName);
   };
 
   const changeRecord = (nextId: string) => {
@@ -195,7 +209,12 @@ export default function UnleashedMiniWikiPage() {
         const next = await response.json() as WikiListResponse;
         if (!response.ok) throw new Error(next.error || '위키 데이터를 불러오지 못했습니다.');
         setData(next);
-        setSelectedId(current => next.records.some(record => record.id === current) ? current : (next.records[0]?.id ?? null));
+        const requestedNox = category === '녹스' && pendingNoxTitle.current
+          ? next.records.find(record => record.title.trim() === pendingNoxTitle.current)
+          : undefined;
+        if (requestedNox) pendingNoxTitle.current = null;
+        setSelectedId(current => requestedNox?.id
+          ?? (next.records.some(record => record.id === current) ? current : (next.records[0]?.id ?? null)));
       } catch (loadError) {
         if ((loadError as Error).name !== 'AbortError') setError((loadError as Error).message);
       } finally {
@@ -387,7 +406,7 @@ export default function UnleashedMiniWikiPage() {
 
                     <AcquisitionTables sections={selected.structured.acquisition ?? []} />
                   </>
-                ) : selected.structured ? <GenericDetails data={selected.structured} /> : summaryValues.length > 0 && (
+                ) : selected.structured ? <GenericDetails data={selected.structured} onOpenNox={openNox} /> : summaryValues.length > 0 && (
                   <section className="uw-facts">
                     <h3>목록 정보</h3>
                     <div>
