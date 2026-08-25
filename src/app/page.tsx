@@ -85,17 +85,16 @@ export default function MainPage() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('ohome.homeView.v1');
-      if (!isAdmin) setHomeView('focus');
-      else if (stored === 'dashboard') setHomeView('dashboard');
-      else if (stored === 'home') setHomeView('home');
+      if (stored === 'dashboard') setHomeView('dashboard');
+      else if (stored === 'home' && isAdmin) setHomeView('home');
       else setHomeView('focus');
     } catch { /* 기본 감상 모드 */ }
   }, [isAdmin]);
 
-  // 홈페이지/전체 위젯 모드와 전환 UI는 관리자 전용이다.
-  // 같은 브라우저에서 로그아웃하거나 일반 회원으로 바뀌어도 저장된 관리자 모드를 노출하지 않는다.
+  // 홈페이지 모드만 관리자 전용이다. 감상/전체 위젯 전환은 방문자도 사용할 수 있다.
+  // 같은 브라우저에서 로그아웃하거나 일반 회원으로 바뀌면 저장된 홈페이지 모드만 감상 모드로 되돌린다.
   useEffect(() => {
-    if (!isAdmin && homeView !== 'focus') setHomeView('focus');
+    if (!isAdmin && homeView === 'home') setHomeView('focus');
   }, [isAdmin, homeView]);
 
   useEffect(() => {
@@ -134,7 +133,7 @@ export default function MainPage() {
   }, []);
 
   const changeHomeView = (view: HomeView) => {
-    if (!isAdmin || view === homeView || viewMotion !== 'idle') return;
+    if ((!isAdmin && view === 'home') || view === homeView || viewMotion !== 'idle') return;
     closeDock();
     viewTimers.current.forEach(t => window.clearTimeout(t));
     setViewMotion('leaving');
@@ -195,7 +194,7 @@ export default function MainPage() {
   const leftDock = dockable.filter(w => w.col !== 3);
   const rightDock = dockable.filter(w => w.col === 3);
   const openDockWidget = dockable.find(w => w.id === dockOpen) ?? null;
-  const authorizedHomeView: HomeView = isAdmin ? homeView : 'focus';
+  const authorizedHomeView: HomeView = !isAdmin && homeView === 'home' ? 'focus' : homeView;
   const focusActive = !editOn && authorizedHomeView === 'focus' && !isMobile;
   const homepageActive = isAdmin && !editOn && homeView === 'home';
   const showDashboard = editOn || authorizedHomeView === 'dashboard' || (isMobile && authorizedHomeView !== 'home');
@@ -350,7 +349,7 @@ export default function MainPage() {
         topbarHost,
       )}
 
-      {!editOn && isAdmin && !isMobile && topbarHost && createPortal(
+      {!editOn && !isMobile && topbarHost && createPortal(
         <button className="home-view-switch" disabled={viewMotion !== 'idle'} onClick={e => {
           e.stopPropagation();
           changeHomeView(homeView === 'dashboard' ? 'focus' : 'dashboard');
