@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { backend, isServerMode } from './backend';
 import { setCurrentUserId } from './currentUser';
-import { getSetting, setSetting } from './settingStore';
+import { getSetting, refreshScheduleSetting, setSetting } from './settingStore';
 
 export type Role = 'admin' | 'member' | 'guest';
 
@@ -228,6 +228,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.body.classList.toggle('admin', user?.role === 'admin');
     setCurrentUserId(user?.id ?? null);
   }, [user]);
+
+  // 앱 부팅과 Supabase 세션 복원 순서가 엇갈려 방문자용 일정이 먼저 캐시돼도,
+  // 확정된 현재 권한으로 일정 원본/공개 투영본을 다시 받아 모든 위젯을 즉시 맞춘다.
+  useEffect(() => {
+    if (!server || !be) return;
+    void refreshScheduleSetting();
+  }, [server, be, user?.id, user?.role]);
 
   return (
     <Ctx.Provider value={{

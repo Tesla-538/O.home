@@ -95,6 +95,43 @@ export async function primeSettings(): Promise<void> {
   }
 }
 
+/**
+ * 인증 상태가 확정되거나 바뀐 뒤 일정만 다시 읽는다.
+ *
+ * Supabase가 저장된 세션을 복원하기 전에 ServerBoot의 primeSettings가 먼저 실행되면
+ * 관리자도 잠시 방문자용 일정 투영본을 받는다. 일정 위젯이 이미 마운트된 뒤이므로
+ * 캐시만 바꿔서는 화면이 갱신되지 않는다. 이 함수는 현재 세션 권한으로 원본을 다시
+ * 요청하고, 원본을 읽을 수 없는 세션이면 공개 API 투영본으로 교체한 뒤 구독자에게 알린다.
+ */
+export async function refreshScheduleSetting(): Promise<void> {
+  const key = 'ohome.sched.v1';
+  const empty = { events: [], cats: [], allowMember: false, todoMigrated: true };
+  const be = backend();
+  if (!be) return;
+
+  let next: unknown = null;
+  try {
+    next = await be.fetchSetting(key);
+  } catch {
+    // 직접 읽기가 실패해도 방문자용 투영본으로 재시도한다.
+  }
+
+  if (next == null) {
+    try {
+      const res = await fetch('/api/public-schedule', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`public schedule ${res.status}`);
+      const body = await res.json() as { state?: unknown };
+      next = body.state ?? empty;
+    } catch {
+      next = empty;
+    }
+  }
+
+  cache.set(key, next);
+  try { localStorage.setItem(key, JSON.stringify(next)); } catch { /* 무시 */ }
+  try { window.dispatchEvent(new CustomEvent(EVT, { detail: key })); } catch { /* 무시 */ }
+}
+
 export function settingsPrimed(): boolean { return primed; }
 
 /** 동기 읽기 — 서버 캐시 > localStorage > 기본값 */
