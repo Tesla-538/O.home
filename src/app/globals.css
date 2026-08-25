@@ -910,18 +910,18 @@ body.main-fixed:not(.edit-on) #appMain{overflow-x:hidden}
 .dock-popover-left{left:87px;transform-origin:left center}.dock-popover-right{--dock-shift:16px;--dock-clip-left:88%;--dock-clip-right:0%;right:87px;transform-origin:right center}
 .dock-popover .panel,.dock-popover .banner,.dock-popover .deco-wgt{width:100%;margin:0;min-height:150px}
 .dock-popover>.panel{
-  --ink:var(--dd-fg);
-  --sub:color-mix(in srgb,var(--dd-fg) 86%,transparent);
-  --faint:color-mix(in srgb,var(--dd-fg) 70%,transparent);
+  --ink:var(--dock-panel-fg,var(--dd-fg));
+  --sub:var(--dock-panel-sub,color-mix(in srgb,var(--dd-fg) 86%,transparent));
+  --faint:var(--dock-panel-faint,color-mix(in srgb,var(--dd-fg) 70%,transparent));
   background:
     linear-gradient(145deg,rgba(255,255,255,.14),transparent 36%),
     linear-gradient(180deg,rgba(255,255,255,.055),transparent 46%),
-    color-mix(in srgb,var(--dd-bg) 86%,transparent);
+    var(--dock-panel-bg,color-mix(in srgb,var(--dd-bg) 86%,transparent));
   border-color:color-mix(in srgb,var(--glass-edge) 82%,transparent);
   -webkit-backdrop-filter:blur(30px) saturate(150%);
   backdrop-filter:blur(30px) saturate(150%);
 }
-.dock-popover>.panel h4{color:color-mix(in srgb,var(--dd-fg) 88%,transparent)}
+.dock-popover>.panel h4{color:var(--dock-panel-title,color-mix(in srgb,var(--dd-fg) 88%,transparent))}
 .dock-popover>.panel .more,.dock-popover>.panel small{color:var(--sub)}
 .dock-popover .widget{max-height:calc(100vh - 160px);overflow:auto;overscroll-behavior:contain;scrollbar-width:none}
 .dock-popover .widget::-webkit-scrollbar{display:none}

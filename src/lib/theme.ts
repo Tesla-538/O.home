@@ -276,14 +276,20 @@ export function themeToCssVars(t: ThemeVars): Record<string, string> {
     '--top-bg': withAlpha(t.topBg, 0.84), '--top-fg': topFg, '--top-hv': t.topHv, '--top-brand': t.topBrand,
     // 로고 — 라이트는 제공된 Gemini SVG의 SF 계열 명암·굵기, 다크는 기존 외형 유지.
     // 두 모드는 같은 자간을 써 전환할 때 글자 폭이 흔들리지 않는다.
-    '--logo-fg': lightGlass ? '#1d1d1f' : t.topBrand,
-    '--logo-weight': lightGlass ? '700' : '480',
-    '--logo-size': lightGlass ? '24px' : '21.5px',
+    '--logo-fg': lightGlass ? '#1d1d1f' : '#ffffff',
+    '--logo-weight': '700',
+    '--logo-size': '24px',
     '--logo-track': '-0.5px',
-    '--logo-sub-fg': lightGlass ? '#556375' : 'rgba(245,245,247,.58)',
-    '--logo-sub-weight': lightGlass ? '600' : '500',
-    '--logo-sub-size': lightGlass ? '9.5px' : '8.25px',
+    '--logo-sub-fg': lightGlass ? '#556375' : '#a8b2c3',
+    '--logo-sub-weight': '600',
+    '--logo-sub-size': '9.5px',
     '--logo-sub-track': '3.5px',
+    // 감상 모드에서 펼친 일반 위젯만 쓰는 표면/글자. 밝은 유리는 배경 투과를 줄여 읽기 우선.
+    '--dock-panel-bg': withAlpha(t.ddBg, lightGlass ? 0.94 : 0.86),
+    '--dock-panel-fg': t.ddFg,
+    '--dock-panel-title': withAlpha(t.ddFg, lightGlass ? 0.96 : 0.88),
+    '--dock-panel-sub': withAlpha(t.ddFg, lightGlass ? 0.9 : 0.86),
+    '--dock-panel-faint': withAlpha(t.ddFg, lightGlass ? 0.82 : 0.7),
     '--dd-bg': withAlpha(t.ddBg, 0.97), '--dd-fg': t.ddFg, '--dd-hv': withAlpha(t.ddHv, 0.09),
     '--page-title': t.pageTitle, '--page-desc': t.pageDesc,
     // 페이지 헤더 표시 옵션 (v1.9) — 모바일 생략은 CSS 미디어쿼리가 --ph-m을 보고 처리
