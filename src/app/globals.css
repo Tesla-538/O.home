@@ -2286,13 +2286,15 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
 .brand{
   display:flex;flex-direction:column;justify-content:center;min-height:40px;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Pretendard,"Apple SD Gothic Neo",sans-serif;
-  font-size:calc(20px*var(--fs,1));font-weight:650;letter-spacing:-.025em;line-height:1;
-  color:#f5f5f7;text-shadow:none;
+  font-size:calc(21.5px*var(--fs,1));font-weight:480;letter-spacing:-.045em;line-height:.98;
+  color:#f5f5f7;text-shadow:none;font-synthesis:none;font-optical-sizing:auto;
+  -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;
 }
 .brand small{
   font-family:var(--font-logosub,-apple-system,BlinkMacSystemFont,"SF Pro Text",Pretendard,"Apple SD Gothic Neo",sans-serif);
-  font-size:calc(8.5px*var(--fs,1)*var(--fs-logosub,1));font-weight:max(var(--fw-logosub,400),500);
-  letter-spacing:.105em;line-height:1.1;margin-top:5px;color:rgba(245,245,247,.56);
+  font-size:calc(8.25px*var(--fs,1)*var(--fs-logosub,1));font-weight:max(var(--fw-logosub,400),500);
+  letter-spacing:.055em;line-height:1.1;margin-top:5px;color:rgba(245,245,247,.58);
+  -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;
 }
 .gnb button,.gnb a.gnb-link{font-size:calc(13px*var(--fs,1));font-weight:max(var(--fw-menu,400),500);padding:8px 14px}
 
