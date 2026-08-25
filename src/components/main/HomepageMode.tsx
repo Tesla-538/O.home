@@ -60,6 +60,7 @@ export function HomepageMode({ widgets, motionLocked, onFocusMode }: HomepageMod
   const find = (type: WidgetType) => enabled.find(w => w.type === type);
   const memo = find('memo');
   const latest = find('latest');
+  const diary = find('diary');
   const dday = find('dday');
   const todo = find('todo');
 
@@ -154,7 +155,7 @@ export function HomepageMode({ widgets, motionLocked, onFocusMode }: HomepageMod
           )}
           {tab === 'recent' && (
             <div className={styles.widgetSurface}>
-              {latest ? renderWidget(latest) : <EmptyLinkedWidget label="LATEST" />}
+              {diary ? renderWidget(diary) : <EmptyLinkedWidget label="DIARY" />}
             </div>
           )}
         </div>
