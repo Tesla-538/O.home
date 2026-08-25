@@ -11,9 +11,17 @@ export type CursorState = 'default' | 'pointer' | 'text' | 'active' | 'grab'
 
 export interface CursorEntry { imgId: string; hx: number; hy: number } // 핫스팟 (px)
 
+export interface CursorThemeInfo {
+  name: string;
+  importedAt: string;
+  files: Partial<Record<CursorState, string>>;
+  skipped: string[];
+}
+
 export interface CursorSettings {
   enabled: boolean;
   states: Partial<Record<CursorState, CursorEntry>>;
+  theme?: CursorThemeInfo;
 }
 
 export const CURSOR_STATE_LABEL: Record<CursorState, { label: string; desc: string }> = {

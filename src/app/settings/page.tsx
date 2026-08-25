@@ -2,6 +2,7 @@
 // 환경설정 (기획서 5장) — 0차: 「디자인」 탭(테마) 실동작.
 // 나머지 카테고리는 해당 기능 마일스톤에서 함께 구현.
 import React, { Suspense, useEffect, useRef, useState } from 'react';
+import JSZip from 'jszip';
 import { useAuth, inviteCode, setInviteCode } from '@/lib/auth';
 import { useMembers } from '@/lib/members';
 import { useTheme } from '@/lib/ThemeProvider';
@@ -30,7 +31,7 @@ import {
 import { FEATURES } from '@/lib/menu';
 import { useSiteDraft } from '@/lib/siteStore';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCursorSettings, CursorState, CURSOR_STATE_LABEL } from '@/lib/cursorStore';
+import { useCursorSettings, CursorState, CURSOR_STATE_LABEL, CursorEntry } from '@/lib/cursorStore';
 import { RelQuestionSet, RELQ_SEED, RELQ_KEY, CP_LABEL } from '@/lib/relqStore';
 import { SymbolInput } from '@/components/ui/SymbolInput';
 import { allBlobs, putBlobAs, useBlobUrl, getBlob } from '@/lib/blobStore';
@@ -1269,12 +1270,60 @@ async function fitCursorImage(f: File): Promise<{ blob: Blob; resized: boolean }
   }
 }
 
-/** 마우스 커서 탭 (5.1 v1.1) — 상태별 이미지 + 핫스팟 + 전체 on/off */
-function CursorRow({ state }: { state: CursorState }) {
-  const [st, patch] = useCursorSettings();
-  const toast = useToast();
-  const entry = st.states[state];
-  // .ani는 <img>로 표시되지 않아 첫 프레임(.cur)을 뽑아 미리보기 (v1.9)
+const CURSOR_STATES = Object.keys(CURSOR_STATE_LABEL) as CursorState[];
+const CURSOR_FILE_RE = /\.(ani|cur|png|gif|webp|ico)$/i;
+const CURSOR_MANIFEST_RE = /\.(inf|ini|theme)$/i;
+
+const CURSOR_MIME: Record<string, string> = {
+  ani: 'application/octet-stream', cur: 'application/octet-stream',
+  png: 'image/png', gif: 'image/gif', webp: 'image/webp', ico: 'image/x-icon',
+};
+
+const MANIFEST_KEYS: Record<string, CursorState> = {
+  arrow: 'default', hand: 'pointer', ibeam: 'text', appstarting: 'active', wait: 'active',
+  sizeall: 'grab', sizenwse: 'rsNwse', sizenesw: 'rsNesw', sizewe: 'rsEw', sizens: 'rsNs',
+};
+
+function cursorBase(path: string) {
+  return path.split(/[\\/]/).pop()?.toLowerCase() ?? path.toLowerCase();
+}
+
+/** install.inf가 없는 테마도 흔한 파일명 규칙으로 최대한 자동 판별한다. */
+function cursorStateFromName(path: string): { state: CursorState; score: number } | null {
+  const base = cursorBase(path).replace(/\.[^.]+$/, '');
+  const n = base.replace(/[\s_.()[\]{}-]+/g, '');
+  const hit = (words: string[]) => words.some(w => n.includes(w));
+  if (hit(['sizenwse', 'resizenwse', 'nwse', 'diag1', 'diagonal1', '대각선1', '우하향'])) return { state: 'rsNwse', score: 930 };
+  if (hit(['sizenesw', 'resizenesw', 'nesw', 'diag2', 'diagonal2', '대각선2', '좌하향'])) return { state: 'rsNesw', score: 930 };
+  if (hit(['sizewe', 'resizeew', 'resizewe', 'horizontal', 'horz', '가로조절', '좌우조절'])) return { state: 'rsEw', score: 920 };
+  if (hit(['sizens', 'resizens', 'verticalresize', 'vertresize', '세로조절', '상하조절'])) return { state: 'rsNs', score: 920 };
+  if (hit(['ibeam', 'textselect', 'text', '글자', '텍스트', '아이빔'])) return { state: 'text', score: 880 };
+  if (hit(['sizeall', 'move', 'drag', 'grab', '이동', '드래그', '십자'])) return { state: 'grab', score: 870 };
+  if (hit(['click', 'pressed', 'active', 'appstarting', 'working', 'busy', 'wait', '누름', '클릭', '작업', '대기'])) return { state: 'active', score: 860 };
+  if (hit(['hand', 'hyperlink', 'linkselect', 'link', 'pointer', '손가락', '링크', '포인터'])) return { state: 'pointer', score: 850 };
+  if (hit(['arrow', 'normalselect', 'normal', 'default', '일반', '기본', '화살표'])) return { state: 'default', score: 840 };
+  return null;
+}
+
+async function readCursorManifest(zip: JSZip) {
+  const hints = new Map<string, { state: CursorState; score: number }>();
+  const files = Object.values(zip.files).filter(f => !f.dir && CURSOR_MANIFEST_RE.test(f.name)).slice(0, 20);
+  for (const file of files) {
+    let text = '';
+    try { text = await file.async('string'); } catch { continue; }
+    for (const line of text.split(/\r?\n/)) {
+      const m = line.match(/^\s*(Arrow|Hand|IBeam|AppStarting|Wait|SizeAll|SizeNWSE|SizeNESW|SizeWE|SizeNS)\s*=\s*(.+)$/i);
+      if (!m) continue;
+      const matches = [...m[2].matchAll(/([^"'=,\\/]+\.(?:ani|cur|png|gif|webp|ico))/ig)];
+      const name = matches.at(-1)?.[1];
+      const state = MANIFEST_KEYS[m[1].toLowerCase()];
+      if (name && state) hints.set(cursorBase(name), { state, score: 2000 + (m[1].toLowerCase() === 'appstarting' ? 10 : 0) });
+    }
+  }
+  return hints;
+}
+
+function CursorThemePreview({ entry }: { entry?: CursorEntry }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!entry?.imgId) { setUrl(null); return; }
@@ -1289,66 +1338,115 @@ function CursorRow({ state }: { state: CursorState }) {
     });
     return () => { cancelled = true; if (obj) URL.revokeObjectURL(obj); };
   }, [entry?.imgId]);
-  const inputId = `curFile-${state}`;
-  const setEntry = (p: Partial<{ imgId: string; hx: number; hy: number }>) =>
-    patch({ states: { ...st.states, [state]: { imgId: entry?.imgId ?? '', hx: 0, hy: 0, ...entry, ...p } } });
   return (
-    <div className="set-row" style={{ flexWrap: 'wrap' }}>
-      <div className="l" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-        <span style={{
-          width: 36, height: 36, borderRadius: 9, border: '1.5px dashed var(--line)',
-          display: 'grid', placeItems: 'center', overflow: 'hidden', flexShrink: 0,
-        }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {url ? <img src={url} alt="" style={{ maxWidth: 32, maxHeight: 32 }} /> : <span style={{ color: 'var(--faint)', fontSize: 14 }}>✛</span>}
-        </span>
-        <div><b>{CURSOR_STATE_LABEL[state].label}</b><small>{CURSOR_STATE_LABEL[state].desc}</small></div>
-      </div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input id={inputId} type="file" accept="image/png,image/gif,image/webp,image/x-icon,.cur,.ani" style={{ display: 'none' }}
-          onChange={async e => {
-            const f = e.target.files?.[0];
-            e.target.value = '';
-            if (!f) return;
-            const { blob, resized } = await fitCursorImage(f);
-            setEntry({ imgId: await putBlob(blob) });
-            if (resized) toast('커서로 쓸 수 있게 128px 이내로 줄였습니다 (원본이 너무 컸음)');
-          }} />
-        <button className="btn btn-ghost" style={{ height: 33, padding: '0 12px', fontSize: 11 }}
-          onClick={() => document.getElementById(inputId)?.click()}>{entry ? 'CHANGE' : 'UPLOAD'}</button>
-        {entry && (
-          <>
-            <span className="cp-lb">핫스팟 X</span>
-            <KStep value={entry.hx} min={0} max={32} step={1} onChange={v => setEntry({ hx: v })} />
-            <span className="cp-lb">Y</span>
-            <KStep value={entry.hy} min={0} max={32} step={1} onChange={v => setEntry({ hy: v })} />
-            <button className="btn btn-ghost" style={{ height: 33, padding: '0 12px', fontSize: 11 }}
-              onClick={() => {
-                const next = { ...st.states };
-                delete next[state];
-                patch({ states: next });
-              }}>REMOVE</button>
-          </>
-        )}
-      </div>
-    </div>
+    <span style={{ width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'color-mix(in srgb,var(--glass-fill) 72%,transparent)', border: '1px solid var(--line)', overflow: 'hidden', flexShrink: 0 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {url ? <img src={url} alt="" style={{ maxWidth: 30, maxHeight: 30 }} /> : <span style={{ color: 'var(--faint)' }}>·</span>}
+    </span>
   );
 }
 
 function CursorPane() {
   const [st, patch] = useCursorSettings();
+  const toast = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [drag, setDrag] = useState(false);
+
+  const applyArchive = async (archive: File) => {
+    if (!/\.zip$/i.test(archive.name)) {
+      toast(/\.alz$/i.test(archive.name) ? 'ALZ는 브라우저에서 해제할 수 없습니다 — 알집에서 ZIP으로 다시 압축해 주세요' : 'ZIP 압축파일만 등록할 수 있습니다');
+      return;
+    }
+    if (archive.size > 50 * 1024 * 1024) { toast('ZIP은 50MB 이하만 등록할 수 있습니다'); return; }
+    setBusy(true);
+    try {
+      const zip = await JSZip.loadAsync(archive);
+      const entries = Object.values(zip.files).filter(f => !f.dir && !/(^|\/)__MACOSX\//i.test(f.name) && CURSOR_FILE_RE.test(f.name));
+      if (!entries.length) throw new Error('지원하는 커서 파일이 없습니다 (.cur · .ani · png · gif · webp · ico)');
+      if (Object.keys(zip.files).length > 600) throw new Error('파일이 너무 많은 ZIP입니다 (최대 600개)');
+
+      const hints = await readCursorManifest(zip);
+      const chosen = new Map<CursorState, { path: string; name: string; score: number }>();
+      for (const file of entries) {
+        const manifest = hints.get(cursorBase(file.name));
+        const guessed = manifest ?? cursorStateFromName(file.name);
+        if (!guessed) continue;
+        const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+        const formatBonus = ext === 'ani' ? 3 : ext === 'cur' ? 2 : 1;
+        const candidate = { path: file.name, name: cursorBase(file.name), score: guessed.score + formatBonus };
+        if (!chosen.has(guessed.state) || candidate.score > chosen.get(guessed.state)!.score) chosen.set(guessed.state, candidate);
+      }
+      // 설명 파일도 없고 이름도 전혀 일반적이지 않은 단일 파일은 기본 커서로 안전하게 적용한다.
+      if (!chosen.size && entries.length === 1) chosen.set('default', { path: entries[0].name, name: cursorBase(entries[0].name), score: 1 });
+      if (!chosen.size) throw new Error('파일 역할을 판별하지 못했습니다 — install.inf가 포함된 커서 ZIP을 사용해 주세요');
+
+      const next: Partial<Record<CursorState, CursorEntry>> = {};
+      const names: Partial<Record<CursorState, string>> = {};
+      const skipped = entries.filter(f => ![...chosen.values()].some(c => c.path === f.name)).map(f => cursorBase(f.name));
+      let total = 0;
+      for (const [state, candidate] of chosen) {
+        const raw = await zip.file(candidate.path)!.async('blob');
+        total += raw.size;
+        if (raw.size > 12 * 1024 * 1024 || total > 40 * 1024 * 1024) { skipped.push(candidate.name); continue; }
+        const ext = candidate.name.split('.').pop()?.toLowerCase() ?? '';
+        const file = new File([raw], candidate.name, { type: CURSOR_MIME[ext] ?? 'application/octet-stream' });
+        const { blob } = await fitCursorImage(file);
+        next[state] = { imgId: await putBlob(blob), hx: 0, hy: 0 };
+        names[state] = candidate.name;
+      }
+      if (!Object.keys(next).length) throw new Error('적용할 수 있는 커서 파일이 없습니다');
+      patch({
+        enabled: true,
+        states: next,
+        theme: { name: archive.name, importedAt: new Date().toISOString(), files: names, skipped: [...new Set(skipped)].slice(0, 80) },
+      });
+      toast(`${Object.keys(next).length}개 커서 역할을 자동 인식해 적용했습니다`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : '커서 ZIP을 분석하지 못했습니다');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="set-sec">
       <h3>마우스 커서</h3>
-      <div className="d">상태별 커서 등록 (png·gif·cur·ani — 32px 내외 권장) + 클릭 지점(핫스팟) — ani는 애니메이션 재생 · cur/ani는 내장 핫스팟 사용 · 등록하지 않은 상태는 기본 커서</div>
-      <p className="hint" style={{ margin: '-6px 0 10px' }}>
-        브라우저는 128px가 넘는 이미지를 커서로 쓰지 못합니다 — 큰 이미지를 올리면 자동으로 줄여서 등록합니다
-      </p>
+      <div className="d">커서 테마 ZIP 하나만 넣으면 파일명과 install.inf를 분석해 기본·버튼·텍스트·이동·크기조절 커서를 자동 배정합니다</div>
       <div className="set-row">
         <div className="l"><b>커스텀 커서 사용</b><small>끄면 전부 기본 커서로 (등록 이미지는 보존)</small></div>
         <KToggle checked={st.enabled} onChange={v => patch({ enabled: v })} />
       </div>
-      {(Object.keys(CURSOR_STATE_LABEL) as CursorState[]).map(s => <CursorRow key={s} state={s} />)}
+      <input ref={inputRef} type="file" accept=".zip,application/zip" style={{ display: 'none' }} onChange={e => {
+        const f = e.target.files?.[0]; e.target.value = ''; if (f) void applyArchive(f);
+      }} />
+      <div role="button" tabIndex={0} className={`dropzone${drag ? ' drag' : ''}`}
+        style={{ minHeight: 145, display: 'grid', placeContent: 'center', gap: 8, background: 'color-mix(in srgb,var(--glass-fill) 70%,transparent)' }}
+        onClick={() => !busy && inputRef.current?.click()}
+        onKeyDown={e => { if (!busy && (e.key === 'Enter' || e.key === ' ')) inputRef.current?.click(); }}
+        onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
+        onDrop={e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files?.[0]; if (f && !busy) void applyArchive(f); }}>
+        <b style={{ color: 'var(--ink)', fontSize: 14 }}>{busy ? 'ZIP 분석 및 적용 중…' : st.theme ? '다른 커서 테마 ZIP으로 교체' : '커서 테마 ZIP 선택'}</b>
+        <span>.cur · .ani · png · gif · webp · ico 자동 인식</span>
+        <small style={{ color: 'var(--faint)' }}>ZIP 최대 50MB · ALZ는 ZIP으로 다시 압축해 주세요</small>
+      </div>
+      {Object.keys(st.states).length > 0 && (
+        <div style={{ marginTop: 14, padding: 14, border: '1px solid var(--line)', borderRadius: 14, background: 'color-mix(in srgb,var(--glass-fill) 62%,transparent)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+            <div><b style={{ color: 'var(--ink)', fontSize: 12 }}>{st.theme?.name ?? '기존 커서 설정'}</b><div className="hint" style={{ margin: '3px 0 0' }}>{Object.keys(st.states).length}개 역할 적용됨</div></div>
+            <button className="btn btn-ghost" style={{ height: 32, padding: '0 12px', fontSize: 10 }} onClick={() => patch({ states: {}, theme: undefined })}>테마 제거</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 8 }}>
+            {CURSOR_STATES.filter(state => st.states[state]).map(state => (
+              <div key={state} style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0, padding: 8, borderRadius: 11, background: 'color-mix(in srgb,var(--dd-bg) 22%,transparent)' }}>
+                <CursorThemePreview entry={st.states[state]} />
+                <div style={{ minWidth: 0 }}><b style={{ color: 'var(--ink)', fontSize: 11 }}>{CURSOR_STATE_LABEL[state].label}</b><small style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--faint)' }}>{st.theme?.files[state] ?? '적용됨'}</small></div>
+              </div>
+            ))}
+          </div>
+          {!!st.theme?.skipped.length && <p className="hint" style={{ margin: '10px 0 0' }}>미사용 파일 {st.theme.skipped.length}개: {st.theme.skipped.slice(0, 5).join(', ')}{st.theme.skipped.length > 5 ? ' 외' : ''}</p>}
+        </div>
+      )}
     </div>
   );
 }
