@@ -9,22 +9,26 @@ import { primeSettings } from '@/lib/settingStore';
 type IntroPhase = 'checking' | 'hidden' | 'holding' | 'leaving';
 const INTRO_SESSION_KEY = 'ohome.home-intro.v2';
 
-function HomeIntro({ ready, leaving }: { ready: boolean; leaving: boolean }) {
+function HomeIntro({ ready, leaving, progress }: { ready: boolean; leaving: boolean; progress: number }) {
+  const complete = ready && progress >= 100;
   return (
     <div className={`boot-wait${ready ? ' is-ready' : ''}${leaving ? ' is-leaving' : ''}`}
-      role="status" aria-live="polite" aria-label={ready ? '홈페이지 준비 완료' : '홈페이지 불러오는 중'}>
+      role="status" aria-live="polite" aria-label={complete ? '홈페이지 준비 완료' : '홈페이지 불러오는 중'}>
       <div className="boot-aura" aria-hidden />
-      <div className="boot-glass">
-        <div className="boot-kicker"><span>01</span><span>PERSONAL ARCHIVE</span></div>
-        <div className="boot-brand" aria-hidden>O.HOME</div>
-        <p>YOUR ILLUSTRATED ARCHIVE</p>
-        <div className="boot-progress" role="progressbar" aria-label="홈페이지 준비"
-          aria-valuemin={0} aria-valuemax={100} aria-valuenow={ready ? 100 : 18}>
-          <i />
+      <div className="boot-glass" style={{ '--boot-progress': `${progress}%` } as React.CSSProperties}>
+        <div className="boot-identity">
+          <div className="boot-brand" aria-hidden>O.HOME</div>
+          <p>Your Illustrated Archive</p>
         </div>
-        <div className="boot-status">
-          <span>{ready ? 'ARCHIVE READY' : 'LOADING ARCHIVE'}</span>
-          <span>{ready ? '100' : '···'}</span>
+        <div className="boot-loading">
+          <div className="boot-status">
+            <span>{complete ? 'Archive Ready' : 'Loading Archive'}</span>
+            <strong>{progress}%</strong>
+          </div>
+          <div className="boot-progress" role="progressbar" aria-label="홈페이지 준비"
+            aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+            <i />
+          </div>
         </div>
       </div>
     </div>
@@ -34,6 +38,7 @@ function HomeIntro({ ready, leaving }: { ready: boolean; leaving: boolean }) {
 export function ServerBoot({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [intro, setIntro] = useState<IntroPhase>('checking');
+  const [progress, setProgress] = useState(0);
   // 대기가 길어질 때만 표시 — 빠르게 끝나는 경우 스피너가 깜빡이는 게 더 거슬린다
   const [slow, setSlow] = useState(false);
   useEffect(() => {
@@ -57,15 +62,30 @@ export function ServerBoot({ children }: { children: React.ReactNode }) {
     return () => { alive = false; clearTimeout(t); };
   }, []);
 
-  // 데이터가 준비되면 잠시 완성 상태를 보여 준 뒤 유리판이 녹듯 빠지고 홈을 선명하게 드러낸다.
+  // 실제 연결이 끝나기 전에는 92%까지만 진행하고, 준비 완료 뒤 100%까지 부드럽게 마무리한다.
+  // 임의 타이머가 먼저 100%를 표시해 버리는 가짜 완료 상태를 피한다.
   useEffect(() => {
-    if (!ready || intro !== 'holding') return;
-    const t = window.setTimeout(() => setIntro('leaving'), 820);
-    return () => window.clearTimeout(t);
+    if (intro === 'checking' || intro === 'hidden') return;
+    const target = ready ? 100 : 92;
+    const t = window.setInterval(() => {
+      setProgress(current => {
+        if (current >= target) return current;
+        const ratio = ready ? .22 : .075;
+        return Math.min(target, current + Math.max(1, Math.ceil((target - current) * ratio)));
+      });
+    }, 70);
+    return () => window.clearInterval(t);
   }, [ready, intro]);
+
+  // 100% 상태를 잠깐 보여 준 뒤 유리판이 녹듯 빠지고 홈을 선명하게 드러낸다.
+  useEffect(() => {
+    if (!ready || progress < 100 || intro !== 'holding') return;
+    const t = window.setTimeout(() => setIntro('leaving'), 320);
+    return () => window.clearTimeout(t);
+  }, [ready, progress, intro]);
   useEffect(() => {
     if (intro !== 'leaving') return;
-    const t = window.setTimeout(() => setIntro('hidden'), 880);
+    const t = window.setTimeout(() => setIntro('hidden'), 760);
     return () => window.clearTimeout(t);
   }, [intro]);
 
@@ -82,6 +102,6 @@ export function ServerBoot({ children }: { children: React.ReactNode }) {
   if (intro === 'checking') return null;
   // 홈 인트로를 쓰지 않는 화면은 기존처럼 느린 연결에서만 작은 대기 표시를 보인다.
   if (!ready && intro === 'hidden') return slow ? <div className="boot-compact"><i /></div> : null;
-  if (!ready) return <HomeIntro ready={false} leaving={false} />;
-  return <>{children}{intro !== 'hidden' && <HomeIntro ready leaving={intro === 'leaving'} />}</>;
+  if (!ready) return <HomeIntro ready={false} leaving={false} progress={progress} />;
+  return <>{children}{intro !== 'hidden' && <HomeIntro ready leaving={intro === 'leaving'} progress={progress} />}</>;
 }

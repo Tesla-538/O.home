@@ -735,72 +735,80 @@ a{color:inherit;text-decoration:none}
 }
 
 /* 설치 초기 화면 (v2.0) — 서버(Supabase) 연결 · 관리자 계정 · 설정 파일 / 백업 복원 */
-/* 첫 홈 진입 — 1:09식 간결한 에디토리얼 로딩을 O.HOME 리퀴드 글래스로 번역한다.
+/* 첫 홈 진입 — ambient mesh 위에 실제 굴절이 읽히는 O.HOME 리퀴드 글래스.
    새 탭의 / 최초 1회만 ServerBoot가 표시하며, 페이지 이동에는 관여하지 않는다. */
 .boot-wait{
   position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow:hidden;
-  padding:24px;pointer-events:none;color:var(--ink);
-  background:color-mix(in srgb,var(--bg-g2) 18%,transparent);
-  -webkit-backdrop-filter:blur(18px) saturate(118%) brightness(82%);
-  backdrop-filter:blur(18px) saturate(118%) brightness(82%);
-  transition:opacity .82s cubic-bezier(.16,1,.3,1),backdrop-filter .82s cubic-bezier(.16,1,.3,1);
-}
-.boot-aura{
-  position:absolute;width:min(760px,86vw);aspect-ratio:1;border-radius:50%;opacity:.72;
+  padding:24px;pointer-events:none;color:#f8f9fc;isolation:isolate;
   background:
-    radial-gradient(circle at 34% 28%,rgba(255,255,255,.32),transparent 24%),
-    radial-gradient(circle at 64% 62%,color-mix(in srgb,var(--accent-soft) 36%,transparent),transparent 52%);
-  filter:blur(42px);animation:boot-aura 2.8s ease-in-out infinite alternate;
+    radial-gradient(75vw 70vh at 24% 18%,color-mix(in srgb,var(--bg-g1) 72%,#27307a 28%),transparent 67%),
+    radial-gradient(62vw 68vh at 82% 78%,color-mix(in srgb,var(--accent) 40%,#6b235a 60%),transparent 72%),
+    linear-gradient(145deg,#090d1b 0%,#101225 46%,#1b0c1a 100%);
+  transition:opacity .72s cubic-bezier(.16,1,.3,1),transform .72s cubic-bezier(.16,1,.3,1),filter .72s cubic-bezier(.16,1,.3,1);
+}
+.boot-wait::before,.boot-wait::after{content:"";position:absolute;z-index:-2;border-radius:50%;pointer-events:none;filter:blur(72px);opacity:.72}
+.boot-wait::before{width:52vw;height:52vw;left:-12vw;top:-25vw;background:color-mix(in srgb,var(--bg-g1) 68%,#5361c8 32%);animation:boot-mesh-a 6s ease-in-out infinite alternate}
+.boot-wait::after{width:46vw;height:46vw;right:-12vw;bottom:-24vw;background:color-mix(in srgb,var(--accent) 54%,#75275e 46%);animation:boot-mesh-b 7.4s ease-in-out infinite alternate}
+.boot-aura{
+  position:absolute;z-index:-1;width:min(1120px,94vw);height:min(660px,76vh);border-radius:50%;opacity:.78;
+  background:
+    radial-gradient(ellipse at 31% 22%,rgba(141,168,255,.22),transparent 37%),
+    radial-gradient(ellipse at 71% 77%,color-mix(in srgb,var(--accent-soft) 32%,transparent),transparent 48%);
+  filter:blur(36px);animation:boot-aura 3.8s ease-in-out infinite alternate;
 }
 .boot-glass{
-  position:relative;width:min(520px,calc(100vw - 40px));padding:34px 38px 30px;border-radius:32px;
-  overflow:hidden;isolation:isolate;
+  position:relative;width:min(860px,calc(100vw - 48px));height:clamp(360px,54vh,460px);max-height:calc(100vh - 48px);
+  padding:clamp(48px,7vh,72px) clamp(32px,4.2vw,56px) clamp(35px,5vh,46px);border-radius:32px;
+  display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;isolation:isolate;
   background:
-    linear-gradient(145deg,rgba(255,255,255,.34),transparent 34%),
-    linear-gradient(180deg,rgba(255,255,255,.12),transparent 55%),
-    color-mix(in srgb,var(--panel-solid) 58%,transparent);
-  border:1px solid color-mix(in srgb,var(--glass-edge,#fff) 88%,transparent);
-  box-shadow:0 1px 0 rgba(255,255,255,.72) inset,0 -1px 0 rgba(255,255,255,.12) inset,
-    0 34px 90px rgba(2,7,17,.3),0 8px 24px rgba(2,7,17,.14);
-  -webkit-backdrop-filter:blur(38px) saturate(165%);backdrop-filter:blur(38px) saturate(165%);
-  animation:boot-glass-in .9s cubic-bezier(.16,1,.3,1) both;
+    linear-gradient(145deg,rgba(255,255,255,.11),transparent 31%),
+    linear-gradient(180deg,rgba(255,255,255,.035),rgba(6,8,17,.12)),
+    rgba(9,11,20,.48);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 -1px 0 rgba(255,255,255,.055) inset,
+    0 42px 110px rgba(0,0,0,.46),0 12px 38px rgba(0,0,0,.24);
+  -webkit-backdrop-filter:blur(42px) saturate(175%) brightness(82%);backdrop-filter:blur(42px) saturate(175%) brightness(82%);
+  animation:boot-glass-in 1s cubic-bezier(.16,1,.3,1) both;
+}
+.boot-glass::before{
+  content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent 4%,rgba(255,255,255,.22) 22%,rgba(255,255,255,.06) 54%,transparent 92%) top/100% 1px no-repeat,
+    radial-gradient(90% 65% at 15% 0%,rgba(255,255,255,.12),transparent 57%);
 }
 .boot-glass::after{
-  content:"";position:absolute;inset:-45% 58% 42% -28%;z-index:-1;transform:rotate(-16deg);
-  background:linear-gradient(115deg,transparent,rgba(255,255,255,.32),transparent);filter:blur(5px);
+  content:"";position:absolute;z-index:-1;left:-20%;top:-76%;width:73%;height:190%;transform:rotate(19deg);pointer-events:none;
+  background:linear-gradient(90deg,transparent 4%,rgba(255,255,255,.055) 46%,rgba(255,255,255,.15) 53%,transparent 78%);
+  filter:blur(1px);opacity:.72;animation:boot-sheen 4.8s ease-in-out infinite alternate;
 }
-.boot-kicker,.boot-status{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.boot-kicker{
-  font-size:9px;font-weight:650;letter-spacing:.22em;color:color-mix(in srgb,var(--ink) 65%,transparent);
-  animation:boot-copy-in .72s .14s cubic-bezier(.16,1,.3,1) both;
-}
-.boot-kicker span:first-child{font-variant-numeric:tabular-nums}
+.boot-identity{text-align:center;margin:auto 0;transform:translateY(-5px)}
 .boot-brand{
-  margin-top:42px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Pretendard,"Apple SD Gothic Neo",sans-serif;
-  font-size:clamp(42px,8vw,68px);font-weight:700;letter-spacing:-.055em;line-height:.92;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Pretendard,"Apple SD Gothic Neo","Segoe UI",sans-serif;
+  font-size:clamp(52px,7vw,78px);font-weight:700;letter-spacing:-.06em;line-height:.92;color:#fff;
+  text-shadow:0 0 28px rgba(255,255,255,.18),0 6px 28px rgba(0,0,0,.18);
   -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;
   animation:boot-brand-in .88s .08s cubic-bezier(.16,1,.3,1) both;
 }
-.boot-glass>p{
-  margin-top:13px;font-size:10px;font-weight:600;letter-spacing:.3em;color:color-mix(in srgb,var(--ink) 62%,transparent);
+.boot-identity>p{
+  margin-top:13px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Pretendard,"Apple SD Gothic Neo","Segoe UI",sans-serif;
+  font-size:clamp(14px,1.7vw,20px);font-weight:400;letter-spacing:-.015em;color:rgba(244,246,252,.64);
   animation:boot-copy-in .72s .22s cubic-bezier(.16,1,.3,1) both;
 }
-.boot-progress{
-  height:3px;margin-top:48px;border-radius:99px;overflow:hidden;background:color-mix(in srgb,var(--ink) 14%,transparent);
-  box-shadow:0 1px 0 rgba(255,255,255,.22) inset;
-}
+.boot-loading{width:100%;animation:boot-copy-in .72s .28s cubic-bezier(.16,1,.3,1) both}
+.boot-status{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:11px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Pretendard,"Apple SD Gothic Neo","Segoe UI",sans-serif;font-size:13px;letter-spacing:-.01em;color:rgba(239,242,250,.54)}
+.boot-status strong{color:#fff;font-weight:620;font-variant-numeric:tabular-nums;text-shadow:0 0 12px rgba(255,255,255,.3)}
+.boot-progress{position:relative;height:3px;border-radius:99px;overflow:visible;background:rgba(255,255,255,.105);box-shadow:0 1px 0 rgba(255,255,255,.075) inset}
 .boot-progress i{
-  display:block;width:22%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent-soft),rgba(255,255,255,.92));
-  box-shadow:0 0 15px color-mix(in srgb,var(--accent-soft) 72%,transparent);
-  animation:boot-progress-wait 1.05s ease-in-out infinite alternate;
+  position:relative;display:block;width:var(--boot-progress,0%);height:100%;border-radius:inherit;background:#fff;
+  box-shadow:0 0 8px rgba(255,255,255,.9),0 0 22px rgba(255,255,255,.36);
+  transition:width .18s cubic-bezier(.25,1,.5,1);
 }
-.boot-wait.is-ready .boot-progress i{width:100%;animation:boot-progress-ready .72s cubic-bezier(.16,1,.3,1) both}
-.boot-status{margin-top:11px;font-size:9px;font-weight:650;letter-spacing:.16em;color:color-mix(in srgb,var(--ink) 58%,transparent)}
-.boot-status span:last-child{font-variant-numeric:tabular-nums}
+.boot-progress i::after{content:"";position:absolute;right:-2px;top:50%;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 10px 2px rgba(255,255,255,.74);transform:translateY(-50%)}
+.boot-wait.is-ready .boot-glass{border-color:rgba(255,255,255,.25);box-shadow:0 1px 0 rgba(255,255,255,.58) inset,0 42px 110px rgba(0,0,0,.42),0 0 54px color-mix(in srgb,var(--accent-soft) 11%,transparent)}
 
-.boot-wait.is-leaving{opacity:0;-webkit-backdrop-filter:blur(0) saturate(100%);backdrop-filter:blur(0) saturate(100%)}
-.boot-wait.is-leaving .boot-glass{animation:boot-glass-out .8s cubic-bezier(.32,0,.4,1) both}
-.boot-wait.is-leaving .boot-aura{opacity:0;transform:scale(1.18);transition:.7s ease}
+.boot-wait.is-leaving{opacity:0;transform:scale(1.018);filter:blur(2px)}
+.boot-wait.is-leaving .boot-glass{animation:boot-glass-out .72s cubic-bezier(.32,0,.4,1) both}
+.boot-wait.is-leaving .boot-aura{opacity:0;transform:scale(1.16);transition:.68s ease}
 
 /* 인트로 뒤의 홈은 먼저 초점 밖에 두고 유리판 퇴장과 함께 선명하게 맞춘다. */
 html.ohome-intro-active #appMain{opacity:.72;filter:blur(13px) saturate(82%);transform:scale(1.025);transition:none}
@@ -822,19 +830,21 @@ html.ohome-intro-revealing .home-view-switch{
 .boot-compact{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;pointer-events:none}
 .boot-compact i{width:26px;height:26px;border-radius:50%;border:2px solid var(--line-dark,rgba(255,255,255,.16));border-top-color:var(--accent,#8ea2c6);animation:boot-spin .8s linear infinite}
 @keyframes boot-spin{to{transform:rotate(360deg)}}
-@keyframes boot-aura{to{transform:translate3d(3%,-2%,0) scale(1.06);opacity:.9}}
-@keyframes boot-glass-in{from{opacity:0;transform:translateY(22px) scale(.965);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+@keyframes boot-mesh-a{to{transform:translate3d(8vw,5vh,0) scale(1.08);opacity:.9}}
+@keyframes boot-mesh-b{to{transform:translate3d(-7vw,-4vh,0) scale(1.1);opacity:.88}}
+@keyframes boot-aura{to{transform:translate3d(2%,-1.5%,0) scale(1.045);opacity:.94}}
+@keyframes boot-sheen{to{transform:translate3d(9%,2%,0) rotate(19deg);opacity:.9}}
+@keyframes boot-glass-in{from{opacity:0;transform:translateY(24px) scale(.965);filter:blur(9px)}to{opacity:1;transform:none;filter:none}}
 @keyframes boot-brand-in{from{opacity:0;transform:translateY(18px);letter-spacing:-.09em;filter:blur(7px)}to{opacity:1;transform:none;letter-spacing:-.055em;filter:none}}
 @keyframes boot-copy-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-@keyframes boot-progress-wait{from{transform:translateX(-10%)}to{transform:translateX(280%)}}
-@keyframes boot-progress-ready{from{width:22%}to{width:100%}}
-@keyframes boot-glass-out{to{opacity:0;transform:translateY(-12px) scale(.975);filter:blur(9px)}}
+@keyframes boot-glass-out{to{opacity:0;transform:scale(1.018);filter:blur(8px)}}
 
 @media (max-width:620px){
-  .boot-wait{padding:18px;-webkit-backdrop-filter:blur(13px) saturate(112%) brightness(84%);backdrop-filter:blur(13px) saturate(112%) brightness(84%)}
-  .boot-glass{width:min(420px,calc(100vw - 32px));padding:28px 26px 25px;border-radius:27px;-webkit-backdrop-filter:blur(28px) saturate(145%);backdrop-filter:blur(28px) saturate(145%)}
-  .boot-brand{margin-top:34px;font-size:clamp(40px,15vw,58px)}
-  .boot-progress{margin-top:38px}
+  .boot-wait{padding:16px}
+  .boot-wait::before{width:115vw;height:115vw;left:-48vw;top:-42vw}.boot-wait::after{width:105vw;height:105vw;right:-50vw;bottom:-39vw}
+  .boot-glass{width:min(430px,calc(100vw - 32px));height:clamp(330px,52vh,400px);padding:46px 25px 30px;border-radius:28px;-webkit-backdrop-filter:blur(32px) saturate(158%) brightness(82%);backdrop-filter:blur(32px) saturate(158%) brightness(82%)}
+  .boot-brand{font-size:clamp(46px,15vw,62px)}
+  .boot-status{font-size:12px}
 }
 
 /* ==========================================================
