@@ -14,6 +14,7 @@ import { ProfileAvatarImage } from '@/components/ui/ProfileAvatarImage';
 import { navigatePage, refreshPage } from '@/lib/pageRefresh';
 import { useToast } from '@/components/ui/Toast';
 import { KToggle } from '@/components/ui/Kit';
+import { useTheme } from '@/lib/ThemeProvider';
 import {
   Notif, NotifType, NOTIF_EVENT, NOTIF_TYPE_LABEL,
   readNotifs, markRead, markAllRead, notifSettings, setNotifSetting,
@@ -32,6 +33,7 @@ export function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const toast = useToast();
+  const { state: themeState, setGlassTone } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuSet, , menuLoaded] = useMenuSettings(); // 메뉴 관리 (5.2) — 노출·순서·이름
@@ -192,6 +194,16 @@ export function TopBar() {
       {editOn && pathname === '/' && (
         <button className="btn btn-ghost edit-top-action"
           onClick={() => window.dispatchEvent(new Event('ohome-background-edit'))}>▧ 배경화면</button>
+      )}
+      {editOn && pathname === '/' && (
+        <div className="glass-tone-actions" aria-label="리퀴드 글래스 색상 모드">
+          <button className={themeState.vars.glassTone === 'light' ? 'on' : ''}
+            title="밝은 유리 UI로 즉시 저장"
+            onClick={() => { setGlassTone('light'); toast('라이트 유리 모드로 저장했습니다.'); }}>☀ 라이트</button>
+          <button className={themeState.vars.glassTone === 'dark' ? 'on' : ''}
+            title="어두운 유리 UI로 즉시 저장"
+            onClick={() => { setGlassTone('dark'); toast('다크 유리 모드로 저장했습니다.'); }}>☾ 다크</button>
+        </div>
       )}
       {/* 위젯 추가 — 그리드 토글 왼쪽 (v1.9 사용자 확정: 본문 하단 버튼 대체) */}
       {editOn && pathname === '/' && (

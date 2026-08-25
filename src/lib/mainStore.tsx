@@ -69,7 +69,7 @@ export function widgetLabel(widgets: WidgetConf[], w: WidgetConf): string {
 // 기본 배치는 절대 좌표로 못 박음 (v1.9 사용자 피드백) — 예전에는 흐름 렌더를 측정해 스냅샷했는데
 // 측정값이 위젯 최소 높이에 걸리면서 D-DAY·TO-DO가 간격 0으로 붙어버렸다. 세로 간격은 전부 10px.
 const DEFAULT_STATE: MainState = {
-  layoutVersion: 2,
+  layoutVersion: 3,
   layoutMode: 'fixed',
   widgets: [
     // 배포 기본 — 더미 콘텐츠 없이 빈 위젯으로 시작 (v1.9)
@@ -78,7 +78,7 @@ const DEFAULT_STATE: MainState = {
     { id: 'memo', type: 'memo', col: 1, enabled: true, tx: 0, ty: 0, ax: 0, ay: 0, w: 260, h: 80, settings: { text: '' } },
     { id: 'banner', type: 'banner', col: 2, enabled: true, fixed: true, tx: 0, ty: 0, ax: 276, ay: 0, w: 720, h: 380, settings: {} },
     { id: 'diary', type: 'diary', col: 2, enabled: true, tx: 0, ty: 0, ax: 276, ay: 396, w: 352, h: 150, settings: {} },
-    { id: 'latest', type: 'latest', col: 2, enabled: true, tx: 0, ty: 0, ax: 644, ay: 396, w: 352, h: 150, settings: {} },
+    { id: 'latest', type: 'latest', col: 2, enabled: true, tx: 0, ty: 0, ax: 644, ay: 396, w: 352, h: 220, settings: {} },
     // 회원정보창은 로그인 상태 내용(프로필+버튼)에 딱 맞는 높이 — 더 키우면 아래가 비어 보임 (v1.9 사용자 확정)
     { id: 'member', type: 'member', col: 3, enabled: true, fixed: true, tx: 0, ty: 0, ax: 1012, ay: 0, w: 280, h: 150, settings: {} },
     { id: 'dday', type: 'dday', col: 3, enabled: true, tx: 0, ty: 0, ax: 1012, ay: 166, w: 280, h: 90, settings: { items: [] } },
@@ -115,6 +115,18 @@ function migrateWideLayout(s: MainState): MainState {
         w: w.w == null ? w.w : Math.round(w.w * a.scale),
       };
     }),
+  };
+}
+
+/** 기존 LATEST 150px 프레임은 그림 실높이가 80px 남짓이라 원본 확인이 불가능했다. */
+function migrateLatestHeight(s: MainState): MainState {
+  if ((s.layoutVersion ?? 1) >= 3) return s;
+  return {
+    ...s,
+    layoutVersion: 3,
+    widgets: s.widgets.map(w => w.id === 'latest' && (w.h ?? 150) <= 160
+      ? { ...w, h: 220 }
+      : w),
   };
 }
 
@@ -164,7 +176,7 @@ export function MainStoreProvider({ children }: { children: React.ReactNode }) {
       const raw = getRawSetting(STORAGE_KEY);
       if (raw) {
         const source = JSON.parse(raw) as MainState;
-        const parsed = migrateWideLayout(source);
+        const parsed = migrateLatestHeight(migrateWideLayout(source));
         // 새 위젯 타입이 추가돼도 기본값과 병합 · 제거된 'image' 위젯은 걸러냄 (v1.9 — deco로 일원화)
         // 구 enabled:false(전체 숨김)는 삭제로 이관 — 토글은 이제 모바일 표시만 제어 (v1.9 사용자 확정)
         const removed = new Set(parsed.removedIds ?? []);
@@ -179,7 +191,7 @@ export function MainStoreProvider({ children }: { children: React.ReactNode }) {
         const merged = [...kept, ...DEFAULT_STATE.widgets.filter(w => !ids.has(w.id) && !removed.has(w.id))];
         const next = { ...DEFAULT_STATE, ...parsed, widgets: merged, removedIds: [...removed] };
         setState(next);
-        if ((source.layoutVersion ?? 1) < 2) setSetting(STORAGE_KEY, next);
+        if ((source.layoutVersion ?? 1) < 3) setSetting(STORAGE_KEY, next);
       }
     } catch { /* 기본값 사용 */ }
   }, []);

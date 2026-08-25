@@ -9,6 +9,8 @@ export type PointTone = 'dark' | 'light';
 
 /** 환경설정에서 항목별로 제어되는 테마 변수 (5.1 상세 설정 항목) */
 export interface ThemeVars {
+  // 홈 편집모드의 빠른 유리 톤. 배경 이미지·포인트색·배치는 유지하고 UI 표면만 전환한다.
+  glassTone?: 'light' | 'dark';
   // 배경 그라데이션 (시작색 → 끝색)
   bgG1: string; bgG2: string;
   // 배경 확장 (v1.9): 그라데이션/이미지 선택 · 그라데이션 각도 · 이미지(IndexedDB)와 블러
@@ -59,6 +61,40 @@ export interface ThemeVars {
   ddShadow?: number;
   // 드롭섀도우 색 (블록·드롭다운 공통, 기본 검정)
   shColor?: string;
+}
+
+/** 배경/포인트/크기는 보존하고, 액체 유리 UI의 명도만 일관되게 맞춘다. */
+export function withGlassTone(t: ThemeVars, tone: 'light' | 'dark'): ThemeVars {
+  if (tone === 'light') return {
+    ...t,
+    glassTone: 'light',
+    cardBg: '#f4f7fb', cardFg: '#1c2430',
+    topBg: '#edf3f8', topFg: '#566270', topHv: '#1c2430', topBrand: '#202936',
+    ddBg: '#f4f7fb', ddFg: '#283340', ddHv: '#1c2430',
+    pageTitle: '#202936', pageDesc: '#667382',
+    bgmBg: '#f4f7fb', bgmFg: '#202936', bgmIc: '#596675', bgmVol: '#344252',
+    sbThumb: '#aeb8c4', sbBd: '#dce2e9',
+    searchBg: '#f6f9fc', searchFg: '#202936', searchIc: '#778493', searchBd: '#cdd6df',
+    btnDark: '#344252', btnDarkFg: '#ffffff', btnDarkHv: '#465567',
+    memoBoard: '#e7edf3', memoBoardBd: '#cbd5df',
+    tabBg: '#e4eaf0', tabFg: '#5e6b79', tabOnBg: '#f9fbfd', tabOnFg: '#202936',
+    cropBg: '#e7edf3', shadow: 35, ddShadow: 35,
+  };
+  return {
+    ...t,
+    glassTone: 'dark',
+    cardBg: '#171d26', cardFg: '#f2f5f9',
+    topBg: '#121820', topFg: '#aeb9c6', topHv: '#ffffff', topBrand: '#f4f7fb',
+    ddBg: '#171d26', ddFg: '#d8dee7', ddHv: '#ffffff',
+    pageTitle: '#f2f5f9', pageDesc: '#a7b1bd',
+    bgmBg: '#171d26', bgmFg: '#f2f5f9', bgmIc: '#b7c1cd', bgmVol: '#edf2f7',
+    sbThumb: '#657181', sbBd: '#202834',
+    searchBg: '#202936', searchFg: '#f2f5f9', searchIc: '#98a4b2', searchBd: '#3c4858',
+    btnDark: '#e5eaf0', btnDarkFg: '#18202a', btnDarkHv: '#ffffff',
+    memoBoard: '#202936', memoBoardBd: '#3a4655',
+    tabBg: '#27313e', tabFg: '#b2bdc9', tabOnBg: '#e9eef4', tabOnFg: '#18202a',
+    cropBg: '#202936', shadow: 110, ddShadow: 110,
+  };
 }
 
 export interface ThemeState {

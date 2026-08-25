@@ -7,7 +7,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import {
   ThemeMode, PointTone, ThemeVars, ThemeState, ThemeStore, ThemePreset,
-  DARK_THEME, DEFAULT_THEME_STORE, defaultVarsFor, derivePointTheme, themeToCssVars,
+  DARK_THEME, DEFAULT_THEME_STORE, defaultVarsFor, derivePointTheme, themeToCssVars, withGlassTone,
 } from './theme';
 import { newId } from './postStore';
 import { getBlob } from './blobStore';
@@ -23,6 +23,7 @@ interface ThemeCtx {
   setPointAccent: (hex: string) => void;       // 포인트 자동: 변경 시에만 재파생
   setPointTone: (t: PointTone) => void;
   setVar: <K extends keyof ThemeVars>(key: K, value: ThemeVars[K]) => void; // 현재 모드의 수정본에 반영
+  setGlassTone: (tone: 'light' | 'dark') => void; // 홈 빠른 전환 — 배경은 보존, 즉시 저장
   resetMode: (m: ThemeMode) => void;           // 선택 리셋 — 해당 모드만 초기값으로
   save: () => void;                            // 드래프트 → 실제 저장 (localStorage + FOUC 맵)
   discard: () => void;                         // 드래프트 폐기 → 저장본으로 복귀
@@ -171,6 +172,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setGlassTone = useCallback((tone: 'light' | 'dark') => {
+    setDraft(d => {
+      const vars = withGlassTone(d.perMode[d.mode], tone);
+      const next: ThemeStore = {
+        ...d,
+        mode: 'custom',
+        perMode: { ...d.perMode, custom: vars },
+      };
+      setSaved(next);
+      try {
+        setSetting(STORAGE_KEY, next);
+        setSetting(CSS_KEY, themeToCssVars(vars));
+      } catch { /* quota 등 무시 */ }
+      return next;
+    });
+  }, []);
+
   const discard = useCallback(() => setDraft(saved), [saved]);
 
   // 프리셋 — 즉시 저장 (드래프트와 무관한 별도 보관함)
@@ -205,7 +223,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider value={{
-      state, dirty, setMode, setPointAccent, setPointTone, setVar,
+      state, dirty, setMode, setPointAccent, setPointTone, setVar, setGlassTone,
       resetMode, save, discard, presets, savePreset, applyPreset, removePreset, setPageTheme,
     }}>
       {children}
