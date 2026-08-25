@@ -46,24 +46,26 @@ function EmptyLinkedWidget({ label }: { label: string }) {
   );
 }
 
-function MovablePiece({ id, className = '', children, offset, dragging, onPointerDown, onPointerMove, onPointerEnd, onClickCapture }: {
+function MovablePiece({ id, className = '', children, offset, dragging, editing, onPointerDown, onPointerMove, onPointerEnd, onLongPress, onClickCapture }: {
   id: MobilePieceId;
   className?: string;
   children: ReactNode;
   offset: { x: number; y: number };
   dragging: boolean;
+  editing: boolean;
   onPointerDown: (id: MobilePieceId, e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerEnd: (e: ReactPointerEvent<HTMLDivElement>) => void;
+  onLongPress: (id: MobilePieceId, e: React.MouseEvent<HTMLDivElement>) => void;
   onClickCapture: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
   const style = { '--piece-x': `${offset.x}px`, '--piece-y': `${offset.y}px` } as CSSProperties;
   return (
-    <div className={`${styles.piece} ${className} ${dragging ? styles.dragging : ''}`}
+    <div className={`${styles.piece} ${className} ${editing ? styles.editing : ''} ${dragging ? styles.dragging : ''}`}
       style={style} data-home-piece={id}
       onPointerDown={e => onPointerDown(id, e)} onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd} onPointerCancel={onPointerEnd}
-      onContextMenu={e => e.preventDefault()} onClickCapture={onClickCapture}>
+      onContextMenu={e => onLongPress(id, e)} onClickCapture={onClickCapture}>
       {children}
     </div>
   );
@@ -77,6 +79,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
   const [tab, setTab] = useState<ToolTab>('today');
   const [mobileLayout, setMobileLayout] = useState<MobileLayout>(DEFAULT_MOBILE_LAYOUT);
   const [dragging, setDragging] = useState<MobilePieceId | null>(null);
+  const [layoutEditing, setLayoutEditing] = useState(false);
   const mobileLayoutRef = useRef(mobileLayout);
   const suppressClickUntil = useRef(0);
   const dragRef = useRef<{
@@ -137,15 +140,18 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
       originX: current.x, originY: current.y, active: false,
       rect: element.getBoundingClientRect(), element, timer: 0,
     };
-    draft.timer = window.setTimeout(() => {
+    dragRef.current = draft;
+    const activate = () => {
       if (dragRef.current !== draft) return;
       draft.active = true;
       draft.rect = element.getBoundingClientRect();
       try { element.setPointerCapture(draft.pointerId); } catch { /* 합성 입력·취소된 포인터도 배치는 계속 허용 */ }
+      setLayoutEditing(true);
       setDragging(id);
       navigator.vibrate?.(18);
-    }, 460);
-    dragRef.current = draft;
+    };
+    if (layoutEditing) activate();
+    else draft.timer = window.setTimeout(activate, 460);
   };
 
   const movePiece = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -184,6 +190,14 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     e.stopPropagation();
   };
 
+  const enterLayoutEditing = (_id: MobilePieceId, e: React.MouseEvent<HTMLDivElement>) => {
+    if (!window.matchMedia('(max-width:620px)').matches) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setLayoutEditing(true);
+    navigator.vibrate?.(18);
+  };
+
   const resetMobileLayout = () => {
     mobileLayoutRef.current = DEFAULT_MOBILE_LAYOUT;
     setMobileLayout(DEFAULT_MOBILE_LAYOUT);
@@ -191,16 +205,17 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
   };
 
   const movableProps = (id: MobilePieceId) => ({
-    id, offset: mobileLayout[id], dragging: dragging === id,
+    id, offset: mobileLayout[id], dragging: dragging === id, editing: layoutEditing,
     onPointerDown: beginMove, onPointerMove: movePiece, onPointerEnd: endMove,
-    onClickCapture: blockDraggedClick,
+    onLongPress: enterLayoutEditing, onClickCapture: blockDraggedClick,
   });
 
   return (
     <div className={styles.shell} aria-label="관리자 홈페이지 모드">
       <div className={styles.mobileHint}>
-        <span>길게 눌러 배치</span>
+        <span>{layoutEditing ? '배치 조정 중' : '길게 눌러 배치'}</span>
         <button type="button" onClick={resetMobileLayout}>초기화</button>
+        {layoutEditing && <button type="button" onClick={() => setLayoutEditing(false)}>완료</button>}
       </div>
 
       <div className={styles.primary}>
