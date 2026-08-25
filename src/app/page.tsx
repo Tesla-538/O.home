@@ -47,6 +47,7 @@ export default function MainPage() {
   const [bgOpen, setBgOpen] = useState(false);
   const [homeView, setHomeView] = useState<HomeView>('focus');
   const [dockOpen, setDockOpen] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const bgFileRef = React.useRef<HTMLInputElement>(null);
   const bgPreview = useBlobUrl(theme.state.vars.bgImageId);
 
@@ -60,6 +61,14 @@ export default function MainPage() {
   useEffect(() => {
     if (editOn) setDockOpen(null);
   }, [editOn]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width:620px)');
+    const sync = () => setIsMobile(media.matches);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
 
   useEffect(() => {
     const close = (e: KeyboardEvent) => { if (e.key === 'Escape') setDockOpen(null); };
@@ -103,6 +112,8 @@ export default function MainPage() {
   const leftDock = dockable.filter(w => w.col !== 3);
   const rightDock = dockable.filter(w => w.col === 3);
   const openDockWidget = dockable.find(w => w.id === dockOpen) ?? null;
+  const focusActive = !editOn && homeView === 'focus' && !isMobile;
+  const showDashboard = editOn || homeView === 'dashboard' || isMobile;
   const byCol = (c: 1 | 2 | 3) => enabled.filter(w => w.col === c);
   const mOrder = (id: string) => {
     const i = state.mobileOrder.indexOf(id);
@@ -199,9 +210,9 @@ export default function MainPage() {
     : undefined;
 
   return (
-    <section className={`page page-main-wrap ${!editOn && homeView === 'focus' ? 'focus-home' : 'dashboard-home'}`}
+    <section className={`page page-main-wrap ${focusActive ? 'focus-home' : 'dashboard-home'}`}
       onClick={() => { setCtx(null); setDockOpen(null); }}>
-      {!editOn && homeView === 'focus' && (
+      {focusActive && (
         <div className="focus-stage" aria-label="일러스트 감상 화면">
           {dock('left', leftDock)}
           {dock('right', rightDock)}
@@ -216,7 +227,7 @@ export default function MainPage() {
         </div>
       )}
 
-      {!editOn && (
+      {!editOn && !isMobile && (
         <button className="home-view-switch" onClick={e => {
           e.stopPropagation();
           changeHomeView(homeView === 'focus' ? 'dashboard' : 'focus');
@@ -225,7 +236,7 @@ export default function MainPage() {
         </button>
       )}
 
-      <div ref={gridRef} className={`main-grid ${absMode ? 'abs' : ''} ${gridOn ? 'gridlines' : ''}`}
+      {showDashboard && <div ref={gridRef} className={`main-grid ${absMode ? 'abs' : ''} ${gridOn ? 'gridlines' : ''}`}
         style={{ marginTop: 12, ...(canvasH ? { height: canvasH } : {}) }}>
         {absMode ? (
           /* 절대배치 캔버스 — 위젯 전부 직속, 좌표는 각자 ax/ay */
@@ -256,7 +267,7 @@ export default function MainPage() {
             </div>
           </>
         )}
-      </div>
+      </div>}
 
       {/* 우클릭 컨텍스트 메뉴 (겹침 순서 v1.8 · 그리드 무시 v1.9 · 설정·삭제 v1.9 사용자 확정) */}
       {ctx && (() => {
