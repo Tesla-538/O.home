@@ -7,7 +7,7 @@ import { useMainStore } from '@/lib/mainStore';
 import { useSched, SchedEvent, SchedState, eventColor, eventOnDate } from '@/lib/schedStore';
 import { DdayWidget, TodoWidget } from '@/components/main/widgets';
 import { Modal, useConfirmDelete } from '@/components/ui/Modal';
-import { KInput, KTextarea, KSelect, KCheck, KDate, KToggle } from '@/components/ui/Kit';
+import { KInput, KTextarea, KSelect, KCheck, KDate } from '@/components/ui/Kit';
 import { ColorField } from '@/components/ui/ColorField';
 import { DragList } from '@/components/ui/DragList';
 import { EditableDesc, PageTitle } from '@/components/ui/PageText';
@@ -37,7 +37,7 @@ export default function CalPage() {
   const toast = useToast();
   const {
     st, loaded, addEvent, importEvents, updateEvent, removeEvent,
-    patchCat, addCat, removeCat, setCats, setAllowMember, reorderOn, replaceState,
+    patchCat, addCat, removeCat, setCats, reorderOn, replaceState,
   } = useSched();
   const { state: mainState, updateWidget } = useMainStore();
   const del = useConfirmDelete();
@@ -166,7 +166,9 @@ export default function CalPage() {
 
   if (!loaded) return <section className="page" />;
 
-  const canWrite = isAdmin || (st.allowMember && !!user);
+  // 일정·TO-DO·D-DAY는 개인 일정 데이터다. 로그인 여부나 과거의
+  // 「회원 등록 허용」 설정과 무관하게 관리자만 변경할 수 있다.
+  const canWrite = isAdmin;
   const canSee = (e: SchedEvent) =>
     isAdmin || e.visibility === 'public' || (e.visibility === 'member' && !!user);
 
@@ -183,6 +185,7 @@ export default function CalPage() {
   };
 
   const importCalendar = async (file: File) => {
+    if (!isAdmin) return;
     try {
       const parsed = parseIcs(await file.text());
       if (parsed.length === 0) { toast('읽을 수 있는 일정이 없습니다'); return; }
@@ -205,6 +208,7 @@ export default function CalPage() {
   };
 
   const disconnectGoogle = async () => {
+    if (!isAdmin) return;
     if (!window.confirm('Google 캘린더 자동 연동을 해제할까요? 기존 일정은 삭제되지 않습니다.')) return;
     const res = await fetch('/api/google-calendar/status', { method: 'DELETE', headers: await googleAuthHeaders() });
     if (!res.ok) { toast('연결을 해제하지 못했습니다'); return; }
@@ -214,6 +218,7 @@ export default function CalPage() {
   };
 
   const connectGoogle = async () => {
+    if (!isAdmin) return;
     try {
       const res = await fetch('/api/google-calendar/connect', { method: 'POST', headers: await googleAuthHeaders() });
       const body = await res.json() as { url?: string; error?: string };
@@ -264,6 +269,7 @@ export default function CalPage() {
     setEvOpen(true);
   };
   const saveEvent = () => {
+    if (!isAdmin) return;
     if (!f.title.trim()) { toast('일정 제목을 입력해 주세요'); return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(f.start)) { toast('시작 날짜를 선택해 주세요'); return; }
     const ev = {
@@ -278,6 +284,7 @@ export default function CalPage() {
   };
   // 일정 → D-day 승격 (4.12) — 메인 D-DAY 위젯 항목으로 추가
   const promoteDday = () => {
+    if (!isAdmin) return;
     const w = mainState.widgets.find(x => x.type === 'dday');
     if (!w) return;
     const items = (w.settings.items as { title: string; date: string }[]) ?? [];
@@ -539,7 +546,7 @@ export default function CalPage() {
           )} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
           <button className="btn btn-ghost" style={{ padding: '5px 12px', fontSize: 11 }} onClick={addCat}>＋ ADD</button>
-          <KToggle label="회원도 일정 등록 허용" checked={st.allowMember} onChange={setAllowMember} />
+          <span className="hint">일정 변경은 관리자 계정만 가능합니다</span>
         </div>
       </Modal>
 

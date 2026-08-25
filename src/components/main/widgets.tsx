@@ -237,7 +237,7 @@ export function DdayWidget({ conf }: { conf: WidgetConf }) {
   // 'serif'는 폰트 라이브러리의 실제(잠금) 폰트라 편집기의 기본 옵션과 값이 늘 일치한다
   const dFontId = (conf.settings.fontId as string | undefined) ?? 'serif';
   const dColor = conf.settings.color as string | undefined;
-  useEditEvent(conf.id, () => setOpen(true));   // 편집모드 우클릭 → 설정 (v1.9)
+  useEditEvent(conf.id, () => { if (isAdmin) setOpen(true); });   // 편집모드 우클릭 → 설정 (v1.9)
   return (
     <div className="panel widget" style={{ cursor: isAdmin ? 'pointer' : undefined }}
       onClick={e => { if ((e.target as HTMLElement).closest('.modal-ov')) return; if (isAdmin && !editOn) setOpen(true); }}>
@@ -277,7 +277,7 @@ export function TodoWidget({ conf, date }: { conf: WidgetConf; date?: string }) 
   // 본인은 전체 기록을 보고, 방문자는 오늘 이후의 공개 범위 항목만 본다.
   const items = st.events.filter(e =>
     (isAdmin || shownDate >= today) && canSee(e.visibility) && eventOnDate(e, shownDate));
-  useEditEvent(conf.id, () => setOpen(true));   // 편집모드 우클릭 → 설정 (v1.9)
+  useEditEvent(conf.id, () => { if (isAdmin) setOpen(true); });   // 편집모드 우클릭 → 설정 (v1.9)
 
   return (
     <div className="panel widget" style={{ cursor: isAdmin ? 'pointer' : undefined }}
@@ -290,14 +290,14 @@ export function TodoWidget({ conf, date }: { conf: WidgetConf; date?: string }) 
       {items.map(it => (
         <div className={`todo-row ${it.done ? 'done' : ''}`} key={it.id}>
           <label className="k-check" style={!isAdmin ? { pointerEvents: 'none' } : undefined}>
-            <input type="checkbox" checked={!!it.done}
-              onChange={ev => updateEvent(it.id, { done: ev.target.checked })} />
+            <input type="checkbox" checked={!!it.done} disabled={!isAdmin}
+              onChange={ev => { if (isAdmin) updateEvent(it.id, { done: ev.target.checked }); }} />
             <span className="box" /><span className="todo-title">{it.title}</span>
           </label>
           <button type="button" className={`todo-record ${it.keepRecord ? 'on' : ''}`}
             disabled={!isAdmin} aria-pressed={!!it.keepRecord}
             title={it.keepRecord ? '완료해도 캘린더에 기록으로 남습니다' : '완료 후에도 캘린더에 남기기'}
-            onClick={() => updateEvent(it.id, { keepRecord: !it.keepRecord })}>
+            onClick={() => { if (isAdmin) updateEvent(it.id, { keepRecord: !it.keepRecord }); }}>
             {it.keepRecord ? '기록 ON' : '기록'}
           </button>
         </div>

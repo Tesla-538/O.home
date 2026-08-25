@@ -14,6 +14,7 @@ import { KSelect } from '@/components/ui/Kit';
 import { ColorField } from '@/components/ui/ColorField';
 import { useFonts } from '@/lib/fontStore';
 import { useSched, eventOnDate } from '@/lib/schedStore';
+import { useAuth } from '@/lib/auth';
 
 /* ---------- MEMO · 자유 텍스트 — settings.text (+ freetext: 폰트·크기·색·정렬, v1.9) ---------- */
 export function TextSettingEditor({ conf }: { conf: WidgetConf }) {
@@ -66,6 +67,7 @@ export function TextSettingEditor({ conf }: { conf: WidgetConf }) {
 export interface DdaySetItem { title: string; date: string; plusOne?: boolean }
 
 export function DdayEditor({ conf }: { conf: WidgetConf }) {
+  const { isAdmin } = useAuth();
   const { updateWidget } = useMainStore();
   const toast = useToast();
   const { fonts, familyOf } = useFonts();
@@ -80,6 +82,8 @@ export function DdayEditor({ conf }: { conf: WidgetConf }) {
     updateWidget(conf.id, { settings: { ...conf.settings, ...patch } }, { persist: true });
   const [nt, setNt] = useState('');
   const [nd, setNd] = useState('');
+
+  if (!isAdmin) return <p className="hint">D-DAY는 관리자 계정에서만 변경할 수 있습니다.</p>;
 
   const add = () => {
     if (!nt.trim()) { toast('제목을 입력해 주세요'); return; }
@@ -134,6 +138,7 @@ export function DdayEditor({ conf }: { conf: WidgetConf }) {
 export interface TodoSetItem { text: string; done: boolean; date?: string } // 구버전 이관 타입
 
 export function TodoEditor({ conf: _conf, date }: { conf: WidgetConf; date?: string }) {
+  const { isAdmin } = useAuth();
   const { st, addEvent, updateEvent, removeEvent, reorderOn } = useSched();
   const [newText, setNewText] = useState('');
   const now = new Date();
@@ -141,6 +146,8 @@ export function TodoEditor({ conf: _conf, date }: { conf: WidgetConf; date?: str
   const [newDate, setNewDate] = useState(date ?? today);
   useEffect(() => { if (date) setNewDate(date); }, [date]);
   const items = st.events.filter(e => !date || eventOnDate(e, date));
+
+  if (!isAdmin) return <p className="hint">TO-DO는 관리자 계정에서만 변경할 수 있습니다.</p>;
 
   const add = () => {
     if (!newText.trim() || !newDate) return;
