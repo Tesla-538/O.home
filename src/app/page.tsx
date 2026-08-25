@@ -321,13 +321,14 @@ export default function MainPage() {
         topbarHost,
       )}
 
-      {!editOn && !isMobile && (
+      {!editOn && !isMobile && topbarHost && createPortal(
         <button className="home-view-switch" disabled={viewMotion !== 'idle'} onClick={e => {
           e.stopPropagation();
           changeHomeView(homeView === 'dashboard' ? 'focus' : 'dashboard');
         }}>
           {homeView === 'dashboard' ? '✦ 감상 모드' : '▦ 전체 위젯'}
-        </button>
+        </button>,
+        document.body,
       )}
 
       {showDashboard && <div ref={gridRef} className={`main-grid ${absMode ? 'abs' : ''} ${gridOn ? 'gridlines' : ''}`}
