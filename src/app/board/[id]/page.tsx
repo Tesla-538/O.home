@@ -116,7 +116,7 @@ export default function BoardDetailPage() {
   );
 
   return (
-    <section className="page">
+    <section className="page board-detail-page">
       <div className="page-head">
         <PageTitle href={boardHref(board.id)}>{boardTitle}</PageTitle>
         <p>{post.notice ? '공지 · ' : `${post.category} · `}{post.author} · {fmtDate(post.date)}</p>
@@ -131,11 +131,11 @@ export default function BoardDetailPage() {
         </div>
       </div>
 
-      <div className="panel" style={{ padding: '26px 28px' }}>
-        <h2 style={{ fontSize: 19, marginBottom: 4 }}>
+      <article className="panel board-detail-card">
+        <h2 className="board-detail-title">
           {post.secret && '🔒 '}{post.title}
         </h2>
-        <p style={{ fontSize: 11, color: 'var(--faint)', marginBottom: 18 }}>
+        <p className="board-detail-meta">
           {post.author} · {fmtDate(post.date)} · {post.mode.toUpperCase()}
         </p>
 
@@ -152,12 +152,12 @@ export default function BoardDetailPage() {
           <div className="post-body" style={post.fold && !open ? { minHeight: 120, filter: 'blur(6px)' } : undefined}
             dangerouslySetInnerHTML={{ __html: html }} />
         </div>
-      </div>
+      </article>
 
       {/* 댓글 + 대댓글 */}
-      <div className="panel" style={{ padding: 0, marginTop: 16 }}>
-        <div style={{ padding: '16px 18px' }}>
-          <h4 style={{ fontSize: 11.5, letterSpacing: '.12em', color: 'var(--faint)', marginBottom: 13 }}>
+      <section className="panel board-comments-card">
+        <div className="board-comments-list">
+          <h4 className="board-comments-title">
             COMMENTS {post.comments.length > 0 && <span style={{ color: 'var(--accent)' }}>{post.comments.length}</span>}
           </h4>
           {roots.map(c => (
@@ -167,7 +167,7 @@ export default function BoardDetailPage() {
             </React.Fragment>
           ))}
           {post.comments.length === 0 && (
-            <p style={{ fontSize: 12, color: 'var(--faint)' }}>첫 댓글을 남겨보세요</p>
+            <p className="board-comments-empty">첫 댓글을 남겨보세요</p>
           )}
         </div>
         {canComment ? (
@@ -184,11 +184,11 @@ export default function BoardDetailPage() {
             </div>
           </div>
         ) : (
-          <div style={{ padding: '12px 18px', borderTop: '1px solid var(--line)', fontSize: 11.5, color: 'var(--faint)' }}>
+          <div className="board-comments-locked">
             {user ? '이 게시판은 관리자만 댓글을 쓸 수 있습니다' : '댓글은 로그인 후 작성할 수 있습니다'}
           </div>
         )}
-      </div>
+      </section>
 
       {/* 게스트 댓글 삭제 — 작성 시 입력한 비밀번호 확인 */}
       <Modal open={pwAsk !== null} onClose={() => setPwAsk(null)} small title="댓글 삭제"

@@ -2028,6 +2028,44 @@ body.edit-on .main-grid.gridlines .wgt{outline-offset:0}
 /* 게스트 모드 댓글 입력 — 구분선 아래에 [게스트 바 / 입력줄] 세로 배치 (로드뷰 어색함 수정) */
 .cmt-input.guest{flex-direction:column;align-items:stretch}
 .cmt-input.guest .ci-row{display:flex;gap:8px}
+/* 게시글 상세 — 배경 일러스트는 유지하고 읽기 영역 안쪽에만 대비가 높은 유리층을 둔다 */
+.board-detail-page .board-detail-card,
+.board-detail-page .board-comments-card{
+  background:
+    linear-gradient(145deg,color-mix(in srgb,#fff 20%,transparent),transparent 35%),
+    color-mix(in srgb,var(--panel-solid) 82%,transparent);
+  border-color:color-mix(in srgb,var(--glass-edge) 94%,transparent);
+  box-shadow:0 1px 0 color-mix(in srgb,#fff 62%,transparent) inset,0 18px 48px rgba(3,8,18,.22);
+  -webkit-backdrop-filter:blur(30px) saturate(135%) brightness(.84);
+  backdrop-filter:blur(30px) saturate(135%) brightness(.84);
+}
+.board-detail-page .board-detail-card{padding:26px 28px}
+.board-detail-title{margin:0 0 5px;font-size:calc(20px*var(--fs,1));font-weight:760;line-height:1.42;letter-spacing:-.018em;color:var(--ink);text-shadow:0 1px 8px color-mix(in srgb,var(--panel-solid) 80%,transparent)}
+.board-detail-meta{margin:0 0 20px;font-size:calc(11.5px*var(--fs,1));font-weight:650;letter-spacing:.025em;color:color-mix(in srgb,var(--ink) 70%,transparent)}
+.board-detail-page .post-body{color:color-mix(in srgb,var(--ink) 96%,transparent);font-size:calc(15px*var(--fs,1));font-weight:500;line-height:1.82;text-shadow:0 1px 9px color-mix(in srgb,var(--panel-solid) 70%,transparent)}
+.board-detail-page .post-body a{
+  display:inline-block;max-width:100%;padding:3px 8px;border:1px solid color-mix(in srgb,var(--accent) 48%,var(--glass-edge));border-radius:7px;
+  background:color-mix(in srgb,var(--panel-solid) 72%,transparent);color:color-mix(in srgb,var(--accent) 76%,var(--ink));
+  font-weight:650;line-height:1.45;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere;
+  text-shadow:none;box-shadow:0 1px 0 color-mix(in srgb,#fff 50%,transparent) inset;
+}
+.board-detail-page .post-body blockquote{color:color-mix(in srgb,var(--ink) 80%,transparent)}
+.board-comments-card{padding:0;margin-top:16px}
+.board-comments-list{padding:17px 19px 18px}
+.board-comments-title{margin:0 0 13px;font-size:calc(11.5px*var(--fs,1));font-weight:800;letter-spacing:.12em;color:color-mix(in srgb,var(--ink) 76%,transparent)}
+.board-comments-empty,.board-comments-locked{font-size:calc(12px*var(--fs,1));font-weight:540;color:color-mix(in srgb,var(--ink) 68%,transparent)}
+.board-comments-locked{padding:12px 18px;border-top:1px solid color-mix(in srgb,var(--glass-edge-soft) 72%,transparent)}
+.board-detail-page .cmt{color:var(--ink)}
+.board-detail-page .cmt small{color:color-mix(in srgb,var(--ink) 63%,transparent)}
+.board-detail-page .cmt p{color:color-mix(in srgb,var(--ink) 92%,transparent);font-weight:500}
+.board-detail-page .cmt-input{border-top-color:color-mix(in srgb,var(--glass-edge-soft) 74%,transparent);background:color-mix(in srgb,var(--panel-solid) 36%,transparent)}
+.board-detail-page .cmt-input .k-input{background:color-mix(in srgb,var(--panel-solid) 78%,transparent);color:var(--ink);border-color:color-mix(in srgb,var(--glass-edge) 88%,transparent)}
+.board-detail-page .cmt-input .k-input::placeholder{color:color-mix(in srgb,var(--ink) 58%,transparent);opacity:1}
+@media(max-width:620px){
+  .board-detail-page .board-detail-card{padding:21px 18px}
+  .board-detail-page .post-body{font-size:calc(14px*var(--fs,1))}
+  .board-comments-list{padding:16px}
+}
 /* 글쓰기 */
 .write-grid{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
 /* 폼 하단 버튼 줄 — 평소엔 우측 카드 폭을 채우고, 1열로 접히면 버튼 크기 그대로 우측 정렬 (v1.9 사용자 확정) */
