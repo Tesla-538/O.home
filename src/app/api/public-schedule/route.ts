@@ -5,6 +5,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const SCHED_KEY = 'ohome.sched.v1';
+type ViewerRole = 'guest' | 'member' | 'admin';
 
 function occursOn(event: CalendarEvent, date: string): boolean {
   const end = event.end && event.end >= event.start ? event.end : event.start;
@@ -17,7 +18,7 @@ function occursOn(event: CalendarEvent, date: string): boolean {
     : md >= startMd || md <= endMd;
 }
 
-function visitorEvent(event: CalendarEvent): CalendarEvent {
+function sharedEvent(event: CalendarEvent): CalendarEvent {
   return {
     id: event.id,
     title: event.title,
@@ -25,9 +26,8 @@ function visitorEvent(event: CalendarEvent): CalendarEvent {
     end: event.end,
     catId: event.catId,
     color: event.color,
-    // 오늘의 비공개 일정은 제목·날짜만 보이고 상세 메모는 공개하지 않는다.
-    memo: event.visibility === 'public' ? event.memo : undefined,
-    visibility: 'public',
+    memo: event.memo,
+    visibility: event.visibility,
     repeat: event.repeat,
     kind: event.kind,
     done: event.done,
@@ -35,9 +35,26 @@ function visitorEvent(event: CalendarEvent): CalendarEvent {
   };
 }
 
-/** 방문자는 오늘 일정 전체와 오늘 이후 공개 일정만 읽는다. 과거·상세 비공개 정보는 내려보내지 않는다. */
-export async function GET() {
+async function viewerRole(request: Request): Promise<ViewerRole> {
+  const bearer = request.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!bearer) return 'guest';
+  const sb = serviceSupabase();
+  const { data: auth } = await sb.auth.getUser(bearer);
+  if (!auth.user) return 'guest';
+  const { data } = await sb.from('profiles').select('role').eq('id', auth.user.id).maybeSingle();
+  return data?.role === 'admin' ? 'admin' : 'member';
+}
+
+function canSee(event: CalendarEvent, role: ViewerRole): boolean {
+  if (role === 'admin') return true;
+  if (event.visibility === 'public') return true;
+  return role === 'member' && event.visibility === 'member';
+}
+
+/** 공개범위에 맞는 일정만 전달한다. 비관리자에게는 과거 기록과 Google 내부 식별자를 내리지 않는다. */
+export async function GET(request: Request) {
   try {
+    const role = await viewerRole(request);
     const { data, error } = await serviceSupabase()
       .from('site_settings').select('value').eq('key', SCHED_KEY).maybeSingle();
     if (error) throw error;
@@ -45,11 +62,11 @@ export async function GET() {
     const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const events = (state.events ?? []).flatMap(event => {
       if (event.done && !event.keepRecord) return [];
-      const todayEvent = occursOn(event, today);
+      if (!canSee(event, role)) return [];
+      if (role === 'admin') return [event];
       const end = event.end && event.end >= event.start ? event.end : event.start;
-      const visiblePublicEvent = event.visibility === 'public'
-        && (event.repeat === 'yearly' || end >= today);
-      return todayEvent || visiblePublicEvent ? [visitorEvent(event)] : [];
+      const currentOrFuture = occursOn(event, today) || event.repeat === 'yearly' || end >= today;
+      return currentOrFuture ? [sharedEvent(event)] : [];
     });
     return Response.json({
       state: { events, cats: state.cats ?? [], allowMember: false, todoMigrated: true },

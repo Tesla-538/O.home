@@ -45,6 +45,19 @@ const LOCAL_ONLY = new Set<string>([
   'ohome.notif.v1',      // 알림 목록은 사람별
 ]);
 
+async function fetchScheduleProjection(): Promise<unknown> {
+  const be = backend();
+  let token: string | null = null;
+  try { token = await be?.accessToken() ?? null; } catch { /* 비로그인으로 요청 */ }
+  const res = await fetch('/api/public-schedule', {
+    cache: 'no-store',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!res.ok) throw new Error(`schedule projection ${res.status}`);
+  const body = await res.json() as { state?: unknown };
+  return body.state;
+}
+
 /**
  * 서버로 올라가는 사이트 설정 키 — **이 목록에 있는 것만 설정으로 취급한다.**
  * `ohome.*` 전체를 훑으면 글 목록 같은 콘텐츠 키(ohome.board.v1 등)까지 설정으로 오인해
@@ -72,9 +85,8 @@ export async function primeSettings(): Promise<void> {
     const schedKey = 'ohome.sched.v1';
     if (!Object.prototype.hasOwnProperty.call(all, schedKey)) {
       try {
-        const res = await fetch('/api/public-schedule', { cache: 'no-store' });
-        const body = await res.json() as { state?: unknown };
-        all[schedKey] = body.state ?? { events: [], cats: [], allowMember: false, todoMigrated: true };
+        all[schedKey] = await fetchScheduleProjection()
+          ?? { events: [], cats: [], allowMember: false, todoMigrated: true };
       } catch {
         all[schedKey] = { events: [], cats: [], allowMember: false, todoMigrated: true };
       }
@@ -120,10 +132,7 @@ export async function refreshScheduleSetting(): Promise<void> {
 
   if (next == null) {
     try {
-      const res = await fetch('/api/public-schedule', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`public schedule ${res.status}`);
-      const body = await res.json() as { state?: unknown };
-      next = body.state ?? empty;
+      next = await fetchScheduleProjection() ?? empty;
     } catch {
       next = empty;
     }

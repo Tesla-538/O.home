@@ -453,13 +453,16 @@ export default function CalPage() {
             {!f.useCatColor && <ColorField value={f.color || '#8a8f98'} onChange={hex => setF(s => ({ ...s, color: hex }))} />}
           </div>
           <KTextarea placeholder="메모 (선택)" value={f.memo} onChange={e => setF(s => ({ ...s, memo: e.target.value }))} />
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-            <KSelect minWidth={120} value={f.visibility} onChange={v => setF(s => ({ ...s, visibility: v as SchedEvent['visibility'] }))}
+          <div className="cal-visibility-row">
+            <div className="cal-visibility-field">
+              <span>공개 범위</span>
+              <KSelect minWidth={210} maxWidth={240} value={f.visibility} onChange={v => setF(s => ({ ...s, visibility: v as SchedEvent['visibility'] }))}
               options={[
-                { value: 'public', label: '전체공개' },
-                { value: 'member', label: '멤버공개' },
-                { value: 'private', label: '나만보기' },
+                { value: 'public', label: '전체공개 · 누구나 열람' },
+                { value: 'member', label: '멤버공개 · 로그인 회원' },
+                { value: 'private', label: '나만보기 · 관리자 전용' },
               ]} />
+            </div>
             <KCheck label="매년 반복" checked={f.yearly} onChange={v => setF(s => ({ ...s, yearly: v }))} />
             {isAdmin && f.title.trim() && f.start && (
               <>
