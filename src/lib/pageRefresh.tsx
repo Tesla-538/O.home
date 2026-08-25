@@ -42,7 +42,7 @@ function makeRouteGhost() {
   return ghost;
 }
 
-/** 기존 화면과 새 화면을 겹쳐 전환한다. 이동 시작 전 빈 대기 구간을 만들지 않는다. */
+/** 기존 화면은 클릭 즉시 퇴장시키고, 새 화면은 라우트 커밋 직후 진입시킨다. */
 export function navigatePage(router: RouterLike, href: string) {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduced) { router.push(href); return; }
@@ -64,10 +64,11 @@ export function navigatePage(router: RouterLike, href: string) {
       activeGhost?.remove();
       activeGhost = null;
       navTimer = null;
-    }, 1380);
+    }, 920);
   };
 
-  // 이동은 즉시 시작하지만 기존 화면은 새 DOM이 준비될 때까지 완전히 유지한다.
+  // 이동과 기존 화면의 퇴장을 동시에 시작한다. 이전 화면을 커밋까지 고정하면
+  // 느린 정지 화면이 한 번 더 나타나는 것처럼 보여 전환이 끊겨 보인다.
   router.push(href);
   const started = performance.now();
   const waitForCommit = () => {
