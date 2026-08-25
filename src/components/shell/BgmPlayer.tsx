@@ -282,10 +282,11 @@ export function BgmPlayer() {
       <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
         <div ref={holderRef} />
       </div>
-      <div className="disc" style={{
-        animationPlayState: playing ? 'running' : 'paused',
-        ...(trackArtUrl ? { '--disc-image': `url(${JSON.stringify(trackArtUrl)})` } : {}),
-      } as React.CSSProperties} />
+      <div className="disc" style={{ animationPlayState: playing ? 'running' : 'paused' }}>
+        {/* 곡별 일러스트는 배경 혼합이 아니라 실제 이미지 층으로 표시한다.
+            그래야 작은 레코드에서도 무지개 효과에 묻히지 않고 원본이 또렷하게 보인다. */}
+        {trackArtUrl && <img className="disc-art" src={trackArtUrl} alt="" />}
+      </div>
       <div className="title">
         {/* 흐르는 글씨는 제목만 — 설명은 항상 말줄임 (정신없지 않게) */}
         <Marquee className="tt" text={track?.title ?? ''} active={playing} />
