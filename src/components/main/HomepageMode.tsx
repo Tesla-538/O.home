@@ -8,11 +8,12 @@ import { useAuth } from '@/lib/auth';
 import styles from './HomepageMode.module.css';
 
 type ToolTab = 'today' | 'memo' | 'recent';
-type MobilePieceId = 'clock' | 'search' | 'banner' | 'latest' | 'tools';
-type MobileLayout = Record<MobilePieceId, { x: number; y: number }>;
+type PieceId = 'clock' | 'search' | 'banner' | 'latest' | 'tools';
+type LayoutOffsets = Record<PieceId, { x: number; y: number }>;
 
 const MOBILE_LAYOUT_KEY = 'ohome.homeLayout.mobile.v1';
-const DEFAULT_MOBILE_LAYOUT: MobileLayout = {
+const DESKTOP_LAYOUT_KEY = 'ohome.homeLayout.desktop.v1';
+const DEFAULT_LAYOUT: LayoutOffsets = {
   clock: { x: 0, y: 0 }, search: { x: 0, y: 0 }, banner: { x: 0, y: 0 },
   latest: { x: 0, y: 0 }, tools: { x: 0, y: 0 },
 };
@@ -47,16 +48,16 @@ function EmptyLinkedWidget({ label }: { label: string }) {
 }
 
 function MovablePiece({ id, className = '', children, offset, dragging, editing, onPointerDown, onPointerMove, onPointerEnd, onLongPress, onClickCapture }: {
-  id: MobilePieceId;
+  id: PieceId;
   className?: string;
   children: ReactNode;
   offset: { x: number; y: number };
   dragging: boolean;
   editing: boolean;
-  onPointerDown: (id: MobilePieceId, e: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerDown: (id: PieceId, e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
   onPointerEnd: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onLongPress: (id: MobilePieceId, e: React.MouseEvent<HTMLDivElement>) => void;
+  onLongPress: (id: PieceId, e: React.MouseEvent<HTMLDivElement>) => void;
   onClickCapture: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
   const style = { '--piece-x': `${offset.x}px`, '--piece-y': `${offset.y}px` } as CSSProperties;
@@ -77,17 +78,18 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
   const [now, setNow] = useState<Date | null>(null);
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<ToolTab>('today');
-  const [mobileLayout, setMobileLayout] = useState<MobileLayout>(DEFAULT_MOBILE_LAYOUT);
-  const [dragging, setDragging] = useState<MobilePieceId | null>(null);
+  const [layout, setLayout] = useState<LayoutOffsets>(DEFAULT_LAYOUT);
+  const [dragging, setDragging] = useState<PieceId | null>(null);
   const [layoutEditing, setLayoutEditing] = useState(false);
-  const mobileLayoutRef = useRef(mobileLayout);
+  const layoutRef = useRef(layout);
+  const layoutKeyRef = useRef(DESKTOP_LAYOUT_KEY);
   const suppressClickUntil = useRef(0);
   const dragRef = useRef<{
-    id: MobilePieceId; pointerId: number; startX: number; startY: number;
+    id: PieceId; pointerId: number; startX: number; startY: number;
     originX: number; originY: number; timer: number; active: boolean;
     rect: DOMRect; element: HTMLDivElement;
   } | null>(null);
-  mobileLayoutRef.current = mobileLayout;
+  layoutRef.current = layout;
 
   useEffect(() => {
     const update = () => setNow(new Date());
@@ -97,11 +99,26 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(MOBILE_LAYOUT_KEY);
-      if (saved) setMobileLayout({ ...DEFAULT_MOBILE_LAYOUT, ...JSON.parse(saved) });
-    } catch { /* 기본 모바일 배치 유지 */ }
+    const media = window.matchMedia('(max-width:620px)');
+    const loadLayout = () => {
+      const key = media.matches ? MOBILE_LAYOUT_KEY : DESKTOP_LAYOUT_KEY;
+      layoutKeyRef.current = key;
+      try {
+        const saved = localStorage.getItem(key);
+        const next = saved ? { ...DEFAULT_LAYOUT, ...JSON.parse(saved) } : DEFAULT_LAYOUT;
+        layoutRef.current = next;
+        setLayout(next);
+      } catch {
+        layoutRef.current = DEFAULT_LAYOUT;
+        setLayout(DEFAULT_LAYOUT);
+      }
+      setLayoutEditing(false);
+      setDragging(null);
+    };
+    loadLayout();
+    media.addEventListener('change', loadLayout);
     return () => {
+      media.removeEventListener('change', loadLayout);
       if (dragRef.current) window.clearTimeout(dragRef.current.timer);
     };
   }, []);
@@ -130,11 +147,11 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     window.location.assign(`https://www.google.com/search?q=${encodeURIComponent(value)}`);
   };
 
-  const beginMove = (id: MobilePieceId, e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!window.matchMedia('(max-width:620px)').matches || e.button !== 0) return;
+  const beginMove = (id: PieceId, e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
     if (dragRef.current) window.clearTimeout(dragRef.current.timer);
     const element = e.currentTarget;
-    const current = mobileLayoutRef.current[id];
+    const current = layoutRef.current[id];
     const draft = {
       id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY,
       originX: current.x, originY: current.y, active: false,
@@ -163,11 +180,11 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     const dx = Math.min(window.innerWidth - 12 - drag.rect.right, Math.max(12 - drag.rect.left, rawDx));
     const dy = Math.min(window.innerHeight - 12 - drag.rect.bottom, Math.max(64 - drag.rect.top, rawDy));
     const next = {
-      ...mobileLayoutRef.current,
+      ...layoutRef.current,
       [drag.id]: { x: Math.round(drag.originX + dx), y: Math.round(drag.originY + dy) },
     };
-    mobileLayoutRef.current = next;
-    setMobileLayout(next);
+    layoutRef.current = next;
+    setLayout(next);
   };
 
   const endMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -178,7 +195,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
       e.preventDefault();
       suppressClickUntil.current = Date.now() + 380;
       try { drag.element.releasePointerCapture(drag.pointerId); } catch { /* 이미 해제됨 */ }
-      try { localStorage.setItem(MOBILE_LAYOUT_KEY, JSON.stringify(mobileLayoutRef.current)); } catch { /* 현재 세션만 유지 */ }
+      try { localStorage.setItem(layoutKeyRef.current, JSON.stringify(layoutRef.current)); } catch { /* 현재 세션만 유지 */ }
     }
     dragRef.current = null;
     setDragging(null);
@@ -190,22 +207,21 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     e.stopPropagation();
   };
 
-  const enterLayoutEditing = (_id: MobilePieceId, e: React.MouseEvent<HTMLDivElement>) => {
-    if (!window.matchMedia('(max-width:620px)').matches) return;
+  const enterLayoutEditing = (_id: PieceId, e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setLayoutEditing(true);
     navigator.vibrate?.(18);
   };
 
-  const resetMobileLayout = () => {
-    mobileLayoutRef.current = DEFAULT_MOBILE_LAYOUT;
-    setMobileLayout(DEFAULT_MOBILE_LAYOUT);
-    try { localStorage.removeItem(MOBILE_LAYOUT_KEY); } catch { /* 무시 */ }
+  const resetLayout = () => {
+    layoutRef.current = DEFAULT_LAYOUT;
+    setLayout(DEFAULT_LAYOUT);
+    try { localStorage.removeItem(layoutKeyRef.current); } catch { /* 무시 */ }
   };
 
-  const movableProps = (id: MobilePieceId) => ({
-    id, offset: mobileLayout[id], dragging: dragging === id, editing: layoutEditing,
+  const movableProps = (id: PieceId) => ({
+    id, offset: layout[id], dragging: dragging === id, editing: layoutEditing,
     onPointerDown: beginMove, onPointerMove: movePiece, onPointerEnd: endMove,
     onLongPress: enterLayoutEditing, onClickCapture: blockDraggedClick,
   });
@@ -214,7 +230,7 @@ export function HomepageMode({ widgets }: HomepageModeProps) {
     <div className={styles.shell} aria-label="관리자 홈페이지 모드">
       <div className={styles.mobileHint}>
         <span>{layoutEditing ? '배치 조정 중' : '길게 눌러 배치'}</span>
-        <button type="button" onClick={resetMobileLayout}>초기화</button>
+        <button type="button" onClick={resetLayout}>초기화</button>
         {layoutEditing && <button type="button" onClick={() => setLayoutEditing(false)}>완료</button>}
       </div>
 

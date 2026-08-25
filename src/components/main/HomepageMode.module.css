@@ -8,9 +8,15 @@
 }
 .primary{min-width:0;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(28px,4vh,44px) 0 2px}
 .hero{width:min(620px,76%)}
-.piece{position:relative;min-width:0}
+.piece{position:relative;min-width:0;transform:translate3d(var(--piece-x),var(--piece-y),0);touch-action:none;transition:transform .24s var(--motion-spring),filter .2s ease;will-change:transform}
+.piece::after{content:"";position:absolute;inset:-5px;z-index:30;border:1px solid transparent;border-radius:calc(var(--radius) + 8px);pointer-events:none;transition:.18s}
+.editing::after{border-color:color-mix(in srgb,var(--glass-edge-soft) 66%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--glass-control) 28%,transparent)}
+.dragging{z-index:80;filter:drop-shadow(0 20px 34px rgba(2,7,17,.34));transition:none}
+.dragging::after{border-color:color-mix(in srgb,var(--accent-soft) 78%,#fff);background:color-mix(in srgb,var(--accent) 7%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 14%,transparent),0 0 24px color-mix(in srgb,var(--accent-soft) 28%,transparent)}
 .toolsPiece{align-self:start;min-width:0}
-.mobileHint,.mobileBanner{display:none}
+.mobileBanner{display:none}
+.mobileHint{position:absolute;top:12px;left:50%;z-index:90;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border:1px solid color-mix(in srgb,var(--glass-edge-soft) 66%,transparent);border-radius:999px;color:var(--top-brand);background:color-mix(in srgb,var(--dd-bg) 54%,transparent);box-shadow:0 1px 0 rgba(255,255,255,.24) inset,0 8px 24px rgba(2,7,17,.16);-webkit-backdrop-filter:blur(22px) saturate(155%);backdrop-filter:blur(22px) saturate(155%);font-size:10px;font-weight:700;letter-spacing:.05em;transform:translateX(-50%)}
+.mobileHint button{padding:5px 9px;border-radius:999px;color:var(--top-brand);background:color-mix(in srgb,var(--glass-control-hover) 58%,transparent);font-size:10px;font-weight:700}
 .greeting{margin:0 0 4px;font-size:clamp(18px,2vw,27px);font-weight:620;letter-spacing:-.035em;color:var(--top-brand);text-shadow:0 2px 3px rgba(0,0,0,.58),0 7px 26px rgba(0,0,0,.34)}
 .clockRow{display:flex;align-items:flex-end;gap:18px;margin-bottom:22px;color:var(--top-brand)}
 .clock{font-size:clamp(54px,7.4vw,92px);font-weight:310;line-height:1;letter-spacing:-.055em;font-variant-numeric:tabular-nums;text-shadow:0 2px 4px rgba(0,0,0,.62),0 10px 32px rgba(0,0,0,.3)}
@@ -93,10 +99,5 @@
   .mobileBanner :global(.banner){height:190px}
   .mobileHint{position:absolute;top:12px;left:50%;z-index:12;display:flex;align-items:center;gap:8px;padding:5px 7px 5px 11px;border:1px solid color-mix(in srgb,var(--glass-edge-soft) 66%,transparent);border-radius:999px;color:var(--top-brand);background:color-mix(in srgb,var(--dd-bg) 54%,transparent);box-shadow:0 1px 0 rgba(255,255,255,.24) inset,0 8px 24px rgba(2,7,17,.16);-webkit-backdrop-filter:blur(22px) saturate(155%);backdrop-filter:blur(22px) saturate(155%);font-size:9px;font-weight:700;letter-spacing:.05em;transform:translateX(-50%)}
   .mobileHint button{padding:5px 8px;border-radius:999px;color:var(--top-brand);background:color-mix(in srgb,var(--glass-control-hover) 58%,transparent);font-size:9px;font-weight:700}
-  .piece{transform:translate3d(var(--piece-x),var(--piece-y),0);touch-action:none;transition:transform .24s var(--motion-spring),filter .2s ease;will-change:transform}
-  .piece::after{content:"";position:absolute;inset:-5px;z-index:30;border:1px solid transparent;border-radius:calc(var(--radius) + 8px);pointer-events:none;transition:.18s}
-  .editing::after{border-color:color-mix(in srgb,var(--glass-edge-soft) 66%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--glass-control) 28%,transparent)}
-  .dragging{z-index:80;filter:drop-shadow(0 20px 34px rgba(2,7,17,.34));transition:none}
-  .dragging::after{border-color:color-mix(in srgb,var(--accent-soft) 78%,#fff);background:color-mix(in srgb,var(--accent) 7%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 14%,transparent),0 0 24px color-mix(in srgb,var(--accent-soft) 28%,transparent)}
 }
 @media (prefers-reduced-motion:reduce){.shell{animation:none}.search{transition:none}}
