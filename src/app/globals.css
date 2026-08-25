@@ -186,7 +186,7 @@ a{color:inherit;text-decoration:none}
 }
 .bgm .disc{
   position:relative;isolation:isolate;overflow:hidden;
-  width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
+  width:40px;height:40px;flex:0 0 40px;border-radius:50%;display:grid;place-items:center;
   background-image:
     radial-gradient(circle at 31% 24%,rgba(255,255,255,.64),transparent 21%),
     var(--bg-image,none),
@@ -197,7 +197,10 @@ a{color:inherit;text-decoration:none}
   box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 0 0 1px rgba(5,8,14,.28),0 4px 12px rgba(2,5,12,.3);
   animation:spin 7s linear infinite;
 }
-.bgm .disc-art{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;pointer-events:none}
+.bgm .disc-art{
+  position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;pointer-events:none;
+  filter:saturate(1.16) contrast(1.14) brightness(1.03);transform:scale(1.025);
+}
 /* LP 홈과 홀로그램 반사광 — 일러스트 위에서도 회전 방향이 보이게 한다. */
 .bgm .disc::before{
   content:"";position:absolute;inset:2px;z-index:1;border-radius:50%;pointer-events:none;
@@ -206,7 +209,9 @@ a{color:inherit;text-decoration:none}
     conic-gradient(from 12deg,transparent 0 12%,rgba(255,90,150,.34) 18%,transparent 27% 43%,rgba(80,220,255,.36) 51%,transparent 61% 76%,rgba(255,222,92,.3) 84%,transparent 94%);
   mix-blend-mode:screen;opacity:.62;
 }
-.bgm .disc::after{content:"";position:relative;z-index:2;width:9px;height:9px;border-radius:50%;background:#14161a;border:2px solid rgba(235,243,255,.72);box-shadow:0 0 0 1px rgba(5,8,13,.45),0 1px 4px rgba(0,0,0,.55)}
+/* 등록한 일러스트 위에서는 LP 무늬를 흔적만 남긴다 — 작은 썸네일의 얼굴·선이 뿌옇게 씻기지 않게. */
+.bgm .disc:has(.disc-art)::before{opacity:.2}
+.bgm .disc::after{content:"";position:relative;z-index:2;width:8px;height:8px;border-radius:50%;background:#11141a;border:1.5px solid rgba(235,243,255,.76);box-shadow:0 0 0 1px rgba(5,8,13,.42),0 1px 3px rgba(0,0,0,.48)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .bgm-art-thumb{width:38px;height:38px;flex:0 0 38px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--soft);border:1px solid var(--line);color:var(--muted);font-size:18px;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:.16s}
 .bgm-art-thumb:hover{transform:scale(1.06);border-color:var(--accent)}
@@ -230,6 +235,7 @@ a{color:inherit;text-decoration:none}
   width:48px;height:48px;padding:6px;gap:0;
   justify-content:center;cursor:var(--cur-pointer,pointer);overflow:hidden;
 }
+.bgm.folded .disc{width:34px;height:34px;flex-basis:34px}
 .bgm.folded .title,.bgm.folded .ctrl,.bgm.folded .vol,.bgm.folded .fold-btn,.bgm.folded .bgm-list{display:none}
 .bgm-list{position:absolute;bottom:calc(100% + 10px);right:0;width:min(280px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 100px));overflow:auto;background:var(--bgm-bg);border:1px solid var(--line-dark);border-radius:14px;padding:8px;display:none;box-shadow:var(--sh-dd)}
 /* 왼쪽 배치일 때 목록 팝업도 왼쪽 기준으로 — 화면 밖으로 밀리지 않게 */
