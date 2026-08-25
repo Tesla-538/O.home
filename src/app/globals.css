@@ -921,6 +921,7 @@ body.main-fixed:not(.edit-on) #appMain{overflow-x:hidden}
   -webkit-backdrop-filter:blur(30px) saturate(150%);
   backdrop-filter:blur(30px) saturate(150%);
 }
+.dock-popover>.panel h4{color:color-mix(in srgb,var(--dd-fg) 88%,transparent)}
 .dock-popover>.panel .more,.dock-popover>.panel small{color:var(--sub)}
 .dock-popover .widget{max-height:calc(100vh - 160px);overflow:auto;overscroll-behavior:contain;scrollbar-width:none}
 .dock-popover .widget::-webkit-scrollbar{display:none}
