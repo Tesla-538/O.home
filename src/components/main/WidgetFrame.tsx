@@ -16,6 +16,9 @@ export function WidgetFrame({ conf, mobileOrder, children, className, style, onC
   const { editOn, gridOn, updateWidget } = useMainStore();
   // 메인은 항상 고정 캔버스 (v1.9 — 반응형 옵션 제거, PC/모바일 두 가지만) — 저장 크기 상시 유지
   const useSize = true;
+  // TO-DO는 보기 모드에서 항목 수가 달라지므로 저장된 고정 높이 대신 내용 높이를 쓴다.
+  // 편집 모드에서는 기존 리사이즈 동작을 유지해 배치 기준 크기를 직접 조절할 수 있다.
+  const autoHeight = conf.type === 'todo' && !editOn;
   const ref = useRef<HTMLDivElement>(null);
   // Shift+드래그 중앙 정렬에서 폭이 20px 배수가 아니라 딱 가운데가 안 될 때의 안내 (v1.9 사용자 요청)
   const [centerAsk, setCenterAsk] = useState<{ w: number; canvasW: number; grow: number; shrink: number } | null>(null);
@@ -161,7 +164,8 @@ export function WidgetFrame({ conf, mobileOrder, children, className, style, onC
     <div
       ref={ref}
       data-wid={conf.id}
-      className={`wgt ${useSize && conf.w != null ? 'sized' : ''} ${conf.mOff ? 'wgt-hide-m' : ''} ${className ?? ''}`}
+      data-wtype={conf.type}
+      className={`wgt ${useSize && conf.w != null && !autoHeight ? 'sized' : ''} ${autoHeight ? 'wgt-auto-height' : ''} ${conf.mOff ? 'wgt-hide-m' : ''} ${className ?? ''}`}
       style={{
         ...style,
         order: mobileOrder,
@@ -179,7 +183,7 @@ export function WidgetFrame({ conf, mobileOrder, children, className, style, onC
             ].join(' ').trim() || undefined,
           }),
         width: useSize && conf.w != null ? conf.w : undefined,
-        height: useSize && conf.h != null ? conf.h : undefined,
+        height: autoHeight ? 'auto' : (useSize && conf.h != null ? conf.h : undefined),
         zIndex: conf.z,
       }}
       onPointerDown={onPointerDown}

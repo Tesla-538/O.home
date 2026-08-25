@@ -269,6 +269,7 @@ export default function MainPage() {
   // 기존 열 흐름 렌더 위치를 1회 스냅샷해 마이그레이션. 모바일은 CSS가 흐름 스택으로 복원.
   const absMode = enabled.length > 0 && enabled.every(w => w.ax != null && w.ay != null);
   const gridRef = React.useRef<HTMLDivElement>(null);
+  const [measuredCanvasH, setMeasuredCanvasH] = useState(0);
   useEffect(() => {
     if (absMode) return;
     const t = setTimeout(() => {
@@ -288,8 +289,33 @@ export default function MainPage() {
     }, 250);   // 폰트·이미지 로드 후 안정된 레이아웃에서 측정
     return () => clearTimeout(t);
   }, [absMode, enabled.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 절대배치 캔버스에서도 내용에 따라 커지는 TO-DO의 실제 하단을 스크롤 범위에 포함한다.
+  // ResizeObserver라서 체크리스트가 추가·삭제되는 즉시 다시 측정되며 저장 좌표는 건드리지 않는다.
+  useEffect(() => {
+    if (!absMode) {
+      setMeasuredCanvasH(0);
+      return;
+    }
+    const grid = gridRef.current;
+    if (!grid) return;
+    const measure = () => {
+      const bottom = Array.from(grid.children).reduce((max, node) => {
+        const el = node as HTMLElement;
+        return Math.max(max, el.offsetTop + el.offsetHeight);
+      }, 0);
+      setMeasuredCanvasH(Math.max(400, bottom + 40));
+    };
+    const observer = new ResizeObserver(measure);
+    Array.from(grid.children).forEach(node => observer.observe(node));
+    const frame = requestAnimationFrame(measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [absMode, enabled.length]);
   const canvasH = absMode
-    ? Math.max(400, ...enabled.map(w => (w.ay ?? 0) + (w.h ?? 200))) + 40
+    ? Math.max(measuredCanvasH, Math.max(400, ...enabled.map(w => (w.ay ?? 0) + (w.h ?? 200))) + 40)
     : undefined;
 
   return (
