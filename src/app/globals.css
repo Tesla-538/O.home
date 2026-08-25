@@ -837,10 +837,11 @@ a{color:inherit;text-decoration:none}
    편집 중에는 포인터 이동량과 위젯 좌표가 1:1이어야 하므로 원본 배율을 유지한다. */
 body.main-fixed:not(.edit-on) .dashboard-home{zoom:var(--home-canvas-scale,1)}
 body.main-fixed:not(.edit-on) #appMain{overflow-x:hidden}
-/* 가독성 오버레이는 route-frame 안에 두지 않는다. 진입 애니메이션의 transform이
-   fixed 기준점을 바꾸면 상단 64px이 두 번 더해져 본문 중간에 경계선이 생긴다. */
+/* 가독성 오버레이는 route-frame 안에 두지 않는다. #appMain은 view-transition 중
+   fixed 요소의 기준점이 될 수 있으므로 헤더 높이를 다시 더하지 않는다.
+   화면 전체에 깔고(z-index:0) 헤더와 본문을 위에 두면 중간 경계선도 생기지 않는다. */
 #appMain:has(> .route-frame > .page-main-wrap)::before{
-  content:"";position:fixed;inset:64px 0 0;z-index:0;pointer-events:none;
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   background:rgba(7,10,16,0);
   -webkit-backdrop-filter:blur(0) saturate(100%) brightness(100%);
   backdrop-filter:blur(0) saturate(100%) brightness(100%);
@@ -2331,7 +2332,7 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
    테마별 고정색 대신 panel-solid/ink 토큰을 사용해 두 톤이 함께 전환된다.
    ========================================================== */
 #appMain:has(> .route-frame > .page:not(.page-main-wrap))::before{
-  content:"";position:fixed;inset:64px 0 0;z-index:0;pointer-events:none;
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   background:color-mix(in srgb,#07101c 12%,transparent);
   -webkit-backdrop-filter:blur(1.5px) saturate(92%) brightness(88%);
   backdrop-filter:blur(1.5px) saturate(92%) brightness(88%);
@@ -2389,7 +2390,7 @@ html.route-transitioning .gnb .sub{display:none!important;animation:none!importa
 }
 
 @media (max-width:620px){
-  #appMain:has(> .route-frame > .page:not(.page-main-wrap))::before{inset:58px 0 0;backdrop-filter:blur(1px) brightness(90%)}
+  #appMain:has(> .route-frame > .page:not(.page-main-wrap))::before{inset:0;backdrop-filter:blur(1px) brightness(90%)}
   .route-frame > .page:not(.page-main-wrap) > .page-head{min-height:0;padding:16px;margin-bottom:14px}
   .route-frame > .page:not(.page-main-wrap) > .page-head .head-actions{grid-column:1;grid-row:auto;margin-top:12px}
 }
