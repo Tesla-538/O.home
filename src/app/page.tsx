@@ -10,8 +10,10 @@ import { KRadio, KStep } from '@/components/ui/Kit';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/lib/ThemeProvider';
 import { putBlob, useBlobUrl } from '@/lib/blobStore';
+import { useAuth } from '@/lib/auth';
+import { HomepageMode } from '@/components/main/HomepageMode';
 
-type HomeView = 'focus' | 'dashboard';
+type HomeView = 'focus' | 'home';
 
 const DOCK_ICON: Partial<Record<WidgetType, React.ReactNode>> = {
   banner: <><path d="M5 7.5h14v9H5z"/><path d="m7 14 3.2-3 2.5 2 1.8-1.6L17 14"/></>,
@@ -37,6 +39,7 @@ const EDITABLE: WidgetType[] = ['banner', 'memo', 'dday', 'todo', 'freetext', 'd
 
 export default function MainPage() {
   const { state, editOn, gridOn, updateWidget, addWidget, removeWidget } = useMainStore();
+  const { isAdmin } = useAuth();
   const theme = useTheme();
   const toast = useToast();
   const [ctx, setCtx] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -79,9 +82,16 @@ export default function MainPage() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('ohome.homeView.v1');
-      if (stored === 'dashboard') setHomeView('dashboard');
+      // 예전 「전체 위젯」 저장값도 새 관리자 홈페이지 모드로 자연스럽게 이관한다.
+      if (isAdmin && (stored === 'home' || stored === 'dashboard')) setHomeView('home');
+      else if (!isAdmin) setHomeView('focus');
     } catch { /* 기본 감상 모드 */ }
-  }, []);
+  }, [isAdmin]);
+
+  // 홈페이지 모드는 관리자 전용이다. 로그아웃·권한 변경 시 개인 패널을 즉시 걷는다.
+  useEffect(() => {
+    if (!isAdmin && homeView !== 'focus') setHomeView('focus');
+  }, [isAdmin, homeView]);
 
   useEffect(() => {
     if (editOn) { setDockOpen(null); setDockClosing(false); }
@@ -177,7 +187,8 @@ export default function MainPage() {
   const rightDock = dockable.filter(w => w.col === 3);
   const openDockWidget = dockable.find(w => w.id === dockOpen) ?? null;
   const focusActive = !editOn && homeView === 'focus' && !isMobile;
-  const showDashboard = editOn || homeView === 'dashboard' || isMobile;
+  const homepageActive = isAdmin && !editOn && homeView === 'home' && !isMobile;
+  const showDashboard = editOn || isMobile;
   const byCol = (c: 1 | 2 | 3) => enabled.filter(w => w.col === c);
   const mOrder = (id: string) => {
     const i = state.mobileOrder.indexOf(id);
@@ -275,7 +286,7 @@ export default function MainPage() {
     : undefined;
 
   return (
-    <section className={`page page-main-wrap ${focusActive ? 'focus-home' : 'dashboard-home'} home-motion-${viewMotion}`}
+    <section className={`page page-main-wrap ${focusActive ? 'focus-home' : homepageActive ? 'homepage-home' : 'dashboard-home'} home-motion-${viewMotion}`}
       style={{ '--home-canvas-scale': canvasScale } as React.CSSProperties}
       onClick={() => { setCtx(null); closeDock(); }}>
       {focusActive && (
@@ -293,12 +304,17 @@ export default function MainPage() {
         </div>
       )}
 
-      {!editOn && !isMobile && (
+      {homepageActive && (
+        <HomepageMode widgets={enabled} motionLocked={viewMotion !== 'idle'}
+          onFocusMode={() => changeHomeView('focus')} />
+      )}
+
+      {isAdmin && focusActive && (
         <button className="home-view-switch" disabled={viewMotion !== 'idle'} onClick={e => {
           e.stopPropagation();
-          changeHomeView(homeView === 'focus' ? 'dashboard' : 'focus');
+          changeHomeView('home');
         }}>
-          {homeView === 'focus' ? '▦ 전체 위젯' : '✦ 감상 모드'}
+          ⌂ 홈페이지 모드
         </button>
       )}
 
