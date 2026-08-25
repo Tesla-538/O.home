@@ -132,7 +132,7 @@ export function MemoWidget({ conf }: { conf: WidgetConf }) {
     <div className="panel widget" style={{ cursor: isAdmin ? 'pointer' : undefined }}
       onClick={e => { if ((e.target as HTMLElement).closest('.modal-ov')) return; if (isAdmin && !editOn) { setDraft(text); setOpen(true); } }}>
       <h4>MEMO {isAdmin && <span className="more">관리 ›</span>}</h4>
-      <p style={{ fontSize: 12, lineHeight: 1.7, color: '#3a3f47', whiteSpace: 'pre-line' }}>{text || '메모가 비어 있습니다'}</p>
+      <p style={{ fontSize: 12, lineHeight: 1.7, color: 'var(--sub)', whiteSpace: 'pre-line' }}>{text || '메모가 비어 있습니다'}</p>
 
       <Modal open={open} onClose={() => setOpen(false)} title="메모 관리" desc="메인 메모 위젯 내용 — 관리자 전용"
         actions={<>

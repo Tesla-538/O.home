@@ -834,6 +834,8 @@ a{color:inherit;text-decoration:none}
   -webkit-backdrop-filter:blur(34px) saturate(150%);
   backdrop-filter:blur(34px) saturate(150%);
 }
+.dashboard-home .widget h4{color:color-mix(in srgb,var(--ink) 78%,transparent)}
+.dashboard-home .widget h4 .more{color:color-mix(in srgb,var(--ink) 68%,transparent)}
 /* 절대배치 캔버스 (v1.9 사용자 확정) — PC에는 문서 흐름 없음: 위젯은 ax/ay 절대 좌표, 겹침 허용.
    흐름 스택은 모바일 전용 (아래 620px 미디어에서 static 복원) */
 .main-grid.abs{display:block;position:relative}
