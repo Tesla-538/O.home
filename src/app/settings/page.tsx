@@ -2368,6 +2368,24 @@ function BgmTrackRow({ t, onPatch, onDelete }: {
   const [title, setTitle] = useState(t.title);
   const [desc, setDesc] = useState(t.desc);
   const [url, setUrl] = useState(t.videoId);
+  const [artUploading, setArtUploading] = useState(false);
+  const artInput = useRef<HTMLInputElement>(null);
+  const artUrl = useBlobUrl(t.artImgId);
+
+  const uploadArt = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast('이미지 파일을 선택해 주세요'); return; }
+    setArtUploading(true);
+    try {
+      const artImgId = await putBlob(file);
+      onPatch({ artImgId });
+      toast('레코드 일러스트가 등록되었습니다');
+    } catch {
+      toast('일러스트를 올리지 못했습니다 — 저장소 연결을 확인해 주세요');
+    } finally {
+      setArtUploading(false);
+    }
+  };
 
   if (editing) {
     return (
@@ -2397,9 +2415,19 @@ function BgmTrackRow({ t, onPatch, onDelete }: {
     <div className="set-row" style={{ width: '100%' }}>
       <div className="l" style={{ display: 'flex', gap: 11, alignItems: 'center' }}>
         <span className="drag-h">⠿</span>
+        <button type="button" className="bgm-art-thumb" aria-label={`${t.title} 레코드 일러스트 ${artUrl ? '교체' : '등록'}`}
+          data-tip={artUrl ? '일러스트 교체' : '일러스트 등록'} onClick={() => artInput.current?.click()}>
+          {artUrl ? <img src={artUrl} alt="" /> : <span>＋</span>}
+        </button>
+        <input ref={artInput} type="file" accept="image/*" hidden
+          onChange={e => { uploadArt(e.target.files?.[0]); e.target.value = ''; }} />
         <div><b>{t.title}</b><small>{t.desc || t.videoId}</small></div>
       </div>
-      <div style={{ display: 'flex', gap: 6 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 10.5 }} disabled={artUploading}
+          onClick={() => artInput.current?.click()}>{artUploading ? 'UPLOADING…' : artUrl ? 'ART CHANGE' : 'ART UPLOAD'}</button>
+        {t.artImgId && <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 10.5 }}
+          onClick={() => { onPatch({ artImgId: undefined }); toast('곡별 일러스트를 해제했습니다'); }}>ART REMOVE</button>}
         <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 10.5 }}
           onClick={() => setEditing(true)}>EDIT</button>
         <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 10.5 }}
@@ -2430,7 +2458,7 @@ function BgmPane() {
   return (
     <div className="set-sec">
       <h3>BGM</h3>
-      <div className="d">유튜브 곡 목록 관리 — 미니 플레이어 리스트에 노출 · 화면은 숨기고 소리만 재생</div>
+      <div className="d">유튜브 곡 목록 관리 — 곡별 일러스트는 회전하는 레코드에 표시 · 등록하지 않으면 메인 배경 일러스트 사용</div>
 
       <DragList
         items={state.tracks}

@@ -9,6 +9,7 @@ export interface BgmTrack {
   title: string;
   desc: string;
   videoId: string;   // 유튜브 영상 ID
+  artImgId?: string; // 레코드에 표시할 곡별 일러스트 (없으면 메인 배경 이미지)
 }
 
 export interface BgmSettings {

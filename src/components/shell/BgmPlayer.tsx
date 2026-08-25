@@ -4,6 +4,7 @@
 // 브라우저 정책상 소리 재생은 사용자의 첫 클릭부터 시작
 import React, { useEffect, useRef, useState } from 'react';
 import { useBgm } from '@/lib/bgmStore';
+import { useBlobUrl } from '@/lib/blobStore';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
@@ -86,6 +87,7 @@ export function BgmPlayer() {
   const idxRef = useRef(0);
   idxRef.current = idx;
   const track = tracks[idx] ?? tracks[0];
+  const trackArtUrl = useBlobUrl(track?.artImgId);
 
   useEffect(() => { setVolume(settings.volume); playerRef.current?.setVolume(settings.volume); }, [settings.volume]);
 
@@ -280,7 +282,10 @@ export function BgmPlayer() {
       <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}>
         <div ref={holderRef} />
       </div>
-      <div className="disc" style={{ animationPlayState: playing ? 'running' : 'paused' }} />
+      <div className="disc" style={{
+        animationPlayState: playing ? 'running' : 'paused',
+        ...(trackArtUrl ? { '--disc-image': `url(${JSON.stringify(trackArtUrl)})` } : {}),
+      } as React.CSSProperties} />
       <div className="title">
         {/* 흐르는 글씨는 제목만 — 설명은 항상 말줄임 (정신없지 않게) */}
         <Marquee className="tt" text={track?.title ?? ''} active={playing} />

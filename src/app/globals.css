@@ -189,7 +189,7 @@ a{color:inherit;text-decoration:none}
   width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
   background-image:
     radial-gradient(circle at 31% 24%,rgba(255,255,255,.64),transparent 21%),
-    var(--bg-image,none),
+    var(--disc-image,var(--bg-image,none)),
     conic-gradient(from 24deg,#ff6682,#ffbd5f,#58d6d0,#6fa8ff,#ba75ed,#ff6682);
   background-size:100% 100%,cover,100% 100%;background-position:center;
   background-blend-mode:screen,soft-light,normal;
@@ -207,6 +207,9 @@ a{color:inherit;text-decoration:none}
 }
 .bgm .disc::after{content:"";position:relative;z-index:2;width:9px;height:9px;border-radius:50%;background:#14161a;border:2px solid rgba(235,243,255,.72);box-shadow:0 0 0 1px rgba(5,8,13,.45),0 1px 4px rgba(0,0,0,.55)}
 @keyframes spin{to{transform:rotate(360deg)}}
+.bgm-art-thumb{width:38px;height:38px;flex:0 0 38px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--soft);border:1px solid var(--line);color:var(--muted);font-size:18px;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:.16s}
+.bgm-art-thumb:hover{transform:scale(1.06);border-color:var(--accent)}
+.bgm-art-thumb img{width:100%;height:100%;display:block;object-fit:cover}
 .bgm .title{font-size:calc(11px*var(--fs,1));max-width:none;flex:1 1 auto;color:var(--bgm-fg);opacity:.7;min-width:0}
 .bgm .title .tt{color:var(--bgm-fg);font-size:calc(11.5px*var(--fs,1));font-weight:600;opacity:1}
 /* 흐르는 글씨 — 재생 중 + 넘칠 때만 (Marquee) */
