@@ -53,6 +53,8 @@ export default function CalPage() {
   const stateRef = useRef(st);
   const autoReady = useRef(false);
   const syncBusy = useRef(false);
+  const pendingSync = useRef<{ state: SchedState; announce: boolean } | null>(null);
+  const runGoogleSyncRef = useRef<(source?: SchedState, announce?: boolean) => Promise<void>>(async () => undefined);
   const appliedSignature = useRef('');
   const importRef = useRef<HTMLInputElement>(null);
   // 일정 등록/수정 모달
@@ -76,17 +78,34 @@ export default function CalPage() {
   }, [isAdmin]);
 
   const runGoogleSync = useCallback(async (source?: SchedState, announce = false) => {
-    if (syncBusy.current) return;
+    const requestState = source ?? stateRef.current;
+    if (syncBusy.current) {
+      pendingSync.current = {
+        state: requestState,
+        announce: announce || pendingSync.current?.announce || false,
+      };
+      return;
+    }
     syncBusy.current = true;
     setGoogleSyncing(true);
     try {
       const res = await fetch('/api/google-calendar/sync', {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...await googleAuthHeaders() },
-        body: JSON.stringify(source ? { state: source } : {}),
+        body: JSON.stringify({ state: requestState }),
       });
       const body = await res.json() as { state?: SchedState; syncedAt?: string; error?: string };
       if (!res.ok || !body.state) throw new Error(body.error || '동기화 실패');
+
+      // 요청이 진행되는 동안 일정이 바뀌었다면 오래된 응답으로 화면을 덮지 않는다.
+      // 가장 최신 상태를 대기열에 넣어 현재 요청이 끝난 직후 다시 동기화한다.
+      if (JSON.stringify(stateRef.current) !== JSON.stringify(requestState)) {
+        pendingSync.current = {
+          state: stateRef.current,
+          announce: announce || pendingSync.current?.announce || false,
+        };
+        return;
+      }
       appliedSignature.current = JSON.stringify(body.state);
       stateRef.current = body.state;
       replaceState(body.state);
@@ -97,8 +116,15 @@ export default function CalPage() {
     } finally {
       syncBusy.current = false;
       setGoogleSyncing(false);
+      const pending = pendingSync.current;
+      pendingSync.current = null;
+      if (pending) {
+        queueMicrotask(() => { void runGoogleSyncRef.current(pending.state, pending.announce); });
+      }
     }
   }, [replaceState, toast]);
+
+  useEffect(() => { runGoogleSyncRef.current = runGoogleSync; }, [runGoogleSync]);
 
   useEffect(() => {
     if (!loaded || !isAdmin) return;
